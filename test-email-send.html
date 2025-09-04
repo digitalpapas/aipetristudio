@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Email Send</title>
+</head>
+<body>
+    <script>
+        async function sendTestEmail() {
+            try {
+                const response = await fetch('https://pujouskjoghibojqzjis.supabase.co/functions/v1/test-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userEmail: 'monkvxmode@gmail.com',
+                        userName: 'Max'
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('Email sent:', result);
+                alert('Email sent! Check result in console.');
+            } catch (error) {
+                console.error('Error sending email:', error);
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        // Автоматически отправляем письмо при загрузке страницы
+        sendTestEmail();
+    </script>
+    <h1>Sending test email to monkvxmode@gmail.com...</h1>
+    <p>Check console for results.</p>
+</body>
+</html>

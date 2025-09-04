@@ -1,0 +1,1 @@
+UPDATE researches SET status = 'completed' WHERE "Project ID" = '1755497814752';

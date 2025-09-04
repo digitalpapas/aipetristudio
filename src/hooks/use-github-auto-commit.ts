@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { AutoCommitService, AutoCommitConfig } from '@/lib/auto-commit';
+import { GitAutoCommitService, GitAutoCommitConfig } from '@/lib/git-auto-commit';
 
 const getEnvVar = (key: string): string => {
   if (typeof window !== 'undefined') {
@@ -9,18 +9,16 @@ const getEnvVar = (key: string): string => {
 };
 
 export const useGitHubAutoCommit = () => {
-  const [autoCommitService, setAutoCommitService] = useState<AutoCommitService | null>(() => {
-    const config: AutoCommitConfig = {
-      owner: getEnvVar('VITE_GITHUB_OWNER'),
-      repo: getEnvVar('VITE_GITHUB_REPO'),
-      token: getEnvVar('VITE_GITHUB_PAT'),
+  const [autoCommitService, setAutoCommitService] = useState<GitAutoCommitService | null>(() => {
+    const config: GitAutoCommitConfig = {
       enabled: getEnvVar('VITE_AUTO_COMMIT_ENABLED') === 'true',
       commitPrefix: getEnvVar('VITE_AUTO_COMMIT_PREFIX') || 'feat',
-      autoCommitBranch: getEnvVar('VITE_AUTO_COMMIT_BRANCH') || 'main',
+      branch: getEnvVar('VITE_AUTO_COMMIT_BRANCH') || 'main',
+      remote: 'origin',
     };
 
-    if (config.enabled && config.token && config.owner && config.repo) {
-      return new AutoCommitService(config);
+    if (config.enabled) {
+      return new GitAutoCommitService(config);
     }
     return null;
   });
@@ -41,7 +39,7 @@ export const useGitHubAutoCommit = () => {
     return autoCommitService?.isEnabled() || false;
   }, [autoCommitService]);
 
-  const updateConfig = useCallback((newConfig: Partial<AutoCommitConfig>) => {
+  const updateConfig = useCallback((newConfig: Partial<GitAutoCommitConfig>) => {
     if (autoCommitService) {
       autoCommitService.updateConfig(newConfig);
     }

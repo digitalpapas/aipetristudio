@@ -773,8 +773,8 @@ export default function ResearchResultPage() {
             className="flex-1 sm:flex-initial text-xs sm:text-sm"
             onClick={handleExport}
           >
-            <span className="hidden md:inline">Экспорт</span>
-            <span className="md:hidden">📤</span>
+            <span className="hidden lg:inline">Экспорт</span>
+            <span className="lg:hidden">📤</span>
           </Button>
           <Button 
             variant="outline" 
@@ -782,8 +782,8 @@ export default function ResearchResultPage() {
             className="flex-1 sm:flex-initial text-xs sm:text-sm"
             onClick={handleShare}
           >
-            <span className="hidden md:inline">Поделиться</span>
-            <span className="md:hidden">🔗</span>
+            <span className="hidden lg:inline">Поделиться</span>
+            <span className="lg:hidden">🔗</span>
           </Button>
           <Button 
             variant="outline" 
@@ -791,8 +791,8 @@ export default function ResearchResultPage() {
             className="flex-1 sm:flex-initial text-xs sm:text-sm"
             onClick={handleDuplicate}
           >
-            <span className="hidden md:inline">Дублировать</span>
-            <span className="md:hidden">📋</span>
+            <span className="hidden lg:inline">Дублировать</span>
+            <span className="lg:hidden">📋</span>
           </Button>
         </div>
       </header>

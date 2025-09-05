@@ -675,38 +675,49 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
     <TooltipProvider delayDuration={0}>
       <Card className="w-full">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
             <Brain className="h-5 w-5" />
-            Параметры анализа
+            <span className="whitespace-nowrap">Параметры анализа</span>
           </CardTitle>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {/* Кнопка начать анализ */}
             <Button 
               onClick={handleStartAnalysis}
               disabled={selectedCount === 0 || isLoading}
               size="sm"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 min-w-0 shrink-0"
             >
               {isLoading ? (
                 <>
                   <Clock className="h-4 w-4 animate-spin" />
-                  {selectedCount === 1 ? "Анализируем..." : "Запускаем анализы..."}
+                  <span className="hidden sm:inline">
+                    {selectedCount === 1 ? "Анализируем..." : "Запускаем анализы..."}
+                  </span>
+                  <span className="sm:hidden">Анализ...</span>
                 </>
               ) : analyzingTypes.length > 0 ? (
                 <>
                   <Clock className="h-4 w-4 animate-pulse" />
-                  Выполняется: {analyzingTypes.length} {getAnalysisWord(analyzingTypes.length)}
+                  <span className="hidden sm:inline">
+                    Выполняется: {analyzingTypes.length} {getAnalysisWord(analyzingTypes.length)}
+                  </span>
+                  <span className="sm:hidden">Идет анализ</span>
                 </>
               ) : (
                 <>
                   <Play className="h-4 w-4" />
-                  {selectedCount === 1 
-                    ? "Начать анализ"
-                    : selectedCount > 1
-                    ? `Начать анализ (${selectedCount})`
-                    : "Начать анализ"
-                  }
+                  <span className="hidden sm:inline">
+                    {selectedCount === 1 
+                      ? "Начать анализ"
+                      : selectedCount > 1
+                      ? `Начать анализ (${selectedCount})`
+                      : "Начать анализ"
+                    }
+                  </span>
+                  <span className="sm:hidden">
+                    {selectedCount > 1 ? `Начать (${selectedCount})` : "Начать"}
+                  </span>
                 </>
               )}
             </Button>
@@ -769,7 +780,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                     setSelectedOptions(newSelected);
                   }
                 }}
-                className="text-xs"
+                className="text-xs shrink-0"
               >
                 <CheckCheck className={`h-3 w-3 mr-1 ${(() => {
                   const availableOptions = ANALYSIS_OPTIONS.filter(option => {
@@ -871,7 +882,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                     <IconComponent className="h-4 w-4" />
                     {categoryName}
                   </div>
-                  <div className="grid gap-2 pl-6">
+                  <div className="grid gap-2 pl-2 sm:pl-6">
                     {completedInCategory.map((option) => (
                        <div key={option.id} className="relative">
                            <Button
@@ -986,7 +997,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
         })()}
 
         
-        <ScrollArea className="h-96">
+        <ScrollArea className="h-96 md:h-96 max-h-[70vh]">
           <div className="space-y-6 pr-4">
             {Object.entries(groupedOptions).map(([category, options]) => {
               const IconComponent = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS];
@@ -1005,7 +1016,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                     <h4 className="font-medium text-sm">{categoryName}</h4>
                   </div>
                   
-                   <div className="grid gap-2 pl-6">
+                   <div className="grid gap-2 pl-2 sm:pl-6">
                      {availableOptions.map((option) => {
                        const status = getOptionStatus(option.id);
                       const isDisabled = option.required || status === "completed";

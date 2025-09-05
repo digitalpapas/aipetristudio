@@ -5,7 +5,6 @@ import SegmentAnalysisMenu from "@/components/dashboard/SegmentAnalysisMenu";
 import SegmentAnalysisResult from "@/components/dashboard/SegmentAnalysisResult";
 import FloatingAIAssistant from "@/components/dashboard/FloatingAIAssistant";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { Star } from "lucide-react";
 
 export default function ResearchSegmentPage() {
@@ -216,9 +215,6 @@ export default function ResearchSegmentPage() {
           context="segment"
         />
       )}
-      
-      {/* Кнопка "наверх" */}
-      <ScrollToTop />
     </main>
   );
 }

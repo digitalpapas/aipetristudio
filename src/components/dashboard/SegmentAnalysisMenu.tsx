@@ -673,7 +673,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
 
   return (
     <TooltipProvider delayDuration={0}>
-      <Card className="w-full">
+      <Card className="w-full mx-auto max-w-none overflow-hidden">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
@@ -885,23 +885,23 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                   <div className="grid gap-2 pl-2 sm:pl-6">
                     {completedInCategory.map((option) => (
                        <div key={option.id} className="relative">
-                           <Button
-                             variant="outline"
-                             className="justify-start h-auto p-3 text-left w-full hover:bg-primary/5 hover:border-primary/30 transition-all duration-200 group cursor-pointer"
-                             onClick={() => onViewResult?.(option.id)}
+                            <Button
+                              variant="outline"
+                              className="justify-start h-auto p-3 text-left w-full hover:bg-primary/5 hover:border-primary/30 transition-all duration-200 group cursor-pointer min-w-0"
+                              onClick={() => onViewResult?.(option.id)}
                            >
-                             <div className="flex items-center gap-3 w-full">
-                               <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                               <div className="flex-1">
-                                 <div className="font-medium group-hover:text-primary transition-colors">{option.name}</div>
-                                 {option.description && (
-                                   <div className="text-xs text-muted-foreground mt-1">
-                                     {option.description}
-                                   </div>
-                                 )}
-                               </div>
-                               
-                             </div>
+                              <div className="flex items-center gap-3 w-full min-w-0">
+                                <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium group-hover:text-primary transition-colors truncate">{option.name}</div>
+                                  {option.description && (
+                                    <div className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                      {option.description}
+                                    </div>
+                                  )}
+                                </div>
+                                
+                              </div>
                           </Button>
                          
                          {canDeleteAnalysis(option.id) && (
@@ -1049,7 +1049,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                       return (
                          <div 
                            key={option.id} 
-                           className={`relative flex items-start space-x-3 p-3 rounded-lg border transition-colors ${
+                           className={`relative flex items-start space-x-3 p-3 rounded-lg border transition-colors min-w-0 ${
                              finalReportAvailable 
                                ? "border-primary bg-primary/5 hover:bg-primary/10" 
                                : "hover:bg-muted/50"
@@ -1093,14 +1093,14 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                               className="mt-0.5"
                             />
                           
-                          <div className="flex-1 space-y-1">
-                            <div className="flex items-center gap-2">
-                              <label 
-                                htmlFor={option.id}
-                                className={`text-sm font-medium cursor-pointer ${isDisabled ? 'text-muted-foreground' : ''}`}
-                              >
-                                {option.name}
-                              </label>
+                           <div className="flex-1 space-y-1 min-w-0">
+                             <div className="flex flex-wrap items-center gap-2">
+                               <label 
+                                 htmlFor={option.id}
+                                 className={`text-sm font-medium cursor-pointer break-words ${isDisabled ? 'text-muted-foreground' : ''}`}
+                               >
+                                 {option.name}
+                               </label>
                               
                               {status === "completed" && (
                                 <Badge variant="default" className="h-5 text-xs">
@@ -1132,11 +1132,11 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                                )}
                             </div>
                             
-                            {option.description && (
-                              <p className="text-xs text-muted-foreground">
-                                {option.description}
-                              </p>
-                            )}
+                             {option.description && (
+                               <p className="text-xs text-muted-foreground line-clamp-2 break-words">
+                                 {option.description}
+                               </p>
+                             )}
                           </div>
                         </div>
                       );

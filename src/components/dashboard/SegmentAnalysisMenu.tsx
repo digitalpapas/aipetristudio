@@ -890,9 +890,9 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                               className="justify-start h-auto p-2 sm:p-3 text-left w-full hover:bg-primary/5 hover:border-primary/30 transition-all duration-200 group cursor-pointer min-w-0 max-w-full"
                               onClick={() => onViewResult?.(option.id)}
                            >
-                              <div className="flex items-start gap-2 sm:gap-3 w-full min-w-0 max-w-full overflow-hidden">
+                              <div className="flex items-start gap-2 sm:gap-3 w-full">
                                 <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                                <div className="flex-1 min-w-0 max-w-full overflow-hidden">
+                                <div className="flex-1">
                                   <div className="font-medium group-hover:text-primary transition-colors text-sm break-words">
                                     {option.name}
                                   </div>

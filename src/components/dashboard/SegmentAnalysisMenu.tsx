@@ -893,7 +893,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                               <div className="flex items-start gap-2 sm:gap-3 w-full min-w-0 max-w-full overflow-hidden">
                                 <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                                 <div className="flex-1 min-w-0 max-w-full overflow-hidden">
-                                  <div className="font-medium group-hover:text-primary transition-colors text-sm sm:text-base break-words">
+                                  <div className="font-medium group-hover:text-primary transition-colors text-sm break-words">
                                     {option.name}
                                   </div>
                                   {option.description && (
@@ -1098,7 +1098,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                              <div className="flex flex-wrap items-center gap-1 sm:gap-2 min-w-0">
                                <label 
                                  htmlFor={option.id}
-                                 className={`text-xs sm:text-sm font-medium cursor-pointer break-words leading-tight ${isDisabled ? 'text-muted-foreground' : ''}`}
+                                 className={`text-sm font-medium cursor-pointer break-words leading-tight ${isDisabled ? 'text-muted-foreground' : ''}`}
                                >
                                  {option.name}
                                </label>

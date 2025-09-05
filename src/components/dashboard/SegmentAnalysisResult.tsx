@@ -12,6 +12,7 @@ import { useCustomToast } from "@/hooks/use-custom-toast";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageHeader } from "./PageHeader";
+import { ScrollToTop } from "@/components/ui/scroll-to-top";
 
 interface SegmentAnalysisResultProps {
   researchId: string;
@@ -1021,6 +1022,9 @@ export default function SegmentAnalysisResult({
           </div>
         </CardContent>
       </Card>
+      
+      {/* Кнопка "наверх" для длинных результатов анализа */}
+      <ScrollToTop />
     </div>
   );
 }

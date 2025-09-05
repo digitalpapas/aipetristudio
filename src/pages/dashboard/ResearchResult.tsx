@@ -739,7 +739,7 @@ export default function ResearchResultPage() {
 
   return (
     <main className="flex flex-col min-h-full">
-      <div className="flex items-center gap-3 mb-4 pt-6 sm:pt-8 md:pt-12">
+      <div className="flex items-center gap-3 mb-4 pt-4 sm:pt-6">
         <Button 
           variant="ghost" 
           size="sm" 

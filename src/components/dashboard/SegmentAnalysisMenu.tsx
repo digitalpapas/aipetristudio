@@ -1107,7 +1107,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                          >
                            {/* Замочек для заблокированных опций с tooltip */}
                            {(isLockedUntilSegment || isLockedByDependency || finalReportDisabled) && (
-                             <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 rounded-lg backdrop-blur-sm">
+                             <div className="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-gray-900/60 rounded-lg backdrop-blur-sm">
                                <Tooltip>
                                  <TooltipTrigger asChild>
                                    <div className="cursor-help p-2">

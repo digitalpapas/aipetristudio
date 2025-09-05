@@ -882,12 +882,12 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                     <IconComponent className="h-4 w-4" />
                     {categoryName}
                   </div>
-                  <div className="grid gap-2 pl-1 sm:pl-2 md:pl-6 overflow-hidden">
+                   <div className="grid gap-2 pl-1 sm:pl-2 md:pl-6 overflow-hidden pr-2">
                     {completedInCategory.map((option) => (
                        <div key={option.id} className="relative">
                             <Button
                               variant="outline"
-                              className="justify-start h-auto p-2 sm:p-3 text-left w-full hover:bg-primary/5 hover:border-primary/30 transition-all duration-200 group cursor-pointer"
+                              className="justify-start h-auto p-2 sm:p-3 text-left w-full hover:bg-primary/5 hover:border-primary/30 transition-all duration-200 group cursor-pointer max-w-full overflow-hidden"
                               onClick={() => onViewResult?.(option.id)}
                            >
                               <div className="flex items-start gap-2 sm:gap-3 w-full">

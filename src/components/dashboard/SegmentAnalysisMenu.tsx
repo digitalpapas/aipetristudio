@@ -897,7 +897,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                                     {option.name}
                                   </div>
                                   {option.description && (
-                                    <div className="text-xs text-muted-foreground mt-1 line-clamp-3 sm:line-clamp-2 break-words overflow-hidden">
+                                    <div className="text-xs text-muted-foreground mt-1 break-words leading-relaxed">
                                       {option.description}
                                     </div>
                                   )}

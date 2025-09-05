@@ -831,13 +831,15 @@ export default function SegmentAnalysisResult({
 
       {/* Заголовок с кнопками - фиксированная высота */}
       <div className="flex items-end justify-between min-h-[60px] mb-4">
-        {segmentName && (
+        {segmentName ? (
           <div>
             <h1 className="text-2xl font-bold">
               {segmentName}
             </h1>
             <p className="text-muted-foreground mt-1">Подробный анализ</p>
           </div>
+        ) : (
+          <div></div>
         )}
         
         {/* Кнопки выравнены по нижнему краю */}

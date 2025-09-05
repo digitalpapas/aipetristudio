@@ -843,7 +843,7 @@ export default function ResearchResultPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="selected-segments" className="mt-4">
+          <TabsContent value="selected-segments" className="space-y-4">
             {/* Отображаем только выбранные сегменты */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {segments.length > 0 ? (

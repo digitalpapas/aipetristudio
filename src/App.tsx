@@ -190,96 +190,94 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<AuthRoutes.Login />} />
-              <Route path="/register" element={<AuthRoutes.Register />} />
-              <Route path="/verify-email" element={<AuthRoutes.VerifyEmail />} />
-              <Route path="/test-supabase" element={<SupabaseTest />} />
-              <Route path="/test-github" element={<GitHubSync />} />
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<AuthRoutes.Login />} />
+            <Route path="/register" element={<AuthRoutes.Register />} />
+            <Route path="/verify-email" element={<AuthRoutes.VerifyEmail />} />
+            <Route path="/test-supabase" element={<SupabaseTest />} />
+            <Route path="/test-github" element={<GitHubSync />} />
 
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <DashboardHome />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/profile"
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <ProfilePage />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/diagnostics"
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <DiagnosticsPage />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/research/new"
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <ResearchNewPage />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/research/:id"
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <ResearchResultPage />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/research/:id/segment/:segmentId"
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <ResearchSegmentPage />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/dashboard/research/:researchId/segment/:segmentId/bookmarks"
-                element={
-                  <ProtectedRoute>
-                    <DashboardLayout>
-                      <BookmarksPage />
-                    </DashboardLayout>
-                  </ProtectedRoute>
-                }
-              />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="/pricing" element={<DashboardLayout><PricingPage /></DashboardLayout>} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <DashboardHome />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/profile"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ProfilePage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/diagnostics"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <DiagnosticsPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/research/new"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ResearchNewPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/research/:id"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ResearchResultPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/research/:id/segment/:segmentId"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ResearchSegmentPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/research/:researchId/segment/:segmentId/bookmarks"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <BookmarksPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/pricing" element={<DashboardLayout><PricingPage /></DashboardLayout>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 };

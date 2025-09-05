@@ -960,23 +960,23 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
           return hasAvailableAnalyses && (
             <div className="space-y-3">
               <h4 className="font-medium text-sm flex items-center gap-2">
-                <Brain className="h-4 w-4 text-muted-foreground" />
+                <Sparkles className="h-4 w-4 text-yellow-600" />
                 Доступные анализы
               </h4>
               
               {/* Информационное сообщение для доступных анализов */}
-              <div className="relative bg-gradient-to-r from-blue-500/10 via-blue-500/5 to-blue-500/10 border border-blue-500/20 rounded-xl p-4 mt-3 mb-4 overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/5 to-transparent animate-pulse"></div>
+              <div className="relative bg-gradient-to-r from-yellow-500/10 via-yellow-500/5 to-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mt-3 mb-4 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-500/5 to-transparent animate-pulse"></div>
                 <div className="relative flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center">
-                    <Brain className="h-4 w-4 text-blue-600" />
+                  <div className="flex-shrink-0 w-8 h-8 bg-yellow-500/10 rounded-full flex items-center justify-center">
+                    <Sparkles className="h-4 w-4 text-yellow-600" />
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-medium text-foreground mb-1">
                       Выберите анализы для запуска
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Отметьте нужные анализы и нажмите "Начать анализ" для параллельной обработки
+                      Отметьте нужные анализы и нажмите "Начать анализ"
                     </p>
                   </div>
                 </div>

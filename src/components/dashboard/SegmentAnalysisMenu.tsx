@@ -1101,18 +1101,6 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
           </div>
         </ScrollArea>
         
-        <Separator />
-        
-        <div className="flex items-center justify-center">
-          <div className="text-sm text-muted-foreground">
-            {selectedCount === 0 
-              ? "Выберите анализы для запуска"
-              : selectedCount === 1
-              ? "Выбран 1 анализ"
-              : `Выбрано для анализа: ${selectedCount}`
-            }
-          </div>
-        </div>
       </CardContent>
     </Card>
     </TooltipProvider>

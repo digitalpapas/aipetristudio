@@ -22,7 +22,7 @@ export function PageHeader({
   const navigate = useNavigate();
   
   return (
-    <div className="space-y-4 mb-6 pt-4 sm:pt-6">
+    <div className="space-y-4 mb-6 pt-2 sm:pt-3">
       {(backUrl || onBack) && (
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <Button

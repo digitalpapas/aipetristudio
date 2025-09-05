@@ -154,7 +154,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </header>
           
           {/* Main Content with mobile spacing */}
-          <main className="flex-1 p-3 md:p-4 pt-20 md:pt-16 lg:pt-3 mobile-safe-area overflow-x-safe">{children}</main>
+          <main className="flex-1 p-3 md:p-4 pt-20 md:pt-6 lg:pt-3 mobile-safe-area overflow-x-safe">{children}</main>
         </div>
       </div>
     </SidebarProvider>

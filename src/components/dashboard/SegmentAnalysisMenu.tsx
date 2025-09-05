@@ -674,13 +674,13 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
   return (
     <TooltipProvider delayDuration={0}>
       <Card className="w-full mx-auto max-w-none overflow-hidden">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
-            <Brain className="h-5 w-5" />
-            <span className="whitespace-nowrap">Параметры анализа</span>
+      <CardHeader className="px-4 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 overflow-hidden">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg min-w-0">
+            <Brain className="h-5 w-5 flex-shrink-0" />
+            <span className="truncate">Параметры анализа</span>
           </CardTitle>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
             {/* Кнопка начать анализ */}
             <Button 
               onClick={handleStartAnalysis}
@@ -842,7 +842,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 px-4 sm:px-6">
         {/* Завершенные анализы как кнопки, сгруппированные по категориям */}
         {completedAnalyses.length > 0 && (
           <div className="space-y-3">
@@ -882,7 +882,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                     <IconComponent className="h-4 w-4" />
                     {categoryName}
                   </div>
-                  <div className="grid gap-2 pl-2 sm:pl-6">
+                  <div className="grid gap-2 pl-1 sm:pl-2 md:pl-6 overflow-hidden">
                     {completedInCategory.map((option) => (
                        <div key={option.id} className="relative">
                             <Button
@@ -997,8 +997,8 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
         })()}
 
         
-        <ScrollArea className="h-96 md:h-96 max-h-[70vh]">
-          <div className="space-y-6 pr-4">
+        <ScrollArea className="h-96 md:h-96 max-h-[70vh] overflow-x-hidden">
+          <div className="space-y-6 pr-2 sm:pr-4 overflow-hidden">
             {Object.entries(groupedOptions).map(([category, options]) => {
               const IconComponent = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS];
               const categoryName = CATEGORY_NAMES[category as keyof typeof CATEGORY_NAMES];
@@ -1016,7 +1016,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                     <h4 className="font-medium text-sm">{categoryName}</h4>
                   </div>
                   
-                   <div className="grid gap-2 pl-2 sm:pl-6">
+                   <div className="grid gap-2 pl-1 sm:pl-2 md:pl-6 overflow-hidden">
                      {availableOptions.map((option) => {
                        const status = getOptionStatus(option.id);
                       const isDisabled = option.required || status === "completed";

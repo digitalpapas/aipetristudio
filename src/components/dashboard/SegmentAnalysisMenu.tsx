@@ -893,11 +893,11 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                                <div className="flex items-start gap-2 sm:gap-3 w-full">
                                  <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                                  <div className="flex-1 min-w-0 max-w-full">
-                                   <div className="font-medium group-hover:text-primary transition-colors text-sm break-all word-wrap whitespace-normal">
+                                   <div className="font-medium group-hover:text-primary transition-colors text-sm break-all word-wrap whitespace-pre-line">
                                      {option.name}
                                    </div>
                                    {option.description && (
-                                     <div className="text-xs text-muted-foreground mt-1 break-all word-wrap leading-relaxed whitespace-normal">
+                                     <div className="text-xs text-muted-foreground mt-1 break-all word-wrap leading-relaxed whitespace-pre-line">
                                        {option.description}
                                      </div>
                                    )}

@@ -99,6 +99,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Button>
               <Button
                 variant="ghost"
+                className="w-full justify-start"
+                onClick={() => {
+                  navigate("/pricing");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                Тарифы
+              </Button>
+              <Button
+                variant="ghost"
                 className="w-full justify-start text-destructive"
                 onClick={async () => {
                   await signOut();

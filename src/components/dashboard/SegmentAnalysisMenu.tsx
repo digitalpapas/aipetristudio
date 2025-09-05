@@ -893,11 +893,11 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                               <div className="flex items-start gap-2 sm:gap-3 w-full min-w-0 max-w-full overflow-hidden">
                                 <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                                 <div className="flex-1 min-w-0 max-w-full overflow-hidden">
-                                  <div className="font-medium group-hover:text-primary transition-colors truncate text-sm sm:text-base">
+                                  <div className="font-medium group-hover:text-primary transition-colors text-sm sm:text-base break-words">
                                     {option.name}
                                   </div>
                                   {option.description && (
-                                    <div className="text-xs text-muted-foreground mt-1 break-words line-clamp-1 sm:line-clamp-2 overflow-hidden">
+                                    <div className="text-xs text-muted-foreground mt-1 line-clamp-3 sm:line-clamp-2 break-words overflow-hidden">
                                       {option.description}
                                     </div>
                                   )}
@@ -1098,7 +1098,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                              <div className="flex flex-wrap items-center gap-1 sm:gap-2 min-w-0">
                                <label 
                                  htmlFor={option.id}
-                                 className={`text-xs sm:text-sm font-medium cursor-pointer truncate max-w-full ${isDisabled ? 'text-muted-foreground' : ''}`}
+                                 className={`text-xs sm:text-sm font-medium cursor-pointer break-words leading-tight ${isDisabled ? 'text-muted-foreground' : ''}`}
                                >
                                  {option.name}
                                </label>
@@ -1134,7 +1134,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                             </div>
                             
                              {option.description && (
-                               <p className="text-xs text-muted-foreground line-clamp-1 sm:line-clamp-2 break-all overflow-hidden max-w-full">
+                               <p className="text-xs text-muted-foreground line-clamp-3 sm:line-clamp-2 break-words overflow-hidden max-w-full leading-relaxed">
                                  {option.description}
                                </p>
                              )}

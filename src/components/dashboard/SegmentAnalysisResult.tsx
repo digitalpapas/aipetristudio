@@ -817,7 +817,7 @@ export default function SegmentAnalysisResult({
       )}
       
       {/* Навигация */}
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-4 mt-4 sm:mt-2">
         <Button
           variant="ghost"
           size="sm"

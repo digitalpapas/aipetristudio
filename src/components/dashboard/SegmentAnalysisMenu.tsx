@@ -887,7 +887,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                        <div key={option.id} className="relative">
                             <Button
                               variant="outline"
-                              className="justify-start h-auto p-2 sm:p-3 text-left w-full hover:bg-primary/5 hover:border-primary/30 transition-all duration-200 group cursor-pointer min-w-0 max-w-full"
+                              className="justify-start h-auto p-2 sm:p-3 text-left w-full hover:bg-primary/5 hover:border-primary/30 transition-all duration-200 group cursor-pointer"
                               onClick={() => onViewResult?.(option.id)}
                            >
                               <div className="flex items-start gap-2 sm:gap-3 w-full">

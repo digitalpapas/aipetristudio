@@ -1018,9 +1018,9 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                       
                       if (option.id === "solutions_analysis") {
                         isLockedByDependency = !completedAnalyses.includes("problems_analysis");
-                      } else if (option.id === "content_themes") {
-                        const requiredForContent = ["bdf_analysis", "problems_analysis", "jtbd_analysis"];
-                        isLockedByDependency = !requiredForContent.every(id => completedAnalyses.includes(id));
+                       } else if (option.id === "content_themes") {
+                         const requiredForContent = ["bdf_analysis", "problems_analysis", "solutions_analysis", "jtbd_analysis", "user_personas"];
+                         isLockedByDependency = !requiredForContent.every(id => completedAnalyses.includes(id));
                       } else if (option.id === "niche_integration") {
                         const allAnalysisOptions = ["bdf_analysis", "problems_analysis", "solutions_analysis", "jtbd_analysis", "content_themes", "user_personas"];
                         isLockedByDependency = !allAnalysisOptions.every(id => completedAnalyses.includes(id));

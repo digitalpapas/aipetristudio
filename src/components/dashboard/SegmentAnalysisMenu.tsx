@@ -1115,6 +1115,8 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                                    </div>
                                  </TooltipTrigger>
                                   <TooltipContent 
+                                    side="right"
+                                    sideOffset={15}
                                     className="z-50 !bg-white dark:!bg-gray-900 border border-gray-400 dark:border-gray-500 shadow-2xl max-w-xs p-4 !opacity-100"
                                   >
                                  <div className="space-y-2">

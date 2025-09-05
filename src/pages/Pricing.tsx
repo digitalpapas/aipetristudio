@@ -126,79 +126,79 @@ const PricingPage = () => {
             </header>
 
             {/* Pricing Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
               {/* DEMO plan */}
-              <div className="flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Демо</h3>
+              <div className="flex flex-col bg-card border border-border rounded-xl p-4 md:p-6">
+                <h3 className="text-lg md:text-xl font-semibold text-foreground">Демо</h3>
                 <div className="mt-2 mb-4">
-                  <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">Бесплатно</span>
+                  <span className="text-2xl md:text-3xl font-bold text-foreground">Бесплатно</span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 h-12">
+                <p className="text-sm text-muted-foreground mb-4 md:mb-6 min-h-[3rem]">
                   Попробуйте платформу и оцените возможности AI-анализа целевой аудитории
                 </p>
-                <Button asChild className="w-full py-2.5 px-4 rounded-lg bg-gray-100 text-gray-900 hover:bg-gray-200 font-medium">
+                <Button asChild className="w-full py-2.5 px-4 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/80 font-medium">
                   <Link to="/demo">Попробовать демо</Link>
                 </Button>
-                <hr className="my-6 border-gray-200 dark:border-gray-700" />
+                <hr className="my-4 md:my-6 border-border" />
                 <div className="space-y-2">
                   {demoFeatures.map((feature, index) => (
                     <div key={index} className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-xs text-gray-700 dark:text-gray-300">{feature}</span>
+                      <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-xs md:text-sm text-foreground">{feature}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* PRO plan */}
-              <div className="flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 border-t-4 border-t-blue-500 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Pro</h3>
+              <div className="flex flex-col bg-card border border-border border-t-4 border-t-primary rounded-xl p-4 md:p-6">
+                <h3 className="text-lg md:text-xl font-semibold text-foreground">Pro</h3>
                 <div className="mt-2 mb-4">
-                  <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">2,900₽</span>
-                  <span className="text-gray-500">/мес</span>
+                  <span className="text-2xl md:text-3xl font-bold text-foreground">2,900₽</span>
+                  <span className="text-muted-foreground">/мес</span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 h-12">
+                <p className="text-sm text-muted-foreground mb-4 md:mb-6 min-h-[3rem]">
                   Полный доступ с расширенной аналитикой для маркетологов
                 </p>
-                <Button asChild className="w-full py-2.5 px-4 rounded-lg bg-blue-500 text-white hover:bg-blue-600 font-medium">
+                <Button asChild className="w-full py-2.5 px-4 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-medium">
                   <Link to="/register">Начать за 2,900₽</Link>
                 </Button>
-                <hr className="my-6 border-gray-200 dark:border-gray-700" />
+                <hr className="my-4 md:my-6 border-border" />
                 <div className="space-y-2">
                   {proFeatures.map((feature, index) => (
                     <div key={index} className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-xs text-gray-700 dark:text-gray-300">{feature}</span>
+                      <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-xs md:text-sm text-foreground">{feature}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* ENTERPRISE plan */}
-              <div className="flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Enterprise</h3>
+              <div className="flex flex-col bg-card border border-border rounded-xl p-4 md:p-6 md:col-span-2 xl:col-span-1">
+                <h3 className="text-lg md:text-xl font-semibold text-foreground">Enterprise</h3>
                 <div className="mt-2 mb-4">
-                  <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">29,900₽</span>
-                  <span className="text-gray-500">/мес</span>
+                  <span className="text-2xl md:text-3xl font-bold text-foreground">29,900₽</span>
+                  <span className="text-muted-foreground">/мес</span>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-6 h-12">
+                <p className="text-sm text-muted-foreground mb-4 md:mb-6 min-h-[3rem]">
                   Корпоративное решение для команд с персональной поддержкой и API
                 </p>
                 <Button 
-                  className="w-full py-2.5 px-4 rounded-lg bg-white border-2 border-blue-500 text-blue-600 hover:bg-blue-50 font-medium"
+                  className="w-full py-2.5 px-4 rounded-lg bg-background border-2 border-primary text-primary hover:bg-accent font-medium"
                   onClick={() => setIsEnterpriseModalOpen(true)}
                 >
                   Связаться с нами
                 </Button>
-                <hr className="my-6 border-gray-200 dark:border-gray-700" />
+                <hr className="my-4 md:my-6 border-border" />
                 <div className="mb-4">
-                  <p className="text-xs font-medium text-gray-500">Всё из Pro, плюс:</p>
+                  <p className="text-xs font-medium text-muted-foreground">Всё из Pro, плюс:</p>
                 </div>
                 <div className="space-y-2">
                   {enterpriseFeatures.map((feature, index) => (
                     <div key={index} className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-xs text-gray-700 dark:text-gray-300">{feature}</span>
+                      <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-xs md:text-sm text-foreground">{feature}</span>
                     </div>
                   ))}
                 </div>
@@ -206,14 +206,14 @@ const PricingPage = () => {
             </div>
 
             {/* FAQ Section */}
-            <div className="mt-8 text-center">
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-8">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Вопросы о тарифах?</h2>
-                <p className="text-gray-600 dark:text-gray-400">
+            <div className="mt-6 md:mt-8 text-center">
+              <div className="bg-muted/50 rounded-lg p-6 md:p-8">
+                <h2 className="text-lg md:text-xl font-semibold text-foreground mb-4">Вопросы о тарифах?</h2>
+                <p className="text-muted-foreground text-sm md:text-base">
                   Не уверены, какой план подходит именно вам? Напишите нам на{" "}
                   <a 
                     href="mailto:support@deepscope.ai" 
-                    className="text-blue-500 hover:text-blue-600 font-medium"
+                    className="text-primary hover:text-primary/80 font-medium underline"
                   >
                     support@deepscope.ai
                   </a>

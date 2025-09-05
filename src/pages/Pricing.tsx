@@ -119,7 +119,7 @@ const PricingPage = () => {
       />
 
       <main>
-        <section className="pt-8 sm:pt-10 md:pt-8 lg:pt-6 py-4 md:py-6">
+        <section className="pt-8 sm:pt-10 md:pt-16 lg:pt-6 py-4 md:py-6">
           <div className="max-w-7xl mx-auto px-4 md:px-8">
             <header className="sr-only">
               <h1>Тарифы</h1>

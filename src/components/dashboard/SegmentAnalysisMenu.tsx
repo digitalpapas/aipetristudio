@@ -1114,12 +1114,9 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                                      <Lock className="h-5 w-5 text-muted-foreground" />
                                    </div>
                                  </TooltipTrigger>
-                                 <TooltipContent 
-                                   side="right"
-                                   align="end"
-                                   sideOffset={15}
-                                   className="z-50 !bg-white dark:!bg-gray-900 border border-gray-400 dark:border-gray-500 shadow-2xl max-w-xs p-4 !opacity-100"
-                                 >
+                                  <TooltipContent 
+                                    className="z-50 !bg-white dark:!bg-gray-900 border border-gray-400 dark:border-gray-500 shadow-2xl max-w-xs p-4 !opacity-100"
+                                  >
                                  <div className="space-y-2">
                                    <div className="flex items-center gap-2">
                                      <Lock className="h-4 w-4 text-amber-600" />

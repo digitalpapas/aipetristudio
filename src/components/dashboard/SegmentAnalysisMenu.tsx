@@ -950,6 +950,68 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
           </div>
         )}
         
+        {/* Анализы в процессе */}
+        {analyzingTypes.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm flex items-center gap-2">
+              <Clock className="h-4 w-4 text-orange-600 animate-pulse" />
+              В процессе анализа
+            </h4>
+            
+            {/* Информационное сообщение для анализирующихся */}
+            <div className="relative bg-gradient-to-r from-orange-500/10 via-orange-500/5 to-orange-500/10 border border-orange-500/20 rounded-xl p-4 mt-3 mb-4 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-orange-500/5 to-transparent animate-pulse"></div>
+              <div className="relative flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-orange-500/10 rounded-full flex items-center justify-center">
+                  <Clock className="h-4 w-4 text-orange-600 animate-spin" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground mb-1">
+                    Анализы выполняются
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Идет обработка {analyzingTypes.length} {getAnalysisWord(analyzingTypes.length)}. Результаты появятся в блоке "Готовые результаты анализа"
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Показываем анализирующиеся анализы */}
+            {Object.entries(groupedOptions).map(([category, options]) => {
+              const analyzingInCategory = options.filter(option => analyzingTypes.includes(option.id));
+              if (analyzingInCategory.length === 0) return null;
+              
+              const IconComponent = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS];
+              const categoryName = CATEGORY_NAMES[category as keyof typeof CATEGORY_NAMES];
+              
+              return (
+                <div key={`analyzing-${category}`} className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <IconComponent className="h-4 w-4" />
+                    {categoryName}
+                  </div>
+                  <div className="grid gap-2 pl-6">
+                    {analyzingInCategory.map((option) => (
+                      <div key={`analyzing-${option.id}`} className="relative">
+                        <div className="flex items-center justify-between h-auto p-3 text-left w-full bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <Clock className="h-4 w-4 text-orange-600 animate-spin flex-shrink-0" />
+                            <div>
+                              <p className="font-medium text-sm text-foreground">{option.name}</p>
+                              <p className="text-xs text-muted-foreground">Обрабатывается AI ассистентом...</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+            <Separator />
+          </div>
+        )}
+        
         <ScrollArea className="h-96">
           <div className="space-y-6 pr-4">
             {Object.entries(groupedOptions).map(([category, options]) => {

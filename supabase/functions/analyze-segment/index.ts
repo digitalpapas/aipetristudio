@@ -150,34 +150,44 @@ serve(async (req) => {
     // 5. Ждем завершения
     let runStatus = run.status;
     let attempts = 0;
-    const maxAttempts = 120; // 2 минуты для сложных анализов
+    const maxAttempts = 180; // 3 минуты для сложных анализов
 
     while (runStatus !== 'completed' && runStatus !== 'failed' && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const statusResponse = await fetch(
-        `https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${OPENAI_API_KEY}`,
-            'OpenAI-Beta': 'assistants=v2'
+      try {
+        const statusResponse = await fetch(
+          `https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${OPENAI_API_KEY}`,
+              'OpenAI-Beta': 'assistants=v2'
+            },
+            signal: AbortSignal.timeout(10000) // 10 секунд таймаут для запроса статуса
           }
+        );
+
+        if (!statusResponse.ok) {
+          const error = await statusResponse.text();
+          console.error('Status check error:', error);
+          // Попробуем еще раз вместо немедленного выброса ошибки
+          attempts++;
+          continue;
         }
-      );
 
-      if (!statusResponse.ok) {
-        const error = await statusResponse.text();
-        console.error('Status check error:', error);
-        throw new Error('Не удалось проверить статус');
-      }
-
-      const statusData = await statusResponse.json();
-      runStatus = statusData.status;
-      attempts++;
-      
-      // Логируем прогресс для длительных операций
-      if (attempts % 10 === 0) {
-        console.log(`Анализ ${analysisType}: ожидание ${attempts} сек...`);
+        const statusData = await statusResponse.json();
+        runStatus = statusData.status;
+        attempts++;
+        
+        // Логируем прогресс для длительных операций
+        if (attempts % 10 === 0) {
+          console.log(`Анализ ${analysisType}: ожидание ${attempts} сек...`);
+        }
+      } catch (error) {
+        console.error(`Ошибка проверки статуса (попытка ${attempts}):`, error);
+        attempts++;
+        // Продолжаем попытки вместо немедленного завершения
+        continue;
       }
     }
 

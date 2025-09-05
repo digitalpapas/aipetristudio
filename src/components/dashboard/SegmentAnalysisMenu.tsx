@@ -681,6 +681,36 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
             Параметры анализа
           </CardTitle>
           <div className="flex items-center gap-3">
+            {/* Кнопка начать анализ */}
+            <Button 
+              onClick={handleStartAnalysis}
+              disabled={selectedCount === 0 || isLoading}
+              size="sm"
+              className="flex items-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <Clock className="h-4 w-4 animate-spin" />
+                  {selectedCount === 1 ? "Анализируем..." : "Запускаем анализы..."}
+                </>
+              ) : analyzingTypes.length > 0 ? (
+                <>
+                  <Clock className="h-4 w-4 animate-pulse" />
+                  Выполняется: {analyzingTypes.length} {getAnalysisWord(analyzingTypes.length)}
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4" />
+                  {selectedCount === 1 
+                    ? "Начать анализ"
+                    : selectedCount > 1
+                    ? `Начать анализ (${selectedCount})`
+                    : "Начать анализ"
+                  }
+                </>
+              )}
+            </Button>
+
             {/* Кнопка выделить все с лампочкой в углу */}
             <div className="relative">
               <Button
@@ -1073,7 +1103,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
         
         <Separator />
         
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-center">
           <div className="text-sm text-muted-foreground">
             {selectedCount === 0 
               ? "Выберите анализы для запуска"
@@ -1082,32 +1112,6 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
               : `Выбрано для анализа: ${selectedCount}`
             }
           </div>
-          
-          <Button 
-            onClick={handleStartAnalysis}
-            disabled={selectedCount === 0 || isLoading}
-            className="flex items-center gap-2"
-          >
-            {isLoading ? (
-              <>
-                <Clock className="h-4 w-4 animate-spin" />
-                {selectedCount === 1 ? "Анализируем..." : "Запускаем анализы..."}
-              </>
-            ) : analyzingTypes.length > 0 ? (
-              <>
-                <Clock className="h-4 w-4 animate-pulse" />
-                Выполняется: {analyzingTypes.length} {getAnalysisWord(analyzingTypes.length)}
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4" />
-                {selectedCount === 1 
-                  ? "Начать анализ"
-                  : `Начать анализ (${selectedCount})`
-                }
-              </>
-            )}
-          </Button>
         </div>
       </CardContent>
     </Card>

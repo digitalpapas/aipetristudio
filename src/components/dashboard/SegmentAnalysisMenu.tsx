@@ -887,17 +887,17 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                        <div key={option.id} className="relative min-w-0">
                             <Button
                               variant="outline"
-                              className="justify-start h-auto p-2 sm:p-3 text-left w-full hover:bg-primary/5 hover:border-primary/30 transition-all duration-200 group cursor-pointer min-w-0"
+                              className="justify-start h-auto p-2 sm:p-3 text-left w-full hover:bg-primary/5 hover:border-primary/30 transition-all duration-200 group cursor-pointer min-w-0 whitespace-normal"
                               onClick={() => onViewResult?.(option.id)}
                            >
                                <div className="flex items-start gap-2 sm:gap-3 w-full">
                                  <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                                  <div className="flex-1 min-w-0 max-w-full">
-                                   <div className="font-medium group-hover:text-primary transition-colors text-sm break-words whitespace-pre-line lg:whitespace-nowrap">
+                                   <div className="font-medium group-hover:text-primary transition-colors text-sm break-words whitespace-pre-line">
                                      {option.name}
                                    </div>
                                     {option.description && (
-                                      <div className="text-xs text-muted-foreground mt-1 break-words lg:break-normal leading-relaxed">
+                                      <div className="text-xs text-muted-foreground mt-1 break-words leading-relaxed">
                                         {option.description}
                                       </div>
                                     )}
@@ -1098,7 +1098,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                              <div className="flex flex-wrap items-center gap-1 sm:gap-2 min-w-0">
                                <label 
                                   htmlFor={option.id}
-                                  className={`text-sm font-medium cursor-pointer break-words leading-tight whitespace-pre-line lg:whitespace-nowrap ${isDisabled ? 'text-muted-foreground' : ''}`}
+                                  className={`text-sm font-medium cursor-pointer break-words leading-tight ${isDisabled ? 'text-muted-foreground' : ''}`}
                                 >
                                   {option.name}
                                 </label>
@@ -1134,7 +1134,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                             </div>
                             
                               {option.description && (
-                                <p className="text-xs text-muted-foreground line-clamp-3 sm:line-clamp-2 break-words lg:break-normal overflow-hidden max-w-full leading-relaxed">
+                                <p className="text-xs text-muted-foreground line-clamp-3 sm:line-clamp-2 break-all overflow-hidden max-w-full leading-relaxed">
                                   {option.description}
                                 </p>
                               )}

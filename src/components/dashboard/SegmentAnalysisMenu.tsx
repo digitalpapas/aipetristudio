@@ -62,12 +62,12 @@ const ANALYSIS_OPTIONS: AnalysisOption[] = [
   { id: "segment_description", name: "Описание сегмента", category: "segment", required: true, description: "Базовый анализ сегмента аудитории" },
   
   // Основные категории анализа
-  { id: "bdf_analysis", name: "BDF", category: "analysis", description: "Комплексный анализ убеждений,\nжеланий и чувств аудитории" },
-  { id: "problems_analysis", name: "Боли страхи потребности\nвозражения", category: "analysis", description: "Анализ проблематики и\nбарьеров аудитории" },
+  { id: "bdf_analysis", name: "BDF", category: "analysis", description: "Комплексный анализ убеждений, желаний и чувств аудитории" },
+  { id: "problems_analysis", name: "Боли страхи потребности возражения", category: "analysis", description: "Анализ проблематики и барьеров аудитории" },
   { id: "solutions_analysis", name: "Работа с болями страхами потребностями и возражениями", category: "analysis", description: "Стратегии работы с проблемами аудитории" },
-  { id: "jtbd_analysis", name: "JTBD", category: "analysis", description: "Анализ Jobs to be Done -\nзадач пользователей" },
+  { id: "jtbd_analysis", name: "JTBD", category: "analysis", description: "Анализ Jobs to be Done - задач пользователей" },
   { id: "content_themes", name: "Темы для контента", category: "analysis", description: "Контентная стратегия для аудитории" },
-  { id: "user_personas", name: "User personas (5 шт)", category: "analysis", description: "Детализированные персоны\nпользователей" },
+  { id: "user_personas", name: "User personas (5 шт)", category: "analysis", description: "Детализированные персоны пользователей" },
   { id: "niche_integration", name: "Уровни интеграции с нишей", category: "analysis", description: "Анализ интеграции с нишей" },
   
   // Финальный отчет (доступен только после всех анализов)
@@ -896,11 +896,11 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                                    <div className="font-medium group-hover:text-primary transition-colors text-sm break-all word-wrap whitespace-pre-line">
                                      {option.name}
                                    </div>
-                                   {option.description && (
-                                     <div className="text-xs text-muted-foreground mt-1 break-all word-wrap leading-relaxed whitespace-pre-line">
-                                       {option.description}
-                                     </div>
-                                   )}
+                                    {option.description && (
+                                      <div className="text-xs text-muted-foreground mt-1 break-words sm:break-normal leading-relaxed">
+                                        {option.description}
+                                      </div>
+                                    )}
                                  </div>
                                </div>
                           </Button>
@@ -1133,11 +1133,11 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                                )}
                             </div>
                             
-                             {option.description && (
-                               <p className="text-xs text-muted-foreground line-clamp-3 sm:line-clamp-2 break-words overflow-hidden max-w-full leading-relaxed">
-                                 {option.description}
-                               </p>
-                             )}
+                              {option.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-3 sm:line-clamp-2 break-words sm:break-normal overflow-hidden max-w-full leading-relaxed">
+                                  {option.description}
+                                </p>
+                              )}
                           </div>
                         </div>
                       );

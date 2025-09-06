@@ -63,8 +63,8 @@ const ANALYSIS_OPTIONS: AnalysisOption[] = [
   
   // Основные категории анализа
   { id: "bdf_analysis", name: "BDF", category: "analysis", description: "Комплексный анализ убеждений, желаний и чувств аудитории" },
-  { id: "problems_analysis", name: "Боли страхи потребности возражения", category: "analysis", description: "Анализ проблематики и барьеров аудитории" },
-  { id: "solutions_analysis", name: "Работа с болями страхами потребностями и возражениями", category: "analysis", description: "Стратегии работы с проблемами аудитории" },
+  { id: "problems_analysis", name: "Боли страхи потребности\nвозражения", category: "analysis", description: "Анализ проблематики и барьеров аудитории" },
+  { id: "solutions_analysis", name: "Работа с болями страхами\nпотребностями и возражениями", category: "analysis", description: "Стратегии работы с проблемами аудитории" },
   { id: "jtbd_analysis", name: "JTBD", category: "analysis", description: "Анализ Jobs to be Done - задач пользователей" },
   { id: "content_themes", name: "Темы для контента", category: "analysis", description: "Контентная стратегия для аудитории" },
   { id: "user_personas", name: "User personas (5 шт)", category: "analysis", description: "Детализированные персоны пользователей" },
@@ -893,7 +893,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                                <div className="flex items-start gap-2 sm:gap-3 w-full">
                                  <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
                                  <div className="flex-1 min-w-0 max-w-full">
-                                   <div className="font-medium group-hover:text-primary transition-colors text-sm break-all word-wrap whitespace-pre-line">
+                                   <div className="font-medium group-hover:text-primary transition-colors text-sm break-words whitespace-pre-line lg:whitespace-nowrap">
                                      {option.name}
                                    </div>
                                     {option.description && (
@@ -1097,11 +1097,11 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
                            <div className="flex-1 space-y-1 min-w-0 max-w-full overflow-hidden">
                              <div className="flex flex-wrap items-center gap-1 sm:gap-2 min-w-0">
                                <label 
-                                 htmlFor={option.id}
-                                 className={`text-sm font-medium cursor-pointer break-words leading-tight ${isDisabled ? 'text-muted-foreground' : ''}`}
-                               >
-                                 {option.name}
-                               </label>
+                                  htmlFor={option.id}
+                                  className={`text-sm font-medium cursor-pointer break-words leading-tight whitespace-pre-line lg:whitespace-nowrap ${isDisabled ? 'text-muted-foreground' : ''}`}
+                                >
+                                  {option.name}
+                                </label>
                               
                               {status === "completed" && (
                                 <Badge variant="default" className="h-5 text-xs">

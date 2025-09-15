@@ -282,78 +282,83 @@ export default function SegmentAnalysisResult({
 
   const copyPageContent = async () => {
     try {
-      // Получаем элемент с содержимым анализа
-      const contentElement = document.querySelector('[data-analysis-content]');
-      if (!contentElement) return;
-      
-      let formattedText = '';
-      
-      // Проходим по всем дочерним элементам и форматируем их
-      const processElement = (element: Element): string => {
-        let text = '';
-        
-        // Обрабатываем заголовки
-        if (element.tagName?.match(/^H[1-6]$/)) {
-          const headerText = element.textContent?.trim() || '';
-          if (headerText) {
-            text += '\n' + headerText + '\n';
-          }
-          return text;
-        }
-        
-        // Обрабатываем списки
-        if (element.tagName === 'UL' || element.tagName === 'OL') {
-          const listItems = element.querySelectorAll('li');
-          listItems.forEach((li) => {
-            const itemText = li.textContent?.trim();
-            if (itemText) {
-              text += '- ' + itemText + '\n';
+      let cleanText = '';
+
+      if (typeof analysisResult === 'string' && analysisResult) {
+        const lines = analysisResult.replace(/\\n/g, '\n').split('\n');
+        const out: string[] = [];
+        let i = 0;
+        const pushBlank = () => {
+          if (out.length && out[out.length - 1] !== '') out.push('');
+        };
+
+        while (i < lines.length) {
+          let line = lines[i].trim();
+          if (!line) { pushBlank(); i++; continue; }
+
+          const heading = line.match(/^#{1,6}\s+(.*)$/);
+          if (heading) { out.push(heading[1].trim()); pushBlank(); i++; continue; }
+
+          const boldLabel = line.match(/\*\*\s*(Вывод|Стратегия)[^*]*\*\*/i);
+          if (boldLabel) {
+            const label = boldLabel[1].charAt(0).toUpperCase() + boldLabel[1].slice(1).toLowerCase() + ':';
+            const inlineRest = line.replace(/\*\*[^*]*\*\*/, '').trim();
+            out.push(label);
+            const block: string[] = [];
+            if (inlineRest) block.push(inlineRest);
+            i++;
+            while (i < lines.length) {
+              const next = lines[i].trim();
+              if (!next) { block.push(''); i++; break; }
+              if (/^#{1,6}\s+/.test(next) || /^\*\*[^*]+?\*\*/.test(next)) break;
+              block.push(next);
+              i++;
             }
-          });
-          text += '\n';
-          return text;
-        }
-        
-        // Обрабатываем абзацы
-        if (element.tagName === 'P') {
-          const paragraphText = element.textContent?.trim();
-          if (paragraphText) {
-            text += paragraphText + '\n\n';
+            if (block.length) {
+              const normalized = block.map(l => {
+                if (/^\d+\.\s+/.test(l)) return '- ' + l.replace(/^\d+\.\s+/, '');
+                if (/^[-*•]\s+/.test(l)) return '- ' + l.replace(/^[-*•]\s+/, '');
+                return l;
+              }).join('\n');
+              out.push(normalized.trim());
+              pushBlank();
+            } else {
+              pushBlank();
+            }
+            continue;
           }
-          return text;
-        }
-        
-        // Обрабатываем div-ы как потенциальные секции
-        if (element.tagName === 'DIV') {
-          for (const child of Array.from(element.children)) {
-            text += processElement(child);
+
+          if (/^\d+\.\s+/.test(line) || /^[-*•]\s+/.test(line)) {
+            const items: string[] = [];
+            while (i < lines.length && (/^\d+\.\s+/.test(lines[i].trim()) || /^[-*•]\s+/.test(lines[i].trim()))) {
+              const t = lines[i].trim();
+              items.push(t.replace(/^\d+\.\s+/, '').replace(/^[-*•]\s+/, ''));
+              i++;
+            }
+            items.forEach(it => out.push(`- ${it}`));
+            pushBlank();
+            continue;
           }
-          return text;
-        }
-        
-        // Для остальных элементов просто извлекаем текст
-        const elementText = element.textContent?.trim();
-        if (elementText && !element.children.length) {
-          text += elementText + '\n\n';
-        } else if (element.children.length > 0) {
-          for (const child of Array.from(element.children)) {
-            text += processElement(child);
+
+          const para: string[] = [line];
+          i++;
+          while (i < lines.length) {
+            const nxt = lines[i].trim();
+            if (!nxt || /^#{1,6}\s+/.test(nxt) || /^\*\*[^*]+?\*\*/.test(nxt) || /^\d+\.\s+/.test(nxt) || /^[-*•]\s+/.test(nxt)) break;
+            para.push(nxt);
+            i++;
           }
+          out.push(para.join(' '));
+          pushBlank();
         }
-        
-        return text;
-      };
-      
-      // Обрабатываем все дочерние элементы
-      for (const child of Array.from(contentElement.children)) {
-        formattedText += processElement(child);
+        cleanText = out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+      } else {
+        const contentElement = document.querySelector('[data-analysis-content]') as HTMLElement | null;
+        if (!contentElement) return;
+        const raw = contentElement.innerText || contentElement.textContent || '';
+        cleanText = raw.split('\n').map(l => l.trim()).filter(Boolean).join('\n\n');
       }
-      
-      // Очищаем лишние переносы строк
-      const cleanText = formattedText
-        .replace(/\n{3,}/g, '\n\n')  // Не более двух переносов подряд
-        .trim();
-      
+
       await navigator.clipboard.writeText(cleanText);
       toast({
         title: "Скопировано",

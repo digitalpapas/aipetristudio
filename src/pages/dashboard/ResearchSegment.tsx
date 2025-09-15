@@ -196,6 +196,7 @@ export default function ResearchSegmentPage() {
             backLabel="Назад к исследованию"
             title={segmentName}
             subtitle="Подробный анализ"
+            actions={<div></div>}
           />
           <div className="-mt-2 mb-4 flex justify-end gap-2">
             <Button 

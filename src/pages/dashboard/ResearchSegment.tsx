@@ -5,10 +5,13 @@ import SegmentAnalysisMenu from "@/components/dashboard/SegmentAnalysisMenu";
 import SegmentAnalysisResult from "@/components/dashboard/SegmentAnalysisResult";
 import FloatingAIAssistant from "@/components/dashboard/FloatingAIAssistant";
 import { PageHeader } from "@/components/dashboard/PageHeader";
-import { Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useCustomToast } from "@/hooks/use-custom-toast";
+import { Star, Download, Share2 } from "lucide-react";
 
 export default function ResearchSegmentPage() {
   const { id, segmentId } = useParams();
+  const { toast } = useCustomToast();
   const [segmentName, setSegmentName] = useState<string>(() => {
     // Попытка загрузить из localStorage для мгновенного отображения
     try {
@@ -37,6 +40,23 @@ export default function ResearchSegmentPage() {
     'niche_integration',
     'final_report'
   ];
+
+  // Обработчики для кнопок Export и Share
+  const handleExport = () => {
+    toast({ 
+      type: "info",
+      title: "В разработке",
+      description: "Функция экспорта скоро будет доступна"
+    });
+  };
+
+  const handleShare = () => {
+    toast({ 
+      type: "info",
+      title: "В разработке",
+      description: "Функция поделиться скоро будет доступна"
+    });
+  };
 
   useEffect(() => {
     // Загружаем название сегмента
@@ -176,6 +196,28 @@ export default function ResearchSegmentPage() {
             backLabel="Назад к исследованию"
             title={segmentName}
             subtitle="Подробный анализ"
+            actions={
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleExport}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">Экспорт</span>
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={handleShare}
+                  className="flex items-center gap-2"
+                >
+                  <Share2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Поделиться</span>
+                </Button>
+              </div>
+            }
           />
         </>
       )}

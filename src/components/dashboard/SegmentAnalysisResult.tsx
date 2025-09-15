@@ -292,28 +292,53 @@ export default function SegmentAnalysisResult({
           if (out.length && out[out.length - 1] !== '') out.push('');
         };
 
+        // Функция для очистки markdown разметки
+        const cleanMarkdown = (text: string): string => {
+          return text
+            .replace(/\*\*([^*]+)\*\*/g, '$1')  // Убираем жирный текст **text**
+            .replace(/\*([^*]+)\*/g, '$1')     // Убираем курсив *text*
+            .replace(/#{1,6}\s+/g, '')         // Убираем маркеры заголовков
+            .replace(/^\s*[-*•]\s+/gm, '- ')   // Нормализуем маркеры списков
+            .replace(/^\s*\d+\.\s+/gm, '- ')   // Нумерованные списки в маркированные
+            .trim();
+        };
+
         while (i < lines.length) {
           let line = lines[i].trim();
           if (!line) { pushBlank(); i++; continue; }
 
+          // Обрабатываем заголовки
           const heading = line.match(/^#{1,6}\s+(.*)$/);
-          if (heading) { out.push(heading[1].trim()); pushBlank(); i++; continue; }
+          if (heading) { 
+            out.push(cleanMarkdown(heading[1])); 
+            pushBlank(); 
+            i++; 
+            continue; 
+          }
 
-          const boldLabel = line.match(/\*\*\s*(Вывод|Стратегия)[^*]*\*\*/i);
-          if (boldLabel) {
-            const label = boldLabel[1].charAt(0).toUpperCase() + boldLabel[1].slice(1).toLowerCase() + ':';
-            const inlineRest = line.replace(/\*\*[^*]*\*\*/, '').trim();
+          // Обрабатываем блоки "Вывод" и "Стратегия"
+          const labelMatch = line.match(/^\*\*\s*(Вывод|Стратегия|Рекомендации)[^*]*\*\*:?\s*(.*)$/i);
+          if (labelMatch) {
+            const label = labelMatch[1].charAt(0).toUpperCase() + labelMatch[1].slice(1).toLowerCase() + ':';
+            const inlineRest = cleanMarkdown(labelMatch[2] || '').trim();
             out.push(label);
             const block: string[] = [];
             if (inlineRest) block.push(inlineRest);
             i++;
+            
+            // Собираем содержимое блока
             while (i < lines.length) {
               const next = lines[i].trim();
-              if (!next) { block.push(''); i++; break; }
+              if (!next) { 
+                block.push(''); 
+                i++; 
+                break; 
+              }
               if (/^#{1,6}\s+/.test(next) || /^\*\*[^*]+?\*\*/.test(next)) break;
-              block.push(next);
+              block.push(cleanMarkdown(next));
               i++;
             }
+            
             if (block.length) {
               const normalized = block.map(l => {
                 if (/^\d+\.\s+/.test(l)) return '- ' + l.replace(/^\d+\.\s+/, '');
@@ -328,10 +353,11 @@ export default function SegmentAnalysisResult({
             continue;
           }
 
+          // Обрабатываем списки
           if (/^\d+\.\s+/.test(line) || /^[-*•]\s+/.test(line)) {
             const items: string[] = [];
             while (i < lines.length && (/^\d+\.\s+/.test(lines[i].trim()) || /^[-*•]\s+/.test(lines[i].trim()))) {
-              const t = lines[i].trim();
+              const t = cleanMarkdown(lines[i].trim());
               items.push(t.replace(/^\d+\.\s+/, '').replace(/^[-*•]\s+/, ''));
               i++;
             }
@@ -340,12 +366,13 @@ export default function SegmentAnalysisResult({
             continue;
           }
 
-          const para: string[] = [line];
+          // Обрабатываем обычные абзацы
+          const para: string[] = [cleanMarkdown(line)];
           i++;
           while (i < lines.length) {
             const nxt = lines[i].trim();
             if (!nxt || /^#{1,6}\s+/.test(nxt) || /^\*\*[^*]+?\*\*/.test(nxt) || /^\d+\.\s+/.test(nxt) || /^[-*•]\s+/.test(nxt)) break;
-            para.push(nxt);
+            para.push(cleanMarkdown(nxt));
             i++;
           }
           out.push(para.join(' '));
@@ -353,6 +380,7 @@ export default function SegmentAnalysisResult({
         }
         cleanText = out.join('\n').replace(/\n{3,}/g, '\n\n').trim();
       } else {
+        // Fallback для случаев, когда analysisResult не строка
         const contentElement = document.querySelector('[data-analysis-content]') as HTMLElement | null;
         if (!contentElement) return;
         const raw = contentElement.innerText || contentElement.textContent || '';

@@ -785,15 +785,6 @@ export default function ResearchResultPage() {
             <span className="hidden lg:inline">Поделиться</span>
             <span className="lg:hidden">🔗</span>
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            className="flex-1 sm:flex-initial text-xs sm:text-sm"
-            onClick={handleDuplicate}
-          >
-            <span className="hidden lg:inline">Дублировать</span>
-            <span className="lg:hidden">📋</span>
-          </Button>
         </div>
       </header>
 

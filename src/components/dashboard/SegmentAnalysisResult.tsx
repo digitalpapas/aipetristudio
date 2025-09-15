@@ -282,26 +282,82 @@ export default function SegmentAnalysisResult({
 
   const copyPageContent = async () => {
     try {
-      // Получаем текстовое содержимое анализа
+      // Получаем элемент с содержимым анализа
       const contentElement = document.querySelector('[data-analysis-content]');
       if (!contentElement) return;
       
-      // Извлекаем весь текст без разметки
-      const textContent = contentElement.textContent || '';
+      let formattedText = '';
       
-      // Разбиваем на абзацы и очищаем от лишних пробелов
-      const paragraphs = textContent
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
+      // Проходим по всем дочерним элементам и форматируем их
+      const processElement = (element: Element): string => {
+        let text = '';
+        
+        // Обрабатываем заголовки
+        if (element.tagName?.match(/^H[1-6]$/)) {
+          const headerText = element.textContent?.trim() || '';
+          if (headerText) {
+            text += '\n' + headerText + '\n';
+          }
+          return text;
+        }
+        
+        // Обрабатываем списки
+        if (element.tagName === 'UL' || element.tagName === 'OL') {
+          const listItems = element.querySelectorAll('li');
+          listItems.forEach((li) => {
+            const itemText = li.textContent?.trim();
+            if (itemText) {
+              text += '- ' + itemText + '\n';
+            }
+          });
+          text += '\n';
+          return text;
+        }
+        
+        // Обрабатываем абзацы
+        if (element.tagName === 'P') {
+          const paragraphText = element.textContent?.trim();
+          if (paragraphText) {
+            text += paragraphText + '\n\n';
+          }
+          return text;
+        }
+        
+        // Обрабатываем div-ы как потенциальные секции
+        if (element.tagName === 'DIV') {
+          for (const child of Array.from(element.children)) {
+            text += processElement(child);
+          }
+          return text;
+        }
+        
+        // Для остальных элементов просто извлекаем текст
+        const elementText = element.textContent?.trim();
+        if (elementText && !element.children.length) {
+          text += elementText + '\n\n';
+        } else if (element.children.length > 0) {
+          for (const child of Array.from(element.children)) {
+            text += processElement(child);
+          }
+        }
+        
+        return text;
+      };
       
-      // Объединяем абзацы с двойными переносами строк
-      const cleanText = paragraphs.join('\n\n');
+      // Обрабатываем все дочерние элементы
+      for (const child of Array.from(contentElement.children)) {
+        formattedText += processElement(child);
+      }
+      
+      // Очищаем лишние переносы строк
+      const cleanText = formattedText
+        .replace(/\n{3,}/g, '\n\n')  // Не более двух переносов подряд
+        .trim();
       
       await navigator.clipboard.writeText(cleanText);
       toast({
         title: "Скопировано",
-        description: "Содержимое анализа скопировано в буфер обмена",
+        description: "Содержимое анализа скопировано с сохранением структуры",
       });
     } catch (error) {
       console.error('Error copying content:', error);

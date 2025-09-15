@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Users, Target, Heart, Lightbulb, AlertTriangle, Star, Loader2, Trash2, Bookmark, Brain, Clock, Eye, Wrench, Layers, ArrowLeft, RefreshCw, HelpCircle, MessageSquare } from "lucide-react";
+import { FileText, Users, Target, Heart, Lightbulb, AlertTriangle, Star, Loader2, Trash2, Bookmark, Brain, Clock, Eye, Wrench, Layers, ArrowLeft, RefreshCw, HelpCircle, MessageSquare, Copy } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -279,6 +279,38 @@ export default function SegmentAnalysisResult({
     // Запускаем загрузку без await
     loadBookmarksCount();
   }, [researchId, segmentId]);
+
+  const copyPageContent = async () => {
+    try {
+      // Получаем текстовое содержимое анализа
+      const contentElement = document.querySelector('[data-analysis-content]');
+      if (!contentElement) return;
+      
+      // Извлекаем весь текст без разметки
+      const textContent = contentElement.textContent || '';
+      
+      // Разбиваем на абзацы и очищаем от лишних пробелов
+      const paragraphs = textContent
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0);
+      
+      // Объединяем абзацы с двойными переносами строк
+      const cleanText = paragraphs.join('\n\n');
+      
+      await navigator.clipboard.writeText(cleanText);
+      toast({
+        title: "Скопировано",
+        description: "Содержимое анализа скопировано в буфер обмена",
+      });
+    } catch (error) {
+      console.error('Error copying content:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось скопировать содержимое",
+      });
+    }
+  };
 
   // При обновлении bookmarkedTexts обновляем кеш
   useEffect(() => {
@@ -847,6 +879,16 @@ export default function SegmentAnalysisResult({
           <Button
             variant="outline"
             size="sm"
+            onClick={copyPageContent}
+            className="flex items-center gap-2 transition-all duration-200"
+            title="Копировать весь текст"
+          >
+            <Copy className="h-4 w-4" />
+            Копировать
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             className="flex items-center gap-2 transition-all duration-200"
             onClick={() => {
               navigate(`/dashboard/research/${researchId}/segment/${segmentId}/bookmarks`);
@@ -995,7 +1037,7 @@ export default function SegmentAnalysisResult({
             </CardTitle>
         </CardHeader>
         <CardContent className="min-h-0">
-          <div ref={contentRef} className="select-text">
+          <div ref={contentRef} className="select-text" data-analysis-content>
             {loading && !analysisResult ? (
               <div className="flex items-center justify-center py-16">
                 <div className="text-center">

@@ -817,25 +817,6 @@ export default function ResearchResultPage() {
           </TabsContent>
 
           <TabsContent value="selected-segments" className="space-y-4">
-            {/* Действия для выбранных сегментов */}
-            <div className="flex gap-2 mb-4">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleExport}
-              >
-                <span className="hidden lg:inline">Экспорт</span>
-                <span className="lg:hidden">📤</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleShare}
-              >
-                <span className="hidden lg:inline">Поделиться</span>
-                <span className="lg:hidden">🔗</span>
-              </Button>
-            </div>
             {/* Отображаем только выбранные сегменты */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {segments.length > 0 ? (

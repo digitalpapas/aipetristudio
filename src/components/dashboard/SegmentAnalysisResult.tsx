@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Users, Target, Heart, Lightbulb, AlertTriangle, Star, Loader2, Trash2, Bookmark, Brain, Clock, Eye, Wrench, Layers, ArrowLeft, RefreshCw, HelpCircle, MessageSquare, Copy } from "lucide-react";
+import { FileText, Users, Target, Heart, Lightbulb, AlertTriangle, Star, Loader2, Trash2, Bookmark, Brain, Clock, Eye, Wrench, Layers, ArrowLeft, RefreshCw, HelpCircle, MessageSquare, Copy, Share } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -974,6 +974,24 @@ export default function SegmentAnalysisResult({
           >
             <Copy className="h-4 w-4" />
             Копировать
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 transition-all duration-200"
+            title="Экспорт анализа"
+          >
+            <FileText className="h-4 w-4" />
+            Экспорт
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2 transition-all duration-200"
+            title="Поделиться анализом"
+          >
+            <Share className="h-4 w-4" />
+            Поделиться
           </Button>
           <Button
             variant="outline"

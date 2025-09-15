@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import SegmentAnalysisMenu from "@/components/dashboard/SegmentAnalysisMenu";
 import SegmentAnalysisResult from "@/components/dashboard/SegmentAnalysisResult";
 import FloatingAIAssistant from "@/components/dashboard/FloatingAIAssistant";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useCustomToast } from "@/hooks/use-custom-toast";
-import { ArrowLeft, Download, Share2 } from "lucide-react";
+import { Star, Download, Share2 } from "lucide-react";
 
 export default function ResearchSegmentPage() {
   const { id, segmentId } = useParams();
@@ -189,24 +190,14 @@ export default function ResearchSegmentPage() {
   return (
     <main className="flex flex-col min-h-full">
       {currentView === 'menu' && segmentName && (
-        <div className="space-y-4 mb-6 pt-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate(`/dashboard/research/${id}#selected-segments`)}
-              className="flex items-center gap-2 self-start"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span className="whitespace-nowrap">Назад к исследованию</span>
-            </Button>
-          </div>
-          
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold break-words">{segmentName}</h1>
-            <div className="flex items-center justify-between mt-1">
-              <p className="text-muted-foreground text-sm sm:text-base">Подробный анализ</p>
-              <div className="flex items-center gap-2">
+        <>
+          <PageHeader
+            backUrl={`/dashboard/research/${id}#selected-segments`}
+            backLabel="Назад к исследованию"
+            title={segmentName}
+            subtitle="Подробный анализ"
+            actions={
+              <div className="flex gap-2">
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -226,9 +217,9 @@ export default function ResearchSegmentPage() {
                   <span className="hidden sm:inline">Поделиться</span>
                 </Button>
               </div>
-            </div>
-          </div>
-        </div>
+            }
+          />
+        </>
       )}
 
       <div className="flex-1 flex flex-col transition-all duration-300 ease-in-out">

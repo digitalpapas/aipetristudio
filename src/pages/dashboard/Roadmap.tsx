@@ -318,8 +318,18 @@ export default function Roadmap() {
           {/* Character Controls */}
           <div className="mt-4 flex justify-center">
             <div className="bg-white/95 backdrop-blur-sm rounded-lg p-3 border border-gray-200 shadow-md">
-              <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-4 text-sm flex-wrap">
                 <span className="text-gray-700 font-medium">Настройка персонажа:</span>
+                
+                <div className="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded">
+                  <span className="text-gray-600">Координаты:</span>
+                  <span className="text-xs font-mono">{characterPosition.top}, {characterPosition.left}</span>
+                </div>
+                
+                <div className="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded">
+                  <span className="text-gray-600">Размер:</span>
+                  <span className="text-xs font-mono">{characterSize}px</span>
+                </div>
                 
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600">Размер:</span>

@@ -55,7 +55,8 @@ export default function Roadmap() {
   const [characterPosition, setCharacterPosition] = useState({ top: '20px', left: '20px' });
   const [isDraggingCharacter, setIsDraggingCharacter] = useState(false);
   const sideCrop = 0.75; // maximum right-side crop to minimize empty space
-  const bottomCrop = 0.2; // crop bottom empty space
+  const bottomCrop = 0.4; // crop bottom empty space
+  const topCrop = 0.2; // crop top empty space
   const [blendMode, setBlendMode] = useState<'normal' | 'screen' | 'multiply'>(() => {
     try {
       const saved = localStorage.getItem(characterSettingsKey);
@@ -89,7 +90,7 @@ export default function Roadmap() {
   function handleCharacterWindowMouseMove(e: MouseEvent) {
     const { offsetX, offsetY } = characterOffsetRef.current;
     const width = characterSize * (1 - sideCrop);
-    const height = characterSize * (1 - bottomCrop);
+    const height = characterSize * (1 - bottomCrop - topCrop);
 
     const container = containerRef.current;
     if (container) {
@@ -264,7 +265,7 @@ export default function Roadmap() {
                 top: characterPosition.top, 
                 left: characterPosition.left,
                 width: `${characterSize * (1 - sideCrop)}px`,
-                height: `${characterSize * (1 - bottomCrop)}px`,
+                height: `${characterSize * (1 - bottomCrop - topCrop)}px`,
                 overflow: 'hidden',
                 transform: isDraggingCharacter ? 'scale(1.1)' : 'scale(1)',
                 transition: isDraggingCharacter ? 'none' : 'transform 0.2s ease'
@@ -288,6 +289,7 @@ export default function Roadmap() {
                    height: `${characterSize}px`,
                    position: 'relative',
                    left: '0px',
+                   top: `-${characterSize * topCrop}px`,
                    backgroundColor: 'transparent',
                    mixBlendMode: blendMode === 'normal' ? undefined : blendMode
                 }}

@@ -231,6 +231,8 @@ export default function Roadmap() {
               style={{ 
                 top: characterPosition.top, 
                 left: characterPosition.left,
+                width: `${characterSize}px`,
+                height: `${characterSize}px`,
                 transform: isDraggingCharacter ? 'scale(1.1)' : 'scale(1)',
                 transition: isDraggingCharacter ? 'none' : 'transform 0.2s ease'
               }}

@@ -81,6 +81,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 variant="ghost"
                 className="w-full justify-start"
                 onClick={() => {
+                  navigate("/dashboard/roadmap");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                Дорожная карта
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => {
                   navigate("/dashboard/personality-unpacking");
                   setMobileMenuOpen(false);
                 }}

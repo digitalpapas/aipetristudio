@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Brain, Users, Factory, Trophy, MapPin } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import treasureMapImage from "@/assets/treasure-map-transparent.png";
@@ -47,12 +47,34 @@ export default function Roadmap() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement | null>(null);
   
-  // Fixed character settings (from your screenshot)
-  const characterSize = 820;
-  const characterPosition = { top: '0px', left: '570.3311767578125px' };
+  // Fixed character settings and responsive anchoring (from your screenshot)
+  const fixed = {
+    size: 820,
+    topPx: 0,
+    leftPx: 570.3311767578125,
+    blendMode: 'screen' as const,
+  };
   const sideCrop = 0.75;
   const bottomCrop = 0.2;
-  const blendMode = 'screen';
+
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const rect = el.getBoundingClientRect();
+      setContainerSize({ width: rect.width, height: rect.height });
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const leftPercent = containerSize.width ? fixed.leftPx / containerSize.width : 0;
+  const topPercent = containerSize.height ? fixed.topPx / containerSize.height : 0;
+  const sizePercentW = containerSize.width ? fixed.size / containerSize.width : 0;
+  const sizePercentH = containerSize.height ? fixed.size / containerSize.height : 0;
 
   const handleStepClick = (step: typeof roadmapSteps[0]) => {
     if (step.status === "available" && step.route !== "#") {
@@ -173,10 +195,10 @@ export default function Roadmap() {
             <div 
               className="absolute z-30"
               style={{ 
-                top: characterPosition.top, 
-                left: characterPosition.left,
-                width: `${characterSize * (1 - sideCrop)}px`,
-                height: `${characterSize * (1 - bottomCrop)}px`,
+                top: `${topPercent * 100}%`, 
+                left: `${leftPercent * 100}%`,
+                width: `${sizePercentW * (1 - sideCrop) * 100}%`,
+                height: `${sizePercentH * (1 - bottomCrop) * 100}%`,
                 overflow: 'hidden'
               }}
             >
@@ -187,12 +209,12 @@ export default function Roadmap() {
                 playsInline
                 className="object-contain pointer-events-none"
                 style={{ 
-                   width: `${characterSize}px`,
-                   height: `${characterSize}px`,
+                   width: `${sizePercentW * 100}%`,
+                   height: `${sizePercentH * 100}%`,
                    position: 'relative',
                    left: '0px',
                    backgroundColor: 'transparent',
-                   mixBlendMode: blendMode
+                   mixBlendMode: fixed.blendMode
                 }}
               >
                 <source src="/assets/latest-character.webm" type="video/webm" />

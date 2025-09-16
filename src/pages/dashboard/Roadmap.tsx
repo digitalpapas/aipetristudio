@@ -11,7 +11,7 @@ const roadmapSteps = [
     icon: Brain,
     route: "/dashboard/personality-unpacking",
     status: "available",
-    position: { top: "45%", left: "25%" } // Домик на дереве слева
+    position: { top: "32%", left: "15%" } // Домик на дереве
   },
   {
     id: 2,
@@ -20,7 +20,7 @@ const roadmapSteps = [
     icon: Users,
     route: "/dashboard",
     status: "available",
-    position: { top: "25%", left: "45%" } // Башня в центре
+    position: { top: "48%", left: "28%" } // Область с черепом
   },
   {
     id: 3,
@@ -29,7 +29,7 @@ const roadmapSteps = [
     icon: Factory,
     route: "#",
     status: "coming-soon",
-    position: { top: "75%", left: "35%" } // Корабль с черепом и костями внизу
+    position: { top: "35%", left: "60%" } // Центральная правая область
   },
   {
     id: 4,
@@ -38,7 +38,7 @@ const roadmapSteps = [
     icon: Trophy,
     route: "#",
     status: "treasure",
-    position: { top: "65%", left: "70%" } // Сундук с сокровищами справа
+    position: { top: "50%", left: "78%" } // Сундук с сокровищами
   }
 ];
 
@@ -94,7 +94,7 @@ export default function Roadmap() {
                     <div className={`
                       w-12 h-12 rounded-full border-4 
                       ${step.status === "available" 
-                        ? "border-blue-500 bg-blue-100 hover:bg-blue-200 shadow-lg shadow-blue-500/50 animate-pulse" 
+                        ? "border-blue-500 bg-blue-100 hover:bg-blue-200 shadow-lg shadow-blue-500/50" 
                         : step.status === "treasure"
                         ? "border-yellow-500 bg-yellow-100 hover:bg-yellow-200 shadow-lg shadow-yellow-500/50"
                         : "border-gray-400 bg-gray-100 opacity-70"

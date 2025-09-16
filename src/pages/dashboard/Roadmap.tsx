@@ -46,6 +46,7 @@ const roadmapSteps = [
 export default function Roadmap() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
   
   // Fixed character settings and responsive anchoring (from your screenshot)
   const fixed = {
@@ -59,7 +60,7 @@ export default function Roadmap() {
 
   const [refDims, setRefDims] = useState<{ w: number; h: number } | null>(null);
   useEffect(() => {
-    const el = containerRef.current;
+    const el = imgRef.current;
     if (!el) return;
     const update = () => {
       const rect = el.getBoundingClientRect();
@@ -107,6 +108,11 @@ export default function Roadmap() {
           {/* Map Image with absolute positioned elements */}
           <div ref={containerRef} className="relative inline-block">
             <img 
+              ref={imgRef}
+              onLoad={() => {
+                const r = imgRef.current?.getBoundingClientRect();
+                if (r && !refDims) setRefDims({ w: r.width, h: r.height });
+              }}
               src={treasureMapImage} 
               alt="Treasure Map" 
               className="w-full h-auto max-h-[600px] object-contain block"

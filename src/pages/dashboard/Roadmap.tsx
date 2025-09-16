@@ -187,6 +187,12 @@ export default function Roadmap() {
               }}
               onMouseDown={handleCharacterMouseDown}
             >
+              {/* Character coordinates and size display */}
+              <div className="absolute -top-16 left-0 bg-black text-white text-xs px-2 py-1 rounded opacity-75 whitespace-nowrap">
+                <div>Позиция: {characterPosition.top}, {characterPosition.left}</div>
+                <div>Размер: {characterSize}px</div>
+              </div>
+              
               <video 
                 autoPlay 
                 loop 

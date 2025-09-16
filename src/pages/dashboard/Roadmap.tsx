@@ -138,10 +138,9 @@ export default function Roadmap() {
 
   return (
     <TooltipProvider>
-      <div 
-        className="relative min-h-screen p-6 overflow-hidden bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/assets/treasure-background.png)' }}
-      >
+      <div className="min-h-screen p-6 bg-background">
+        {/* Main content card */}
+        <div className="border rounded-2xl p-8 bg-card shadow-elevated max-w-6xl mx-auto">
         {/* Header */}
         <div className="relative z-10 text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -291,6 +290,7 @@ export default function Roadmap() {
               </video>
             </div>
           </div>
+        </div>
         </div>
       </div>
     </TooltipProvider>

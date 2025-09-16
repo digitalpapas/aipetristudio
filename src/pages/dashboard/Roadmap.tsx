@@ -142,7 +142,7 @@ export default function Roadmap() {
         {/* Main content card */}
         <div 
           className="border rounded-2xl p-8 bg-card shadow-elevated max-w-6xl mx-auto bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: 'url(/assets/vintage-treasure-map.jpg)' }}
+          style={{ backgroundImage: 'url(/assets/sand-texture.jpg)' }}
         >
         {/* Header */}
         <div className="relative z-10 text-center mb-8">

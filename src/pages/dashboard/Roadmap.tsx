@@ -165,7 +165,7 @@ export default function Roadmap() {
                   >
                     {/* Interactive hotspot */}
                     <div className={`
-                      w-8 h-8 rounded-full border-2
+                      w-8 h-8 md:w-12 md:h-12 rounded-full border-2 md:border-4
                       ${draggedStep === step.id 
                         ? "border-red-500 bg-red-100 shadow-lg shadow-red-500/50"
                         : step.status === "available" 

@@ -242,6 +242,7 @@ export default function Roadmap() {
               src={treasureMapImage} 
               alt="Treasure Map" 
               className="w-full h-auto max-h-[600px] object-contain"
+              style={{ mixBlendMode: 'multiply' }}
             />
             
             {/* Animated Character in bottom right corner */}

@@ -11,7 +11,7 @@ const roadmapSteps = [
     icon: Brain,
     route: "/dashboard/personality-unpacking",
     status: "available",
-    position: { top: "35%", left: "22%" } // Домик на дереве
+    position: { top: "45%", left: "25%" } // Домик на дереве слева
   },
   {
     id: 2,
@@ -20,7 +20,7 @@ const roadmapSteps = [
     icon: Users,
     route: "/dashboard",
     status: "available",
-    position: { top: "25%", left: "52%" } // Башня в центре
+    position: { top: "25%", left: "45%" } // Башня в центре
   },
   {
     id: 3,
@@ -29,7 +29,7 @@ const roadmapSteps = [
     icon: Factory,
     route: "#",
     status: "coming-soon",
-    position: { top: "45%", left: "42%" } // Корабль с черепом и костями
+    position: { top: "75%", left: "35%" } // Корабль с черепом и костями внизу
   },
   {
     id: 4,
@@ -38,7 +38,7 @@ const roadmapSteps = [
     icon: Trophy,
     route: "#",
     status: "treasure",
-    position: { top: "55%", left: "72%" } // Сундук с сокровищами
+    position: { top: "65%", left: "70%" } // Сундук с сокровищами справа
   }
 ];
 

@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { Brain, Users, Factory, Trophy, MapPin, Plus, Minus, RotateCcw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import treasureMapImage from "@/assets/new-treasure-map.png";
+import treasureMapImage from "@/assets/final-treasure-map.png";
 
 const roadmapSteps = [
   {

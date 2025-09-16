@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { Brain, Users, Factory, Trophy, MapPin, Plus, Minus, RotateCcw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import treasureMapImage from "@/assets/treasure-map-new.png";
+import treasureMapImage from "@/assets/new-treasure-map.png";
 
 const roadmapSteps = [
   {
@@ -242,7 +242,6 @@ export default function Roadmap() {
               src={treasureMapImage} 
               alt="Treasure Map" 
               className="w-full h-auto max-h-[600px] object-contain"
-              style={{ mixBlendMode: 'multiply' }}
             />
             
             {/* Animated Character in bottom right corner */}

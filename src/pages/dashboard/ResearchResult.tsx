@@ -105,6 +105,9 @@ export default function ResearchResultPage() {
   const [isRetrying, setIsRetrying] = useState(false);
   // Removed isLoading state - show interface immediately like ResearchSegmentPage
   
+  // Move useMemo to top level to prevent hooks rendering error
+  const selectedSegmentIds = useMemo(() => segments.map(s => s.id), [segments]);
+  
   // Load data from Supabase in background without affecting instant UI display
   useEffect(() => {
     const loadDataFromSupabase = async () => {
@@ -802,7 +805,7 @@ export default function ResearchResultPage() {
               <SegmentCards 
                 segments={allGeneratedSegments}
                 topSegments={topSegmentsData} // Передаем уже загруженные топ сегменты как TopSegmentData[]
-                selectedSegments={useMemo(() => segments.map(s => s.id), [segments])} // Используем useMemo для предотвращения пересоздания массива
+                selectedSegments={selectedSegmentIds} // Use pre-calculated array to prevent hooks error
                 researchTitle={localTitle}
                 researchId={id}
                 hideTopRecommendations={true} // Скрываем отдельный блок рекомендаций ИИ

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Brain, Users, Factory, Trophy, MapPin } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import treasureMapImage from "@/assets/treasure-map.png";
@@ -44,11 +45,46 @@ const roadmapSteps = [
 
 export default function Roadmap() {
   const navigate = useNavigate();
+  const [stepPositions, setStepPositions] = useState(
+    roadmapSteps.reduce((acc, step) => {
+      acc[step.id] = step.position;
+      return acc;
+    }, {} as Record<number, { top: string; left: string }>)
+  );
+  const [draggedStep, setDraggedStep] = useState<number | null>(null);
 
   const handleStepClick = (step: typeof roadmapSteps[0]) => {
     if (step.status === "available" && step.route !== "#") {
       navigate(step.route);
     }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent, stepId: number) => {
+    e.preventDefault();
+    setDraggedStep(stepId);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (draggedStep === null) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    setStepPositions(prev => ({
+      ...prev,
+      [draggedStep]: {
+        left: `${Math.max(0, Math.min(100, x))}%`,
+        top: `${Math.max(0, Math.min(100, y))}%`
+      }
+    }));
+  };
+
+  const handleMouseUp = () => {
+    if (draggedStep !== null) {
+      console.log('Final positions:', stepPositions);
+    }
+    setDraggedStep(null);
   };
 
   return (
@@ -70,7 +106,10 @@ export default function Roadmap() {
         {/* Treasure Map Container */}
         <div className="relative max-w-5xl mx-auto">
           {/* Map Image */}
-          <div className="relative bg-white rounded-2xl shadow-2xl border-8 border-amber-800 overflow-hidden">
+          <div className="relative bg-white rounded-2xl shadow-2xl border-8 border-amber-800 overflow-hidden"
+               onMouseMove={handleMouseMove}
+               onMouseUp={handleMouseUp}
+               onMouseLeave={handleMouseUp}>
             <img 
               src={treasureMapImage} 
               alt="Treasure Map" 
@@ -82,18 +121,21 @@ export default function Roadmap() {
               <Tooltip key={step.id}>
                 <TooltipTrigger asChild>
                   <div
-                    className="absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2 group"
+                    className="absolute cursor-move transform -translate-x-1/2 -translate-y-1/2 group select-none"
                     style={{ 
-                      top: step.position.top, 
-                      left: step.position.left,
-                      zIndex: 10
+                      top: stepPositions[step.id].top, 
+                      left: stepPositions[step.id].left,
+                      zIndex: draggedStep === step.id ? 20 : 10
                     }}
-                    onClick={() => handleStepClick(step)}
+                    onMouseDown={(e) => handleMouseDown(e, step.id)}
+                    onClick={() => draggedStep === null && handleStepClick(step)}
                   >
                     {/* Interactive hotspot */}
                     <div className={`
                       w-12 h-12 rounded-full border-4 
-                      ${step.status === "available" 
+                      ${draggedStep === step.id 
+                        ? "border-red-500 bg-red-100 shadow-lg shadow-red-500/50"
+                        : step.status === "available" 
                         ? "border-blue-500 bg-blue-100 hover:bg-blue-200 shadow-lg shadow-blue-500/50" 
                         : step.status === "treasure"
                         ? "border-yellow-500 bg-yellow-100 hover:bg-yellow-200 shadow-lg shadow-yellow-500/50"

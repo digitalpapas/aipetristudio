@@ -104,7 +104,7 @@ export default function Roadmap() {
         </div>
 
         {/* Treasure Map Container */}
-        <div className="relative max-w-5xl mx-auto">
+        <div className="relative max-w-5xl mx-auto flex justify-center">
           {/* Map Image with absolute positioned elements */}
           <div ref={containerRef} className="relative inline-block">
             <img 

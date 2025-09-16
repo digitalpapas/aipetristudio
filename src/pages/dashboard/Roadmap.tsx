@@ -137,7 +137,7 @@ export default function Roadmap() {
 
   const resetCharacterPosition = () => {
     setCharacterPosition({ top: '20px', left: '20px' });
-    setCharacterSize(100);
+    setCharacterSize(200);
   };
 
   useEffect(() => {
@@ -336,14 +336,14 @@ export default function Roadmap() {
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600">Размер:</span>
                   <button 
-                    onClick={() => setCharacterSize(prev => Math.max(50, prev - 10))}
+                    onClick={() => setCharacterSize(prev => Math.max(20, prev - 20))}
                     className="p-1 rounded hover:bg-gray-100"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
-                  <span className="w-8 text-center text-xs">{characterSize}px</span>
+                  <span className="w-12 text-center text-xs">{characterSize}px</span>
                   <button 
-                    onClick={() => setCharacterSize(prev => Math.min(400, prev + 10))}
+                    onClick={() => setCharacterSize(prev => prev + 20)}
                     className="p-1 rounded hover:bg-gray-100"
                   >
                     <Plus className="w-4 h-4" />

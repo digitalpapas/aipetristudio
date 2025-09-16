@@ -138,7 +138,10 @@ export default function Roadmap() {
 
   return (
     <TooltipProvider>
-      <div className="relative min-h-screen p-6 overflow-hidden">
+      <div 
+        className="relative min-h-screen p-6 overflow-hidden bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: 'url(/assets/ocean-map-background.png)' }}
+      >
         {/* Header */}
         <div className="relative z-10 text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">

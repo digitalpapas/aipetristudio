@@ -68,7 +68,7 @@ export default function Roadmap() {
   const [characterSize, setCharacterSize] = useState(100); // percentage
   const [characterPosition, setCharacterPosition] = useState({ top: '20px', left: '20px' });
   const [isDraggingCharacter, setIsDraggingCharacter] = useState(false);
-  const sideCrop = 0.14; // crop right side only to remove empty margin
+  const sideCrop = 0.24; // stronger right-side crop to remove extra empty margin
   const [blendMode, setBlendMode] = useState<'normal' | 'screen' | 'multiply'>(() => {
     try {
       const saved = localStorage.getItem(characterSettingsKey);

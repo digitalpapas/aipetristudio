@@ -354,7 +354,7 @@ export default function Roadmap() {
                   </button>
                   <span className="w-8 text-center text-xs">{characterSize}px</span>
                   <button 
-                    onClick={() => setCharacterSize(prev => Math.min(200, prev + 10))}
+                    onClick={() => setCharacterSize(prev => Math.min(400, prev + 10))}
                     className="p-1 rounded hover:bg-gray-100"
                   >
                     <Plus className="w-4 h-4" />

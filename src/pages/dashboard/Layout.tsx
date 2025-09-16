@@ -122,6 +122,36 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Button>
               <Button
                 variant="ghost"
+                className="w-full justify-start pl-8 text-sm"
+                onClick={() => {
+                  navigate("/dashboard/ai-templates");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                AI-шаблоны
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start pl-8 text-sm"
+                onClick={() => {
+                  navigate("/dashboard/ai-images");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                AI-изображения
+              </Button>
+              <Button
+                variant="ghost"
+                className="w-full justify-start pl-8 text-sm"
+                onClick={() => {
+                  navigate("/dashboard/ai-videos");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                AI-видео
+              </Button>
+              <Button
+                variant="ghost"
                 className="w-full justify-start"
                 onClick={() => {
                   navigate("/dashboard/profile");

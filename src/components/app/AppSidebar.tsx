@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar";
 import { LineChart, User, ShoppingCart, LogOut, MoreHorizontal, Brain, Bot } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -110,6 +110,31 @@ export function AppSidebar() {
                     {state !== "collapsed" && <span>AI-боты</span>}
                   </NavLink>
                 </SidebarMenuButton>
+                {state !== "collapsed" && (
+                  <SidebarMenuSub>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild>
+                        <NavLink to="/dashboard/ai-templates" className={getNavCls}>
+                          AI-шаблоны
+                        </NavLink>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild>
+                        <NavLink to="/dashboard/ai-images" className={getNavCls}>
+                          AI-изображения
+                        </NavLink>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                    <SidebarMenuSubItem>
+                      <SidebarMenuSubButton asChild>
+                        <NavLink to="/dashboard/ai-videos" className={getNavCls}>
+                          AI-видео
+                        </NavLink>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  </SidebarMenuSub>
+                )}
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>

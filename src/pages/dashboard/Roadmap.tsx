@@ -138,7 +138,7 @@ export default function Roadmap() {
 
   return (
     <TooltipProvider>
-      <div className="min-h-screen p-2 bg-background">
+      <div className="min-h-screen p-2" style={{ backgroundColor: '#f5f5f5' }}>
         {/* Main content card */}
         <div className="border rounded-2xl p-8 bg-card shadow-elevated max-w-6xl mx-auto">
         {/* Header */}

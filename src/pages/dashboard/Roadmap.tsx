@@ -165,53 +165,15 @@ export default function Roadmap() {
 
         {/* Treasure Map Container */}
         <div className="relative max-w-5xl mx-auto">
-          {/* Map Image */}
-          <div ref={containerRef} className="relative overflow-hidden">
+          {/* Map Image with absolute positioned elements */}
+          <div ref={containerRef} className="relative inline-block">
             <img 
               src={treasureMapImage} 
               alt="Treasure Map" 
-              className="w-full h-auto max-h-[600px] object-contain"
+              className="w-full h-auto max-h-[600px] object-contain block"
             />
             
-            {/* Animated Character in bottom right corner */}
-            <div 
-              className="absolute z-30 cursor-move"
-              style={{ 
-                top: characterPosition.top, 
-                left: characterPosition.left,
-                width: `${characterSize * (1 - sideCrop)}px`,
-                height: `${characterSize}px`,
-                overflow: 'hidden',
-                transform: isDraggingCharacter ? 'scale(1.1)' : 'scale(1)',
-                transition: isDraggingCharacter ? 'none' : 'transform 0.2s ease'
-              }}
-              onMouseDown={handleCharacterMouseDown}
-            >
-              {/* Character coordinates and size display */}
-              <div className="absolute -top-16 left-0 bg-black text-white text-xs px-2 py-1 rounded opacity-75 whitespace-nowrap">
-                <div>Позиция: {characterPosition.top}, {characterPosition.left}</div>
-                <div>Размер: {characterSize}px</div>
-              </div>
-              
-              <video 
-                autoPlay 
-                loop 
-                muted 
-                playsInline
-                className="object-contain pointer-events-none"
-                style={{ 
-                   width: `${characterSize}px`,
-                   height: `${characterSize}px`,
-                   position: 'relative',
-                   left: '0px',
-                   backgroundColor: 'transparent',
-                   mixBlendMode: blendMode === 'normal' ? undefined : blendMode
-                }}
-              >
-                <source src="/assets/latest-character.webm" type="video/webm" />
-              </video>
-            </div>
-            {/* Interactive Areas */}
+            {/* Interactive Areas - positioned relative to image */}
             {roadmapSteps.map((step) => (
               <Tooltip key={step.id}>
                 <TooltipTrigger asChild>
@@ -293,6 +255,45 @@ export default function Roadmap() {
                 </TooltipContent>
               </Tooltip>
             ))}
+            
+            {/* Animated Character - positioned relative to image */}
+            <div 
+              className="absolute z-30 cursor-move"
+              style={{ 
+                top: characterPosition.top, 
+                left: characterPosition.left,
+                width: `${characterSize * (1 - sideCrop)}px`,
+                height: `${characterSize}px`,
+                overflow: 'hidden',
+                transform: isDraggingCharacter ? 'scale(1.1)' : 'scale(1)',
+                transition: isDraggingCharacter ? 'none' : 'transform 0.2s ease'
+              }}
+              onMouseDown={handleCharacterMouseDown}
+            >
+              {/* Character coordinates and size display */}
+              <div className="absolute -top-16 left-0 bg-black text-white text-xs px-2 py-1 rounded opacity-75 whitespace-nowrap">
+                <div>Позиция: {characterPosition.top}, {characterPosition.left}</div>
+                <div>Размер: {characterSize}px</div>
+              </div>
+              
+              <video 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                className="object-contain pointer-events-none"
+                style={{ 
+                   width: `${characterSize}px`,
+                   height: `${characterSize}px`,
+                   position: 'relative',
+                   left: '0px',
+                   backgroundColor: 'transparent',
+                   mixBlendMode: blendMode === 'normal' ? undefined : blendMode
+                }}
+              >
+                <source src="/assets/latest-character.webm" type="video/webm" />
+              </video>
+            </div>
           </div>
           
           {/* Legend */}

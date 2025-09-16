@@ -11,7 +11,7 @@ const roadmapSteps = [
     icon: Brain,
     route: "/dashboard/personality-unpacking",
     status: "available",
-    position: { top: "28%", left: "10%" } // Слева от домика на дереве
+    position: { top: "22%", left: "18%" } // Начало пунктирной линии (черная точка)
   },
   {
     id: 2,
@@ -20,7 +20,7 @@ const roadmapSteps = [
     icon: Users,
     route: "/dashboard",
     status: "available",
-    position: { top: "55%", left: "22%" } // Слева от черепа
+    position: { top: "55%", left: "22%" } // На пунктирной линии слева
   },
   {
     id: 3,
@@ -29,7 +29,7 @@ const roadmapSteps = [
     icon: Factory,
     route: "#",
     status: "coming-soon",
-    position: { top: "35%", left: "60%" } // Центральная правая область
+    position: { top: "75%", left: "45%" } // На пунктирной линии снизу
   },
   {
     id: 4,
@@ -38,7 +38,7 @@ const roadmapSteps = [
     icon: Trophy,
     route: "#",
     status: "treasure",
-    position: { top: "50%", left: "78%" } // Сундук с сокровищами
+    position: { top: "55%", left: "68%" } // На пунктирной линии справа
   }
 ];
 

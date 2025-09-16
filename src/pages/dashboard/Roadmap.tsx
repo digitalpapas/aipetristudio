@@ -46,6 +46,7 @@ const roadmapSteps = [
 export default function Roadmap() {
   const navigate = useNavigate();
   const storageKey = "roadmap_positions_v1";
+  const characterSettingsKey = "roadmap_character_settings_v1";
   const didDragRef = useRef(false);
   const startPosRef = useRef<{ x: number; y: number } | null>(null);
   const [stepPositions, setStepPositions] = useState(() => {
@@ -65,7 +66,17 @@ export default function Roadmap() {
   const [characterSize, setCharacterSize] = useState(100); // percentage
   const [characterPosition, setCharacterPosition] = useState({ bottom: '20px', right: '20px' });
   const [isDraggingCharacter, setIsDraggingCharacter] = useState(false);
-  const [blendMode, setBlendMode] = useState<'normal' | 'screen' | 'multiply'>('normal');
+  const [blendMode, setBlendMode] = useState<'normal' | 'screen' | 'multiply'>(() => {
+    try {
+      const saved = localStorage.getItem(characterSettingsKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const bm = parsed?.blendMode;
+        if (bm === 'normal' || bm === 'screen' || bm === 'multiply') return bm;
+      }
+    } catch {}
+    return 'screen';
+  });
 
   const handleStepClick = (step: typeof roadmapSteps[0]) => {
     if (step.status === "available" && step.route !== "#") {
@@ -149,6 +160,14 @@ export default function Roadmap() {
     setCharacterPosition({ bottom: '20px', right: '20px' });
     setCharacterSize(100);
   };
+
+  useEffect(() => {
+    try {
+      const prevRaw = localStorage.getItem(characterSettingsKey);
+      const prev = prevRaw ? JSON.parse(prevRaw) : {};
+      localStorage.setItem(characterSettingsKey, JSON.stringify({ ...prev, blendMode }));
+    } catch {}
+  }, [blendMode]);
 
   return (
     <TooltipProvider>

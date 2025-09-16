@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
-import { Brain, Users, Factory, Trophy, MapPin, Plus, Minus, RotateCcw } from "lucide-react";
+import { useRef } from "react";
+import { Brain, Users, Factory, Trophy, MapPin } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import treasureMapImage from "@/assets/treasure-map-transparent.png";
 
@@ -45,108 +45,20 @@ const roadmapSteps = [
 
 export default function Roadmap() {
   const navigate = useNavigate();
-  const characterSettingsKey = "roadmap_character_settings_v1";
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const characterOffsetRef = useRef<{ offsetX: number; offsetY: number }>({ offsetX: 0, offsetY: 0 });
   
-  
-  // Character controls
-  const [characterSize, setCharacterSize] = useState(100); // percentage
-  const [characterPosition, setCharacterPosition] = useState({ top: '20px', left: '20px' });
-  const [isDraggingCharacter, setIsDraggingCharacter] = useState(false);
-  const sideCrop = 0.75; // maximum right-side crop to minimize empty space
-  const bottomCrop = 0.2; // crop bottom empty space
-  const [blendMode, setBlendMode] = useState<'normal' | 'screen' | 'multiply'>(() => {
-    try {
-      const saved = localStorage.getItem(characterSettingsKey);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        const bm = parsed?.blendMode;
-        if (bm === 'normal' || bm === 'screen' || bm === 'multiply') return bm;
-      }
-    } catch {}
-    return 'screen';
-  });
+  // Fixed character settings
+  const characterSize = 820;
+  const characterPosition = { top: '570.331176757812px', left: '0px' };
+  const sideCrop = 0.75;
+  const bottomCrop = 0.2;
+  const blendMode = 'screen';
 
   const handleStepClick = (step: typeof roadmapSteps[0]) => {
     if (step.status === "available" && step.route !== "#") {
       navigate(step.route);
     }
   };
-
-  const handleCharacterMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDraggingCharacter(true);
-    const elRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    characterOffsetRef.current = {
-      offsetX: e.clientX - elRect.left,
-      offsetY: e.clientY - elRect.top,
-    };
-    window.addEventListener('mousemove', handleCharacterWindowMouseMove);
-    window.addEventListener('mouseup', handleCharacterWindowMouseUp);
-  };
-
-  function handleCharacterWindowMouseMove(e: MouseEvent) {
-    const { offsetX, offsetY } = characterOffsetRef.current;
-    const width = characterSize * (1 - sideCrop);
-    const height = characterSize * (1 - bottomCrop);
-
-    const container = containerRef.current;
-    if (container) {
-      const rect = container.getBoundingClientRect();
-
-      let left = e.clientX - rect.left - offsetX;
-      let top = e.clientY - rect.top - offsetY;
-
-      const maxLeft = Math.max(0, rect.width - width);
-      const maxTop = Math.max(0, rect.height - height);
-
-      left = Math.max(0, Math.min(maxLeft, left));
-      top = Math.max(0, Math.min(maxTop, top));
-
-      setCharacterPosition({
-        left: `${left}px`,
-        top: `${top}px`,
-      });
-    } else {
-      // Fallback to viewport bounds if container not available
-      let left = e.clientX - offsetX;
-      let top = e.clientY - offsetY;
-
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-
-      const maxLeft = Math.max(0, viewportWidth - width);
-      const maxTop = Math.max(0, viewportHeight - height);
-
-      left = Math.max(0, Math.min(maxLeft, left));
-      top = Math.max(0, Math.min(maxTop, top));
-
-      setCharacterPosition({
-        left: `${left}px`,
-        top: `${top}px`,
-      });
-    }
-  }
-
-  function handleCharacterWindowMouseUp() {
-    setIsDraggingCharacter(false);
-    window.removeEventListener('mousemove', handleCharacterWindowMouseMove);
-    window.removeEventListener('mouseup', handleCharacterWindowMouseUp);
-  }
-
-  const resetCharacterPosition = () => {
-    setCharacterPosition({ top: '20px', left: '20px' });
-    setCharacterSize(200);
-  };
-
-  useEffect(() => {
-    try {
-      const prevRaw = localStorage.getItem(characterSettingsKey);
-      const prev = prevRaw ? JSON.parse(prevRaw) : {};
-      localStorage.setItem(characterSettingsKey, JSON.stringify({ ...prev, blendMode }));
-    } catch {}
-  }, [blendMode]);
 
   return (
     <TooltipProvider>
@@ -259,24 +171,15 @@ export default function Roadmap() {
             
             {/* Animated Character - positioned relative to image */}
             <div 
-              className="absolute z-30 cursor-move"
+              className="absolute z-30"
               style={{ 
                 top: characterPosition.top, 
                 left: characterPosition.left,
                 width: `${characterSize * (1 - sideCrop)}px`,
                 height: `${characterSize * (1 - bottomCrop)}px`,
-                overflow: 'hidden',
-                transform: isDraggingCharacter ? 'scale(1.1)' : 'scale(1)',
-                transition: isDraggingCharacter ? 'none' : 'transform 0.2s ease'
+                overflow: 'hidden'
               }}
-              onMouseDown={handleCharacterMouseDown}
             >
-              {/* Character coordinates and size display */}
-              <div className="absolute -top-16 left-0 bg-black text-white text-xs px-2 py-1 rounded opacity-75 whitespace-nowrap">
-                <div>Позиция: {characterPosition.top}, {characterPosition.left}</div>
-                <div>Размер: {characterSize}px</div>
-              </div>
-              
               <video 
                 autoPlay 
                 loop 
@@ -289,7 +192,7 @@ export default function Roadmap() {
                    position: 'relative',
                    left: '0px',
                    backgroundColor: 'transparent',
-                   mixBlendMode: blendMode === 'normal' ? undefined : blendMode
+                   mixBlendMode: blendMode
                 }}
               >
                 <source src="/assets/latest-character.webm" type="video/webm" />
@@ -313,65 +216,6 @@ export default function Roadmap() {
                   <div className="w-4 h-4 rounded-full bg-yellow-100 border-2 border-yellow-500"></div>
                   <span className="text-gray-700">Сокровище</span>
                 </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Character Controls */}
-          <div className="mt-4 flex justify-center">
-            <div className="bg-white/95 backdrop-blur-sm rounded-lg p-3 border border-gray-200 shadow-md">
-              <div className="flex items-center gap-4 text-sm flex-wrap">
-                <span className="text-gray-700 font-medium">Настройка персонажа:</span>
-                
-                <div className="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded">
-                  <span className="text-gray-600">Координаты:</span>
-                  <span className="text-xs font-mono">{characterPosition.top}, {characterPosition.left}</span>
-                </div>
-                
-                <div className="flex items-center gap-2 bg-gray-50 px-2 py-1 rounded">
-                  <span className="text-gray-600">Размер:</span>
-                  <span className="text-xs font-mono">{characterSize}px</span>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600">Размер:</span>
-                  <button 
-                    onClick={() => setCharacterSize(prev => Math.max(20, prev - 20))}
-                    className="p-1 rounded hover:bg-gray-100"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="w-12 text-center text-xs">{characterSize}px</span>
-                  <button 
-                    onClick={() => setCharacterSize(prev => prev + 20)}
-                    className="p-1 rounded hover:bg-gray-100"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600">Наложение:</span>
-                  <select
-                    value={blendMode}
-                    onChange={(e) => setBlendMode(e.target.value as 'normal' | 'screen' | 'multiply')}
-                    className="border border-gray-200 rounded px-2 py-1 text-xs bg-white"
-                  >
-                    <option value="normal">Нет</option>
-                    <option value="screen">Screen (убирает черный)</option>
-                    <option value="multiply">Multiply (убирает белый)</option>
-                  </select>
-                </div>
-                
-                <button 
-                  onClick={resetCharacterPosition}
-                  className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  <span className="text-xs">Сброс</span>
-                </button>
-                
-                <span className="text-xs text-gray-500">Перетащите персонажа для изменения позиции</span>
               </div>
             </div>
           </div>

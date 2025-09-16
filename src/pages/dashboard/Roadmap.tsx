@@ -94,11 +94,9 @@ export default function Roadmap() {
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDraggingCharacter) {
-      handleCharacterMouseMove(e);
-    }
+    // Character dragging handled globally via window events
     if (draggedStep === null) return;
-    
+
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -145,49 +143,45 @@ export default function Roadmap() {
   const handleCharacterMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDraggingCharacter(true);
-    const container = containerRef.current;
-    const target = e.currentTarget as HTMLElement;
-    if (container) {
-      const containerRect = container.getBoundingClientRect();
-      const elRect = target.getBoundingClientRect();
-      characterOffsetRef.current = {
-        offsetX: e.clientX - elRect.left,
-        offsetY: e.clientY - elRect.top,
-      };
-    }
+    const elRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    characterOffsetRef.current = {
+      offsetX: e.clientX - elRect.left,
+      offsetY: e.clientY - elRect.top,
+    };
+    window.addEventListener('mousemove', handleCharacterWindowMouseMove);
+    window.addEventListener('mouseup', handleCharacterWindowMouseUp);
   };
 
-  const handleCharacterMouseMove = (e: React.MouseEvent) => {
-    if (!isDraggingCharacter) return;
-    const container = containerRef.current;
-    if (!container) return;
-
-    const containerRect = container.getBoundingClientRect();
+  function handleCharacterWindowMouseMove(e: MouseEvent) {
     const { offsetX, offsetY } = characterOffsetRef.current;
     const width = characterSize;
     const height = characterSize;
 
-    let left = e.clientX - containerRect.left - offsetX;
-    let top = e.clientY - containerRect.top - offsetY;
+    let left = e.clientX - offsetX;
+    let top = e.clientY - offsetY;
 
-    // Clamp within container bounds (supports character smaller or larger than container)
-    const maxLeft = Math.max(0, containerRect.width - width);
-    const minLeft = Math.min(0, containerRect.width - width);
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const maxLeft = Math.max(0, viewportWidth - width);
+    const minLeft = Math.min(0, viewportWidth - width);
     left = Math.max(minLeft, Math.min(maxLeft, left));
 
-    const maxTop = Math.max(0, containerRect.height - height);
-    const minTop = Math.min(0, containerRect.height - height);
+    const maxTop = Math.max(0, viewportHeight - height);
+    const minTop = Math.min(0, viewportHeight - height);
     top = Math.max(minTop, Math.min(maxTop, top));
 
     setCharacterPosition({
       left: `${left}px`,
       top: `${top}px`,
     });
-  };
+  }
 
-  const handleCharacterMouseUp = () => {
+  function handleCharacterWindowMouseUp() {
     setIsDraggingCharacter(false);
-  };
+    window.removeEventListener('mousemove', handleCharacterWindowMouseMove);
+    window.removeEventListener('mouseup', handleCharacterWindowMouseUp);
+  }
 
   const resetCharacterPosition = () => {
     setCharacterPosition({ top: '20px', left: '20px' });
@@ -233,7 +227,7 @@ export default function Roadmap() {
             
             {/* Animated Character in bottom right corner */}
             <div 
-              className="absolute z-30 cursor-move"
+              className="fixed z-30 cursor-move"
               style={{ 
                 top: characterPosition.top, 
                 left: characterPosition.left,
@@ -241,9 +235,6 @@ export default function Roadmap() {
                 transition: isDraggingCharacter ? 'none' : 'transform 0.2s ease'
               }}
               onMouseDown={handleCharacterMouseDown}
-              onMouseMove={handleCharacterMouseMove}
-              onMouseUp={handleCharacterMouseUp}
-              onMouseLeave={handleCharacterMouseUp}
             >
               <video 
                 autoPlay 

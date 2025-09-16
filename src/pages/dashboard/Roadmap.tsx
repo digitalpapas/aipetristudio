@@ -251,7 +251,7 @@ export default function Roadmap() {
                   mixBlendMode: blendMode === 'normal' ? undefined : blendMode
                 }}
               >
-                <source src="/assets/animated-character.webm?v=20250916-1" type="video/webm" />
+                <source src="/assets/new-character.webm" type="video/webm" />
               </video>
             </div>
             {/* Interactive Areas */}

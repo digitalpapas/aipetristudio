@@ -231,7 +231,7 @@ export default function Roadmap() {
                    mixBlendMode: fixed.blendMode
                 }}
               >
-                <source src="/assets/latest-character.webm" type="video/webm" />
+                <source src="/assets/updated-character.webm" type="video/webm" />
               </video>
             </div>
           </div>

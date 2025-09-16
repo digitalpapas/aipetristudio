@@ -295,8 +295,8 @@ export default function Roadmap() {
                     }}
                   >
                     {/* Coordinate display */}
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-75">
-                      {stepPositions[step.id].top}, {stepPositions[step.id].left}
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-75 whitespace-nowrap">
+                      {Math.round(parseFloat(stepPositions[step.id].top))}%, {Math.round(parseFloat(stepPositions[step.id].left))}%
                     </div>
                     
                     {/* Interactive hotspot */}

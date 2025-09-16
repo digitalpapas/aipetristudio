@@ -68,7 +68,7 @@ export default function Roadmap() {
   const [characterSize, setCharacterSize] = useState(100); // percentage
   const [characterPosition, setCharacterPosition] = useState({ top: '20px', left: '20px' });
   const [isDraggingCharacter, setIsDraggingCharacter] = useState(false);
-  const sideCrop = 0.34; // increased right-side crop to remove remaining empty margin
+  const sideCrop = 0.44; // maximum right-side crop to minimize empty space
   const [blendMode, setBlendMode] = useState<'normal' | 'screen' | 'multiply'>(() => {
     try {
       const saved = localStorage.getItem(characterSettingsKey);
@@ -273,7 +273,7 @@ export default function Roadmap() {
                    mixBlendMode: blendMode === 'normal' ? undefined : blendMode
                 }}
               >
-                <source src="/assets/new-character.webm" type="video/webm" />
+                <source src="/assets/latest-character.webm" type="video/webm" />
               </video>
             </div>
             {/* Interactive Areas */}

@@ -11,7 +11,7 @@ const roadmapSteps = [
     icon: Brain,
     route: "/dashboard/personality-unpacking",
     status: "available",
-    position: { top: "22%", left: "18%" } // Начало пунктирной линии (черная точка)
+    position: { top: "30%", left: "18%" } // На черной точке пунктирной линии
   },
   {
     id: 2,

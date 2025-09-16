@@ -170,9 +170,11 @@ export default function Roadmap() {
     let left = e.clientX - containerRect.left - offsetX;
     let top = e.clientY - containerRect.top - offsetY;
 
-    // Clamp within container bounds
-    left = Math.max(0, Math.min(containerRect.width - width, left));
-    top = Math.max(0, Math.min(containerRect.height - height, top));
+    // Clamp within container bounds (allow negative when character is larger than container)
+    const minLeft = containerRect.width - width;
+    const minTop = containerRect.height - height;
+    left = Math.max(minLeft, Math.min(0, left));
+    top = Math.max(minTop, Math.min(0, top));
 
     setCharacterPosition({
       left: `${left}px`,

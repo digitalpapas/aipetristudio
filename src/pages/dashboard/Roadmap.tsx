@@ -68,6 +68,7 @@ export default function Roadmap() {
   const [characterSize, setCharacterSize] = useState(100); // percentage
   const [characterPosition, setCharacterPosition] = useState({ top: '20px', left: '20px' });
   const [isDraggingCharacter, setIsDraggingCharacter] = useState(false);
+  const sideCrop = 0.14; // symmetric crop (14% left/right) to remove empty margins
   const [blendMode, setBlendMode] = useState<'normal' | 'screen' | 'multiply'>(() => {
     try {
       const saved = localStorage.getItem(characterSettingsKey);
@@ -154,7 +155,7 @@ export default function Roadmap() {
 
   function handleCharacterWindowMouseMove(e: MouseEvent) {
     const { offsetX, offsetY } = characterOffsetRef.current;
-    const width = characterSize;
+    const width = characterSize * (1 - sideCrop * 2);
     const height = characterSize;
 
     let left = e.clientX - offsetX;
@@ -231,8 +232,9 @@ export default function Roadmap() {
               style={{ 
                 top: characterPosition.top, 
                 left: characterPosition.left,
-                width: `${characterSize}px`,
+                width: `${characterSize * (1 - sideCrop * 2)}px`,
                 height: `${characterSize}px`,
+                overflow: 'hidden',
                 transform: isDraggingCharacter ? 'scale(1.1)' : 'scale(1)',
                 transition: isDraggingCharacter ? 'none' : 'transform 0.2s ease'
               }}
@@ -245,10 +247,12 @@ export default function Roadmap() {
                 playsInline
                 className="object-contain pointer-events-none"
                 style={{ 
-                  width: `${characterSize}px`,
-                  height: `${characterSize}px`,
-                  backgroundColor: 'transparent',
-                  mixBlendMode: blendMode === 'normal' ? undefined : blendMode
+                   width: `${characterSize}px`,
+                   height: `${characterSize}px`,
+                   position: 'relative',
+                   left: `-${characterSize * sideCrop}px`,
+                   backgroundColor: 'transparent',
+                   mixBlendMode: blendMode === 'normal' ? undefined : blendMode
                 }}
               >
                 <source src="/assets/new-character.webm" type="video/webm" />

@@ -3,6 +3,7 @@ import { useRef, useEffect, useState } from "react";
 import { Brain, Users, Factory, Trophy, MapPin } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import treasureMapImage from "@/assets/treasure-map-transparent.png";
+import oceanBackground from "@/assets/ocean-background.png";
 
 const roadmapSteps = [
   {
@@ -89,7 +90,10 @@ export default function Roadmap() {
 
   return (
     <TooltipProvider>
-      <div className="relative min-h-screen bg-gradient-to-br from-background via-amber-50/30 to-orange-50/20 dark:from-background dark:via-amber-950/10 dark:to-orange-950/5 p-6 overflow-hidden">
+      <div 
+        className="relative min-h-screen p-6 overflow-hidden bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${oceanBackground})` }}
+      >
         {/* Header */}
         <div className="relative z-10 text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">

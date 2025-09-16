@@ -65,6 +65,7 @@ export default function Roadmap() {
   const [characterSize, setCharacterSize] = useState(100); // percentage
   const [characterPosition, setCharacterPosition] = useState({ bottom: '20px', right: '20px' });
   const [isDraggingCharacter, setIsDraggingCharacter] = useState(false);
+  const [blendMode, setBlendMode] = useState<'normal' | 'screen' | 'multiply'>('normal');
 
   const handleStepClick = (step: typeof roadmapSteps[0]) => {
     if (step.status === "available" && step.route !== "#") {
@@ -200,7 +201,9 @@ export default function Roadmap() {
                 className="object-contain pointer-events-none"
                 style={{ 
                   width: `${characterSize}px`,
-                  height: `${characterSize}px`
+                  height: `${characterSize}px`,
+                  backgroundColor: 'transparent',
+                  mixBlendMode: blendMode === 'normal' ? undefined : blendMode
                 }}
               >
                 <source src="/assets/animated-character.webm" type="video/webm" />
@@ -337,6 +340,19 @@ export default function Roadmap() {
                   >
                     <Plus className="w-4 h-4" />
                   </button>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600">Наложение:</span>
+                  <select
+                    value={blendMode}
+                    onChange={(e) => setBlendMode(e.target.value as 'normal' | 'screen' | 'multiply')}
+                    className="border border-gray-200 rounded px-2 py-1 text-xs bg-white"
+                  >
+                    <option value="normal">Нет</option>
+                    <option value="screen">Screen (убирает черный)</option>
+                    <option value="multiply">Multiply (убирает белый)</option>
+                  </select>
                 </div>
                 
                 <button 

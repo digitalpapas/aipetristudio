@@ -68,7 +68,7 @@ export default function Roadmap() {
   const [characterSize, setCharacterSize] = useState(100); // percentage
   const [characterPosition, setCharacterPosition] = useState({ top: '20px', left: '20px' });
   const [isDraggingCharacter, setIsDraggingCharacter] = useState(false);
-  const sideCrop = 0.14; // symmetric crop (14% left/right) to remove empty margins
+  const sideCrop = 0.14; // crop right side only to remove empty margin
   const [blendMode, setBlendMode] = useState<'normal' | 'screen' | 'multiply'>(() => {
     try {
       const saved = localStorage.getItem(characterSettingsKey);
@@ -155,7 +155,7 @@ export default function Roadmap() {
 
   function handleCharacterWindowMouseMove(e: MouseEvent) {
     const { offsetX, offsetY } = characterOffsetRef.current;
-    const width = characterSize * (1 - sideCrop * 2);
+    const width = characterSize * (1 - sideCrop);
     const height = characterSize;
 
     let left = e.clientX - offsetX;
@@ -232,7 +232,7 @@ export default function Roadmap() {
               style={{ 
                 top: characterPosition.top, 
                 left: characterPosition.left,
-                width: `${characterSize * (1 - sideCrop * 2)}px`,
+                width: `${characterSize * (1 - sideCrop)}px`,
                 height: `${characterSize}px`,
                 overflow: 'hidden',
                 transform: isDraggingCharacter ? 'scale(1.1)' : 'scale(1)',
@@ -250,7 +250,7 @@ export default function Roadmap() {
                    width: `${characterSize}px`,
                    height: `${characterSize}px`,
                    position: 'relative',
-                   left: `-${characterSize * sideCrop}px`,
+                   left: '0px',
                    backgroundColor: 'transparent',
                    mixBlendMode: blendMode === 'normal' ? undefined : blendMode
                 }}

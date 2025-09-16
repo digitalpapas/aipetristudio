@@ -12,7 +12,7 @@ const roadmapSteps = [
     icon: Brain,
     route: "/dashboard/personality-unpacking",
     status: "available",
-    position: { top: "30%", left: "18%" } // На черной точке пунктирной линии
+    position: { top: "28%", left: "13%" }
   },
   {
     id: 2,
@@ -21,7 +21,7 @@ const roadmapSteps = [
     icon: Users,
     route: "/dashboard",
     status: "available",
-    position: { top: "55%", left: "22%" } // На пунктирной линии слева
+    position: { top: "56%", left: "23%" }
   },
   {
     id: 3,
@@ -30,7 +30,7 @@ const roadmapSteps = [
     icon: Factory,
     route: "#",
     status: "coming-soon",
-    position: { top: "75%", left: "45%" } // На пунктирной линии снизу
+    position: { top: "33%", left: "43%" }
   },
   {
     id: 4,
@@ -39,30 +39,15 @@ const roadmapSteps = [
     icon: Trophy,
     route: "#",
     status: "treasure",
-    position: { top: "55%", left: "68%" } // На пунктирной линии справа
+    position: { top: "54%", left: "62%" }
   }
 ];
 
 export default function Roadmap() {
   const navigate = useNavigate();
-  const storageKey = "roadmap_positions_v1";
   const characterSettingsKey = "roadmap_character_settings_v1";
-  const didDragRef = useRef(false);
-  const startPosRef = useRef<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const characterOffsetRef = useRef<{ offsetX: number; offsetY: number }>({ offsetX: 0, offsetY: 0 });
-  const [stepPositions, setStepPositions] = useState(() => {
-    const base = roadmapSteps.reduce((acc, step) => {
-      acc[step.id] = step.position;
-      return acc;
-    }, {} as Record<number, { top: string; left: string }>);
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) return { ...base, ...JSON.parse(raw) };
-    } catch {}
-    return base;
-  });
-  const [draggedStep, setDraggedStep] = useState<number | null>(null);
   
   
   // Character controls
@@ -87,60 +72,6 @@ export default function Roadmap() {
       navigate(step.route);
     }
   };
-
-  const handleMouseDown = (e: React.MouseEvent, stepId: number) => {
-    e.preventDefault();
-    setDraggedStep(stepId);
-    didDragRef.current = false;
-    startPosRef.current = { x: e.clientX, y: e.clientY };
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    // Character dragging handled globally via window events
-    if (draggedStep === null) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-    const start = startPosRef.current;
-    if (start) {
-      const dx = e.clientX - start.x;
-      const dy = e.clientY - start.y;
-      if (Math.hypot(dx, dy) > 3) didDragRef.current = true;
-    }
-    
-    setStepPositions(prev => ({
-      ...prev,
-      [draggedStep]: {
-        left: `${Math.max(0, Math.min(100, x))}%`,
-        top: `${Math.max(0, Math.min(100, y))}%`
-      }
-    }));
-  };
-
-  const handleMouseUp = () => {
-    if (draggedStep !== null) {
-      console.log('Final positions:', stepPositions);
-      try { localStorage.setItem(storageKey, JSON.stringify(stepPositions)); } catch {}
-    }
-    setDraggedStep(null);
-    startPosRef.current = null;
-    if (isDraggingCharacter) {
-      setIsDraggingCharacter(false);
-    }
-  };
-
-  // Load saved positions on mount
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) {
-        const saved = JSON.parse(raw) as Record<number, { top: string; left: string }>;
-        setStepPositions(prev => ({ ...prev, ...saved }));
-      }
-    } catch {}
-  }, []);
 
   const handleCharacterMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -235,10 +166,7 @@ export default function Roadmap() {
         {/* Treasure Map Container */}
         <div className="relative max-w-5xl mx-auto">
           {/* Map Image */}
-          <div ref={containerRef} className="relative overflow-hidden"
-               onMouseMove={handleMouseMove}
-               onMouseUp={handleMouseUp}
-               onMouseLeave={handleMouseUp}>
+          <div ref={containerRef} className="relative overflow-hidden">
             <img 
               src={treasureMapImage} 
               alt="Treasure Map" 
@@ -282,29 +210,18 @@ export default function Roadmap() {
               <Tooltip key={step.id}>
                 <TooltipTrigger asChild>
                   <div
-                    className="absolute cursor-move transform -translate-x-1/2 -translate-y-1/2 group select-none"
+                    className="absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2 group select-none"
                     style={{ 
-                      top: stepPositions[step.id].top, 
-                      left: stepPositions[step.id].left,
-                      zIndex: draggedStep === step.id ? 20 : 10
+                      top: step.position.top, 
+                      left: step.position.left,
+                      zIndex: 10
                     }}
-                    onMouseDown={(e) => handleMouseDown(e, step.id)}
-                    onClick={(e) => {
-                      if (didDragRef.current) { e.preventDefault(); return }
-                      handleStepClick(step)
-                    }}
+                    onClick={() => handleStepClick(step)}
                   >
-                    {/* Coordinate display */}
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-75 whitespace-nowrap">
-                      {Math.round(parseFloat(stepPositions[step.id].top))}%, {Math.round(parseFloat(stepPositions[step.id].left))}%
-                    </div>
-                    
                     {/* Interactive hotspot */}
                     <div className={`
                       w-8 h-8 md:w-12 md:h-12 rounded-full border-2 md:border-4
-                      ${draggedStep === step.id 
-                        ? "border-red-500 bg-red-100 shadow-lg shadow-red-500/50"
-                        : step.status === "available" 
+                      ${step.status === "available" 
                         ? "border-blue-500 bg-blue-100 hover:bg-blue-200 shadow-lg shadow-blue-500/50" 
                         : step.status === "treasure"
                         ? "border-yellow-500 bg-yellow-100 hover:bg-yellow-200 shadow-lg shadow-yellow-500/50"

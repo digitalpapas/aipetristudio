@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
-import { LineChart, User, ShoppingCart, LogOut, MoreHorizontal } from "lucide-react";
+import { LineChart, User, ShoppingCart, LogOut, MoreHorizontal, Brain } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -79,6 +79,14 @@ export function AppSidebar() {
           {state !== "collapsed" && <SidebarGroupLabel>только по подписке</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/dashboard/personality-unpacking" end className={getNavCls}>
+                    <Brain className="mr-2 h-4 w-4" />
+                    {state !== "collapsed" && <span>Распаковка личности</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/dashboard" end className={getNavCls}>

@@ -20,6 +20,7 @@ import ResearchResultPage from "./pages/dashboard/ResearchResult";
 import ResearchSegmentPage from "./pages/dashboard/ResearchSegment";
 import BookmarksPage from "./pages/dashboard/Bookmarks";
 import DiagnosticsPage from "./pages/dashboard/Diagnostics";
+import PersonalityUnpackingPage from "./pages/dashboard/PersonalityUnpacking";
 
 const queryClient = new QueryClient();
 
@@ -208,6 +209,16 @@ const App = () => {
                 <ProtectedRoute>
                   <DashboardLayout>
                     <DashboardHome />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/personality-unpacking"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <PersonalityUnpackingPage />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

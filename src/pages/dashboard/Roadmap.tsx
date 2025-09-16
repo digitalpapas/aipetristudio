@@ -11,7 +11,7 @@ const roadmapSteps = [
     icon: Brain,
     route: "/dashboard/personality-unpacking",
     status: "available",
-    position: { top: "32%", left: "15%" } // Домик на дереве
+    position: { top: "28%", left: "10%" } // Слева от домика на дереве
   },
   {
     id: 2,
@@ -20,7 +20,7 @@ const roadmapSteps = [
     icon: Users,
     route: "/dashboard",
     status: "available",
-    position: { top: "48%", left: "28%" } // Область с черепом
+    position: { top: "55%", left: "22%" } // Слева от черепа
   },
   {
     id: 3,

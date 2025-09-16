@@ -50,7 +50,7 @@ export default function Roadmap() {
   const didDragRef = useRef(false);
   const startPosRef = useRef<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const characterOffsetRef = useRef<{ offsetRight: number; offsetBottom: number }>({ offsetRight: 0, offsetBottom: 0 });
+  const characterOffsetRef = useRef<{ offsetX: number; offsetY: number }>({ offsetX: 0, offsetY: 0 });
   const [stepPositions, setStepPositions] = useState(() => {
     const base = roadmapSteps.reduce((acc, step) => {
       acc[step.id] = step.position;
@@ -66,7 +66,7 @@ export default function Roadmap() {
   
   // Character controls
   const [characterSize, setCharacterSize] = useState(100); // percentage
-  const [characterPosition, setCharacterPosition] = useState({ bottom: '20px', right: '20px' });
+  const [characterPosition, setCharacterPosition] = useState({ top: '20px', left: '20px' });
   const [isDraggingCharacter, setIsDraggingCharacter] = useState(false);
   const [blendMode, setBlendMode] = useState<'normal' | 'screen' | 'multiply'>(() => {
     try {
@@ -151,8 +151,8 @@ export default function Roadmap() {
       const containerRect = container.getBoundingClientRect();
       const elRect = target.getBoundingClientRect();
       characterOffsetRef.current = {
-        offsetRight: elRect.right - e.clientX,
-        offsetBottom: elRect.bottom - e.clientY,
+        offsetX: e.clientX - elRect.left,
+        offsetY: e.clientY - elRect.top,
       };
     }
   };
@@ -163,20 +163,20 @@ export default function Roadmap() {
     if (!container) return;
 
     const containerRect = container.getBoundingClientRect();
-    const { offsetRight, offsetBottom } = characterOffsetRef.current;
+    const { offsetX, offsetY } = characterOffsetRef.current;
     const width = characterSize;
     const height = characterSize;
 
-    let right = containerRect.right - e.clientX - offsetRight;
-    let bottom = containerRect.bottom - e.clientY - offsetBottom;
+    let left = e.clientX - containerRect.left - offsetX;
+    let top = e.clientY - containerRect.top - offsetY;
 
     // Clamp within container bounds
-    right = Math.max(0, Math.min(containerRect.width - width, right));
-    bottom = Math.max(0, Math.min(containerRect.height - height, bottom));
+    left = Math.max(0, Math.min(containerRect.width - width, left));
+    top = Math.max(0, Math.min(containerRect.height - height, top));
 
     setCharacterPosition({
-      right: `${right}px`,
-      bottom: `${bottom}px`,
+      left: `${left}px`,
+      top: `${top}px`,
     });
   };
 
@@ -185,7 +185,7 @@ export default function Roadmap() {
   };
 
   const resetCharacterPosition = () => {
-    setCharacterPosition({ bottom: '20px', right: '20px' });
+    setCharacterPosition({ top: '20px', left: '20px' });
     setCharacterSize(100);
   };
 
@@ -230,8 +230,8 @@ export default function Roadmap() {
             <div 
               className="absolute z-30 cursor-move"
               style={{ 
-                bottom: characterPosition.bottom, 
-                right: characterPosition.right,
+                top: characterPosition.top, 
+                left: characterPosition.left,
                 transform: isDraggingCharacter ? 'scale(1.1)' : 'scale(1)',
                 transition: isDraggingCharacter ? 'none' : 'transform 0.2s ease'
               }}

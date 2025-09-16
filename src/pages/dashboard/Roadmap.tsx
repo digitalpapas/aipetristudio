@@ -145,7 +145,7 @@ export default function Roadmap() {
           style={{ backgroundImage: 'url(/assets/desert-sand-texture.jpg)' }}
         >
         {/* Header */}
-        <div className="relative z-10 text-center mb-8">
+        <div className="relative z-10 text-center mb-8 bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-lg">
           <div className="flex items-center justify-center gap-3 mb-4">
             <MapPin className="h-8 w-8 text-amber-600" />
             <h1 className="text-4xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">

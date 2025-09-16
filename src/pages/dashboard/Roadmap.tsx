@@ -158,24 +158,42 @@ export default function Roadmap() {
     const width = characterSize * (1 - sideCrop);
     const height = characterSize;
 
-    let left = e.clientX - offsetX;
-    let top = e.clientY - offsetY;
+    const container = containerRef.current;
+    if (container) {
+      const rect = container.getBoundingClientRect();
 
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+      let left = e.clientX - rect.left - offsetX;
+      let top = e.clientY - rect.top - offsetY;
 
-    const maxLeft = Math.max(0, viewportWidth - width);
-    const minLeft = Math.min(0, viewportWidth - width);
-    left = Math.max(minLeft, Math.min(maxLeft, left));
+      const maxLeft = Math.max(0, rect.width - width);
+      const maxTop = Math.max(0, rect.height - height);
 
-    const maxTop = Math.max(0, viewportHeight - height);
-    const minTop = Math.min(0, viewportHeight - height);
-    top = Math.max(minTop, Math.min(maxTop, top));
+      left = Math.max(0, Math.min(maxLeft, left));
+      top = Math.max(0, Math.min(maxTop, top));
 
-    setCharacterPosition({
-      left: `${left}px`,
-      top: `${top}px`,
-    });
+      setCharacterPosition({
+        left: `${left}px`,
+        top: `${top}px`,
+      });
+    } else {
+      // Fallback to viewport bounds if container not available
+      let left = e.clientX - offsetX;
+      let top = e.clientY - offsetY;
+
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      const maxLeft = Math.max(0, viewportWidth - width);
+      const maxTop = Math.max(0, viewportHeight - height);
+
+      left = Math.max(0, Math.min(maxLeft, left));
+      top = Math.max(0, Math.min(maxTop, top));
+
+      setCharacterPosition({
+        left: `${left}px`,
+        top: `${top}px`,
+      });
+    }
   }
 
   function handleCharacterWindowMouseUp() {

@@ -200,8 +200,7 @@ export default function Roadmap() {
                 className="object-contain pointer-events-none"
                 style={{ 
                   width: `${characterSize}px`,
-                  height: `${characterSize}px`,
-                  mixBlendMode: 'multiply'
+                  height: `${characterSize}px`
                 }}
               >
                 <source src="/assets/animated-character.mp4" type="video/mp4" />

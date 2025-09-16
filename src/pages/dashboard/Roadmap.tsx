@@ -203,7 +203,7 @@ export default function Roadmap() {
                   height: `${characterSize}px`
                 }}
               >
-                <source src="/assets/animated-character.mp4" type="video/mp4" />
+                <source src="/assets/animated-character.webm" type="video/webm" />
               </video>
             </div>
             {/* Interactive Areas */}

@@ -21,6 +21,7 @@ import ResearchSegmentPage from "./pages/dashboard/ResearchSegment";
 import BookmarksPage from "./pages/dashboard/Bookmarks";
 import DiagnosticsPage from "./pages/dashboard/Diagnostics";
 import PersonalityUnpackingPage from "./pages/dashboard/PersonalityUnpacking";
+import AIBotsPage from "./pages/dashboard/AIBots";
 
 const queryClient = new QueryClient();
 
@@ -219,6 +220,16 @@ const App = () => {
                 <ProtectedRoute>
                   <DashboardLayout>
                     <PersonalityUnpackingPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/ai-bots"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <AIBotsPage />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

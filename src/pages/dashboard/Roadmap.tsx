@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Brain, Users, Factory, Trophy, MapPin } from "lucide-react";
+import { Brain, Users, Factory, Trophy, MapPin, Plus, Minus, RotateCcw } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import treasureMapImage from "@/assets/treasure-map-new.png";
 
@@ -60,6 +60,11 @@ export default function Roadmap() {
     return base;
   });
   const [draggedStep, setDraggedStep] = useState<number | null>(null);
+  
+  // Character controls
+  const [characterSize, setCharacterSize] = useState(100); // percentage
+  const [characterPosition, setCharacterPosition] = useState({ bottom: '20px', right: '20px' });
+  const [isDraggingCharacter, setIsDraggingCharacter] = useState(false);
 
   const handleStepClick = (step: typeof roadmapSteps[0]) => {
     if (step.status === "available" && step.route !== "#") {
@@ -117,6 +122,33 @@ export default function Roadmap() {
     } catch {}
   }, []);
 
+  const handleCharacterMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingCharacter(true);
+  };
+
+  const handleCharacterMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingCharacter) return;
+    
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = rect.right - e.clientX;
+    const y = rect.bottom - e.clientY;
+    
+    setCharacterPosition({
+      right: `${Math.max(0, x)}px`,
+      bottom: `${Math.max(0, y)}px`
+    });
+  };
+
+  const handleCharacterMouseUp = () => {
+    setIsDraggingCharacter(false);
+  };
+
+  const resetCharacterPosition = () => {
+    setCharacterPosition({ bottom: '20px', right: '20px' });
+    setCharacterSize(100);
+  };
+
   return (
     <TooltipProvider>
       <div className="relative min-h-screen bg-gradient-to-br from-background via-amber-50/30 to-orange-50/20 dark:from-background dark:via-amber-950/10 dark:to-orange-950/5 p-6 overflow-hidden">
@@ -146,15 +178,31 @@ export default function Roadmap() {
               className="w-full h-auto max-h-[600px] object-contain"
             />
             
-            {/* Animated Character in top right corner */}
-            <div className="absolute top-4 right-4 z-30 pointer-events-none">
+            {/* Animated Character in bottom right corner */}
+            <div 
+              className="absolute z-30 cursor-move"
+              style={{ 
+                bottom: characterPosition.bottom, 
+                right: characterPosition.right,
+                transform: isDraggingCharacter ? 'scale(1.1)' : 'scale(1)',
+                transition: isDraggingCharacter ? 'none' : 'transform 0.2s ease'
+              }}
+              onMouseDown={handleCharacterMouseDown}
+              onMouseMove={handleCharacterMouseMove}
+              onMouseUp={handleCharacterMouseUp}
+              onMouseLeave={handleCharacterMouseUp}
+            >
               <video 
                 autoPlay 
                 loop 
                 muted 
                 playsInline
-                className="w-20 h-20 md:w-24 md:h-24 object-contain"
-                style={{ mixBlendMode: 'multiply' }}
+                className="object-contain pointer-events-none"
+                style={{ 
+                  width: `${characterSize}px`,
+                  height: `${characterSize}px`,
+                  mixBlendMode: 'multiply'
+                }}
               >
                 <source src="/assets/animated-character.mp4" type="video/mp4" />
               </video>
@@ -265,6 +313,42 @@ export default function Roadmap() {
                   <div className="w-4 h-4 rounded-full bg-yellow-100 border-2 border-yellow-500"></div>
                   <span className="text-gray-700">Сокровище</span>
                 </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Character Controls */}
+          <div className="mt-4 flex justify-center">
+            <div className="bg-white/95 backdrop-blur-sm rounded-lg p-3 border border-gray-200 shadow-md">
+              <div className="flex items-center gap-4 text-sm">
+                <span className="text-gray-700 font-medium">Настройка персонажа:</span>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600">Размер:</span>
+                  <button 
+                    onClick={() => setCharacterSize(prev => Math.max(50, prev - 10))}
+                    className="p-1 rounded hover:bg-gray-100"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="w-8 text-center text-xs">{characterSize}px</span>
+                  <button 
+                    onClick={() => setCharacterSize(prev => Math.min(200, prev + 10))}
+                    className="p-1 rounded hover:bg-gray-100"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                
+                <button 
+                  onClick={resetCharacterPosition}
+                  className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span className="text-xs">Сброс</span>
+                </button>
+                
+                <span className="text-xs text-gray-500">Перетащите персонажа для изменения позиции</span>
               </div>
             </div>
           </div>

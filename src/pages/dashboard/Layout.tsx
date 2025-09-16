@@ -91,11 +91,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 variant="ghost"
                 className="w-full justify-start"
                 onClick={() => {
-                  navigate("/dashboard/ai-bots");
+                  navigate("/dashboard");
                   setMobileMenuOpen(false);
                 }}
               >
-                AI-боты
+                Мои исследования
               </Button>
               <Button
                 variant="ghost"
@@ -106,6 +106,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 }}
               >
                 Новое исследование
+              </Button>
+              
+              <div className="border-t border-border my-2"></div>
+              
+              <Button
+                variant="ghost"
+                className="w-full justify-start"
+                onClick={() => {
+                  navigate("/dashboard/ai-bots");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                AI-боты
               </Button>
               <Button
                 variant="ghost"

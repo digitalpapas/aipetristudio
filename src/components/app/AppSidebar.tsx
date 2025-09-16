@@ -89,17 +89,25 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <NavLink to="/dashboard/ai-bots" end className={getNavCls}>
-                    <Bot className="mr-2 h-4 w-4" />
-                    {state !== "collapsed" && <span>AI-боты</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
                   <NavLink to="/dashboard" end className={getNavCls}>
                     <LineChart className="mr-2 h-4 w-4" />
                     {state !== "collapsed" && <span>Исследование ЦА</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          {state !== "collapsed" && <SidebarGroupLabel>автоматизация</SidebarGroupLabel>}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/dashboard/ai-bots" end className={getNavCls}>
+                    <Bot className="mr-2 h-4 w-4" />
+                    {state !== "collapsed" && <span>AI-боты</span>}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

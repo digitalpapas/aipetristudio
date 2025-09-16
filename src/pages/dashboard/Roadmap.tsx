@@ -51,7 +51,7 @@ export default function Roadmap() {
   // Fixed character settings and responsive anchoring (from your screenshot)
   const fixed = {
     size: 850,
-    topPx: -80,
+    topPx: -65,
     leftPx: 570.3311767578125,
     blendMode: 'screen' as const,
   };

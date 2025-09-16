@@ -104,7 +104,7 @@ export default function Roadmap() {
         </div>
 
         {/* Treasure Map Container */}
-        <div className="relative max-w-5xl mx-auto" style={{ marginLeft: 'calc(50% - 40rem + 80px)' }}>
+        <div className="relative max-w-5xl mx-auto" style={{ marginLeft: '80px' }}>
           {/* Map Image with absolute positioned elements */}
           <div ref={containerRef} className="relative inline-block">
             <img 

@@ -2,8 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
 import { Brain, Users, Factory, Trophy, MapPin } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import treasureMapImage from "@/assets/treasure-map-transparent.png";
-import oceanBackground from "@/assets/ocean-background.png";
+const treasureMapImage = '/assets/treasure-map-transparent.png';
 
 // Preload resources for instant loading
 const preloadResources = () => {
@@ -163,8 +162,10 @@ export default function Roadmap() {
                 const r = imgRef.current?.getBoundingClientRect();
                 if (r && !refDims) setRefDims({ w: r.width, h: r.height });
               }}
-              src={treasureMapImage} 
-              alt="Treasure Map" 
+              src={treasureMapImage}
+              alt="Treasure Map"
+              fetchPriority="high"
+              decoding="async"
               className={`w-full h-auto max-h-[600px] object-contain block transition-opacity duration-300 ${
                 isLoaded ? 'opacity-100' : 'opacity-50'
               }`}

@@ -228,7 +228,7 @@ export default function Roadmap() {
             
             {/* Animated Character in bottom right corner */}
             <div 
-              className="fixed z-30 cursor-move"
+              className="absolute z-30 cursor-move"
               style={{ 
                 top: characterPosition.top, 
                 left: characterPosition.left,

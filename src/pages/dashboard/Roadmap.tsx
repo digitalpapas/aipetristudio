@@ -146,6 +146,19 @@ export default function Roadmap() {
               className="w-full h-auto max-h-[600px] object-contain"
             />
             
+            {/* Animated Character in top right corner */}
+            <div className="absolute top-4 right-4 z-30 pointer-events-none">
+              <video 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                className="w-20 h-20 md:w-24 md:h-24 object-contain"
+                style={{ mixBlendMode: 'multiply' }}
+              >
+                <source src="/assets/animated-character.mp4" type="video/mp4" />
+              </video>
+            </div>
             {/* Interactive Areas */}
             {roadmapSteps.map((step) => (
               <Tooltip key={step.id}>

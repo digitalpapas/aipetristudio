@@ -49,7 +49,7 @@ export default function Roadmap() {
   
   // Fixed character settings
   const characterSize = 820;
-  const characterPosition = { top: '570.331176757812px', left: '0px' };
+  const characterPosition = { top: '300px', left: '50px' };
   const sideCrop = 0.75;
   const bottomCrop = 0.2;
   const blendMode = 'screen';

@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
-import { LineChart, User, ShoppingCart, LogOut, MoreHorizontal, Brain, Bot, FileText, Image, Video } from "lucide-react";
+import { LineChart, User, ShoppingCart, LogOut, MoreHorizontal, Brain, Bot, FileText, Image, Video, MessageCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 const items = [
   { title: "Профиль", url: "/dashboard/profile", icon: User },
   { title: "Тарифы", url: "/pricing", icon: ShoppingCart },
+  { title: "AIPetri-чат", url: "/dashboard/chat", icon: MessageCircle },
 ];
 
 export function AppSidebar() {

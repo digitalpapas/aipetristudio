@@ -172,6 +172,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Button>
               <Button
                 variant="ghost"
+                className="w-full justify-start"
+                onClick={() => {
+                  navigate("/dashboard/chat");
+                  setMobileMenuOpen(false);
+                }}
+              >
+                AIPetri-чат
+              </Button>
+              <Button
+                variant="ghost"
                 className="w-full justify-start text-destructive"
                 onClick={async () => {
                   await signOut();

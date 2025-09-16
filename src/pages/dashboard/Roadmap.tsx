@@ -47,9 +47,9 @@ export default function Roadmap() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement | null>(null);
   
-  // Fixed character settings
+  // Fixed character settings (from your screenshot)
   const characterSize = 820;
-  const characterPosition = { top: '300px', left: '50px' };
+  const characterPosition = { top: '0px', left: '570.3311767578125px' };
   const sideCrop = 0.75;
   const bottomCrop = 0.2;
   const blendMode = 'screen';

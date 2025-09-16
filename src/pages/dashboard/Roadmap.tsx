@@ -140,7 +140,7 @@ export default function Roadmap() {
     <TooltipProvider>
       <div 
         className="relative min-h-screen p-6 overflow-hidden bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/assets/ocean-map-background.png)' }}
+        style={{ backgroundImage: 'url(/assets/treasure-background.png)' }}
       >
         {/* Header */}
         <div className="relative z-10 text-center mb-8">

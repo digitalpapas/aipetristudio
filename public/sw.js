@@ -1,7 +1,7 @@
 const CACHE_NAME = 'roadmap-cache-v1';
 const ASSETS = [
   '/assets/treasure-map-transparent.png',
-  '/assets/ocean-map-background.png',
+  '/assets/treasure-background.png',
   '/assets/updated-character.webm',
 ];
 

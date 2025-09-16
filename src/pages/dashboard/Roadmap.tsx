@@ -140,7 +140,10 @@ export default function Roadmap() {
     <TooltipProvider>
       <div className="min-h-screen p-2" style={{ backgroundColor: '#f5f5f5' }}>
         {/* Main content card */}
-        <div className="border rounded-2xl p-8 bg-card shadow-elevated max-w-6xl mx-auto">
+        <div 
+          className="border rounded-2xl p-8 bg-card shadow-elevated max-w-6xl mx-auto bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url(/assets/old-treasure-map.jpg)' }}
+        >
         {/* Header */}
         <div className="relative z-10 text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">

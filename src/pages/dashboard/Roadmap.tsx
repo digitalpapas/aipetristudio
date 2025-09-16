@@ -49,6 +49,8 @@ export default function Roadmap() {
   const characterSettingsKey = "roadmap_character_settings_v1";
   const didDragRef = useRef(false);
   const startPosRef = useRef<{ x: number; y: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const characterOffsetRef = useRef<{ offsetRight: number; offsetBottom: number }>({ offsetRight: 0, offsetBottom: 0 });
   const [stepPositions, setStepPositions] = useState(() => {
     const base = roadmapSteps.reduce((acc, step) => {
       acc[step.id] = step.position;
@@ -92,6 +94,9 @@ export default function Roadmap() {
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    if (isDraggingCharacter) {
+      handleCharacterMouseMove(e);
+    }
     if (draggedStep === null) return;
     
     const rect = e.currentTarget.getBoundingClientRect();
@@ -121,6 +126,9 @@ export default function Roadmap() {
     }
     setDraggedStep(null);
     startPosRef.current = null;
+    if (isDraggingCharacter) {
+      setIsDraggingCharacter(false);
+    }
   };
 
   // Load saved positions on mount
@@ -137,18 +145,38 @@ export default function Roadmap() {
   const handleCharacterMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDraggingCharacter(true);
+    const container = containerRef.current;
+    const target = e.currentTarget as HTMLElement;
+    if (container) {
+      const containerRect = container.getBoundingClientRect();
+      const elRect = target.getBoundingClientRect();
+      characterOffsetRef.current = {
+        offsetRight: elRect.right - e.clientX,
+        offsetBottom: elRect.bottom - e.clientY,
+      };
+    }
   };
 
   const handleCharacterMouseMove = (e: React.MouseEvent) => {
     if (!isDraggingCharacter) return;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = rect.right - e.clientX;
-    const y = rect.bottom - e.clientY;
-    
+    const container = containerRef.current;
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const { offsetRight, offsetBottom } = characterOffsetRef.current;
+    const width = characterSize;
+    const height = characterSize;
+
+    let right = containerRect.right - e.clientX - offsetRight;
+    let bottom = containerRect.bottom - e.clientY - offsetBottom;
+
+    // Clamp within container bounds
+    right = Math.max(0, Math.min(containerRect.width - width, right));
+    bottom = Math.max(0, Math.min(containerRect.height - height, bottom));
+
     setCharacterPosition({
-      right: `${Math.max(0, x)}px`,
-      bottom: `${Math.max(0, y)}px`
+      right: `${right}px`,
+      bottom: `${bottom}px`,
     });
   };
 
@@ -188,7 +216,7 @@ export default function Roadmap() {
         {/* Treasure Map Container */}
         <div className="relative max-w-5xl mx-auto">
           {/* Map Image */}
-          <div className="relative overflow-hidden"
+          <div ref={containerRef} className="relative overflow-hidden"
                onMouseMove={handleMouseMove}
                onMouseUp={handleMouseUp}
                onMouseLeave={handleMouseUp}>

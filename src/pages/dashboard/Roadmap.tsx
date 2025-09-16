@@ -232,9 +232,9 @@ export default function Roadmap() {
         </div>
 
         {/* Treasure Map Container */}
-        <div className="relative max-w-5xl mx-auto bg-gradient-to-br from-background via-amber-50/30 to-orange-50/20 dark:from-background dark:via-amber-950/10 dark:to-orange-950/5 rounded-lg">
+        <div className="relative max-w-5xl mx-auto">
           {/* Map Image */}
-          <div ref={containerRef} className="relative overflow-hidden rounded-lg"
+          <div ref={containerRef} className="relative overflow-hidden"
                onMouseMove={handleMouseMove}
                onMouseUp={handleMouseUp}
                onMouseLeave={handleMouseUp}>

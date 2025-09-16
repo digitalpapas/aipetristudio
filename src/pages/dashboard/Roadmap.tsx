@@ -57,24 +57,28 @@ export default function Roadmap() {
   const sideCrop = 0.75;
   const bottomCrop = 0.2;
 
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const [refDims, setRefDims] = useState<{ w: number; h: number } | null>(null);
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const update = () => {
       const rect = el.getBoundingClientRect();
-      setContainerSize({ width: rect.width, height: rect.height });
+      if (!refDims && rect.width && rect.height) {
+        setRefDims({ w: rect.width, h: rect.height }); // lock reference size once
+      }
     };
     update();
-    const ro = new ResizeObserver(update);
+    const ro = new ResizeObserver(() => {
+      update();
+    });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [refDims]);
 
-  const leftPercent = containerSize.width ? fixed.leftPx / containerSize.width : 0;
-  const topPercent = containerSize.height ? fixed.topPx / containerSize.height : 0;
-  const sizePercentW = containerSize.width ? fixed.size / containerSize.width : 0;
-  const sizePercentH = containerSize.height ? fixed.size / containerSize.height : 0;
+  const leftPercent = refDims ? fixed.leftPx / refDims.w : 0;
+  const topPercent = refDims ? fixed.topPx / refDims.h : 0;
+  const sizePercentW = refDims ? fixed.size / refDims.w : 0;
+  const sizePercentH = refDims ? fixed.size / refDims.h : 0;
 
   const handleStepClick = (step: typeof roadmapSteps[0]) => {
     if (step.status === "available" && step.route !== "#") {

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Brain, Users, Factory, Trophy, MapPin } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import treasureMapImage from "@/assets/treasure-map.png";
@@ -45,12 +45,20 @@ const roadmapSteps = [
 
 export default function Roadmap() {
   const navigate = useNavigate();
-  const [stepPositions, setStepPositions] = useState(
-    roadmapSteps.reduce((acc, step) => {
+  const storageKey = "roadmap_positions_v1";
+  const didDragRef = useRef(false);
+  const startPosRef = useRef<{ x: number; y: number } | null>(null);
+  const [stepPositions, setStepPositions] = useState(() => {
+    const base = roadmapSteps.reduce((acc, step) => {
       acc[step.id] = step.position;
       return acc;
-    }, {} as Record<number, { top: string; left: string }>)
-  );
+    }, {} as Record<number, { top: string; left: string }>);
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) return { ...base, ...JSON.parse(raw) };
+    } catch {}
+    return base;
+  });
   const [draggedStep, setDraggedStep] = useState<number | null>(null);
 
   const handleStepClick = (step: typeof roadmapSteps[0]) => {
@@ -62,6 +70,8 @@ export default function Roadmap() {
   const handleMouseDown = (e: React.MouseEvent, stepId: number) => {
     e.preventDefault();
     setDraggedStep(stepId);
+    didDragRef.current = false;
+    startPosRef.current = { x: e.clientX, y: e.clientY };
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -70,6 +80,13 @@ export default function Roadmap() {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    const start = startPosRef.current;
+    if (start) {
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      if (Math.hypot(dx, dy) > 3) didDragRef.current = true;
+    }
     
     setStepPositions(prev => ({
       ...prev,
@@ -83,9 +100,22 @@ export default function Roadmap() {
   const handleMouseUp = () => {
     if (draggedStep !== null) {
       console.log('Final positions:', stepPositions);
+      try { localStorage.setItem(storageKey, JSON.stringify(stepPositions)); } catch {}
     }
     setDraggedStep(null);
+    startPosRef.current = null;
   };
+
+  // Load saved positions on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        const saved = JSON.parse(raw) as Record<number, { top: string; left: string }>;
+        setStepPositions(prev => ({ ...prev, ...saved }));
+      }
+    } catch {}
+  }, []);
 
   return (
     <TooltipProvider>
@@ -128,7 +158,10 @@ export default function Roadmap() {
                       zIndex: draggedStep === step.id ? 20 : 10
                     }}
                     onMouseDown={(e) => handleMouseDown(e, step.id)}
-                    onClick={() => draggedStep === null && handleStepClick(step)}
+                    onClick={(e) => {
+                      if (didDragRef.current) { e.preventDefault(); return }
+                      handleStepClick(step)
+                    }}
                   >
                     {/* Interactive hotspot */}
                     <div className={`

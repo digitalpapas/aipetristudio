@@ -5,6 +5,24 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import treasureMapImage from "@/assets/treasure-map-transparent.png";
 import oceanBackground from "@/assets/ocean-background.png";
 
+// Preload resources for instant loading
+const preloadResources = () => {
+  // Preload character video
+  const videoLink = document.createElement('link');
+  videoLink.rel = 'preload';
+  videoLink.as = 'video';
+  videoLink.href = '/assets/updated-character.webm';
+  videoLink.type = 'video/webm';
+  document.head.appendChild(videoLink);
+
+  // Preload treasure map image
+  const imageLink = document.createElement('link');
+  imageLink.rel = 'preload';
+  imageLink.as = 'image';
+  imageLink.href = treasureMapImage;
+  document.head.appendChild(imageLink);
+};
+
 const roadmapSteps = [
   {
     id: 1,
@@ -48,6 +66,37 @@ export default function Roadmap() {
   const navigate = useNavigate();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Preload resources on component mount
+  useEffect(() => {
+    preloadResources();
+    
+    // Create a video element to preload the video
+    const video = document.createElement('video');
+    video.preload = 'auto';
+    video.src = '/assets/updated-character.webm';
+    video.muted = true;
+    video.playsInline = true;
+    
+    const img = new Image();
+    img.src = treasureMapImage;
+    
+    // Wait for both resources to load
+    Promise.all([
+      new Promise(resolve => {
+        if (video.readyState >= 3) resolve(true);
+        else video.addEventListener('canplaythrough', () => resolve(true), { once: true });
+      }),
+      new Promise(resolve => {
+        if (img.complete) resolve(true);
+        else img.addEventListener('load', () => resolve(true), { once: true });
+      })
+    ]).then(() => {
+      setIsLoaded(true);
+    });
+  }, []);
   
   // Fixed character settings and responsive anchoring (from your screenshot)
   const fixed = {
@@ -116,7 +165,9 @@ export default function Roadmap() {
               }}
               src={treasureMapImage} 
               alt="Treasure Map" 
-              className="w-full h-auto max-h-[600px] object-contain block"
+              className={`w-full h-auto max-h-[600px] object-contain block transition-opacity duration-300 ${
+                isLoaded ? 'opacity-100' : 'opacity-50'
+              }`}
             />
             
             {/* Interactive Areas - positioned relative to image */}
@@ -214,11 +265,15 @@ export default function Roadmap() {
               }}
             >
               <video 
+                ref={videoRef}
                 autoPlay 
                 loop 
                 muted 
                 playsInline
-                className="object-contain pointer-events-none"
+                preload="auto"
+                className={`object-contain pointer-events-none transition-opacity duration-300 ${
+                  isLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
                 style={{ 
                    width: `${sizePercentW * 100}%`,
                    height: `${sizePercentH * 100}%`,

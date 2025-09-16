@@ -136,7 +136,7 @@ export default function Roadmap() {
         {/* Treasure Map Container */}
         <div className="relative max-w-5xl mx-auto">
           {/* Map Image */}
-          <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden"
+          <div className="relative rounded-2xl shadow-2xl overflow-hidden"
                onMouseMove={handleMouseMove}
                onMouseUp={handleMouseUp}
                onMouseLeave={handleMouseUp}>

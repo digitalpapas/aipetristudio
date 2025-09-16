@@ -231,26 +231,6 @@ export default function Roadmap() {
               </video>
             </div>
           </div>
-          
-          {/* Legend */}
-          <div className="mt-6 flex justify-center">
-            <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 border border-amber-200 shadow-lg">
-              <div className="flex items-center gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-blue-100 border-2 border-blue-500"></div>
-                  <span className="text-gray-700">Доступно</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-gray-100 border-2 border-gray-400"></div>
-                  <span className="text-gray-700">Скоро</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded-full bg-yellow-100 border-2 border-yellow-500"></div>
-                  <span className="text-gray-700">Сокровище</span>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </TooltipProvider>

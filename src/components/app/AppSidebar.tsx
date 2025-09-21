@@ -1,13 +1,12 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar";
-import { LineChart, User, ShoppingCart, LogOut, MoreHorizontal, Brain, MessageCircle, Map, Factory, ChevronRight } from "lucide-react";
+import { LineChart, User, ShoppingCart, LogOut, MoreHorizontal, Brain, MessageCircle, Map, Factory } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const items = [
   { title: "Профиль", url: "/dashboard/profile", icon: User },
@@ -20,7 +19,6 @@ export function AppSidebar() {
   const { state } = useSidebar();
   const navigate = useNavigate();
   const [avatarUrl, setAvatarUrl] = useState(user?.user_metadata?.avatar_url || "");
-  const [isContentFactoryOpen, setIsContentFactoryOpen] = useState(false);
   const initials = user?.user_metadata?.full_name?.[0]?.toUpperCase?.() || user?.email?.[0]?.toUpperCase?.() || "A";
 
   // Update avatar URL when user changes
@@ -106,37 +104,24 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <Collapsible open={isContentFactoryOpen} onOpenChange={setIsContentFactoryOpen} className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton className="hover:bg-[hsl(var(--sidebar-accent))]/60">
-                      <Factory className="mr-2 h-4 w-4" />
-                      {state !== "collapsed" && <span>Контент завод</span>}
-                      {state !== "collapsed" && <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />}
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild>
-                          <NavLink to="/dashboard/content-factory" end className={getNavCls}>
-                            <Factory className="mr-2 h-4 w-4" />
-                            {state !== "collapsed" && <span>Основной</span>}
-                          </NavLink>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton asChild>
-                          <NavLink to="/dashboard/prompt-generator" end className={getNavCls}>
-                            <MessageCircle className="mr-2 h-4 w-4" />
-                            {state !== "collapsed" && <span>Промпт генератор</span>}
-                          </NavLink>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/dashboard/prompt-generator" className={getNavCls}>
+                    <Factory className="mr-2 h-4 w-4" />
+                    {state !== "collapsed" && <span>Контент завод</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+                <SidebarMenuSub>
+                  <SidebarMenuSubItem>
+                    <SidebarMenuSubButton asChild>
+                      <NavLink to="/dashboard/prompt-generator" end className={getNavCls}>
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        {state !== "collapsed" && <span>Промпт генератор</span>}
+                      </NavLink>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                </SidebarMenuSub>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -2,6 +2,7 @@ import Header from "@/components/marketing/Header";
 import Hero from "@/components/marketing/Hero";
 import HowItWorks from "@/components/marketing/HowItWorks";
 import FeaturesBento from "@/components/marketing/FeaturesBento";
+import ContentFactory from "@/components/marketing/ContentFactory";
 import Pricing from "@/components/marketing/Pricing";
 import Testimonials from "@/components/marketing/Testimonials";
 import FinalCTA from "@/components/marketing/FinalCTA";
@@ -38,6 +39,7 @@ const Index = () => {
         <Hero />
         <HowItWorks />
         <FeaturesBento />
+        <ContentFactory />
         <Pricing />
         <Testimonials />
         <FinalCTA />

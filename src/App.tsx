@@ -23,6 +23,7 @@ import DiagnosticsPage from "./pages/dashboard/Diagnostics";
 import PersonalityUnpackingPage from "./pages/dashboard/PersonalityUnpacking";
 import AIBotsPage from "./pages/dashboard/AIBots";
 import RoadmapPage from "./pages/dashboard/Roadmap";
+import ContentFactoryPage from "./pages/dashboard/ContentFactory";
 
 const queryClient = new QueryClient();
 
@@ -231,6 +232,16 @@ const App = () => {
                 <ProtectedRoute>
                   <DashboardLayout>
                     <RoadmapPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/content-factory"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <ContentFactoryPage />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

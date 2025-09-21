@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
-import { LineChart, User, ShoppingCart, LogOut, MoreHorizontal, Brain, MessageCircle, Map } from "lucide-react";
+import { LineChart, User, ShoppingCart, LogOut, MoreHorizontal, Brain, MessageCircle, Map, Factory } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -101,6 +101,14 @@ export function AppSidebar() {
                   <NavLink to="/dashboard" end className={getNavCls}>
                     <LineChart className="mr-2 h-4 w-4" />
                     {state !== "collapsed" && <span>Исследование ЦА</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/dashboard/content-factory" end className={getNavCls}>
+                    <Factory className="mr-2 h-4 w-4" />
+                    {state !== "collapsed" && <span>Контент завод</span>}
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>

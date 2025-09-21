@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar";
-import { LineChart, User, ShoppingCart, LogOut, MoreHorizontal, Brain, MessageCircle, Map, Factory } from "lucide-react";
+import { LineChart, User, ShoppingCart, LogOut, MoreHorizontal, Brain, MessageCircle, Map, Wrench } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -107,8 +107,8 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <NavLink to="/dashboard/prompt-generator" className={getNavCls}>
-                    <Factory className="mr-2 h-4 w-4" />
-                    {state !== "collapsed" && <span>Контент завод</span>}
+                    <Wrench className="mr-2 h-4 w-4" />
+                    {state !== "collapsed" && <span>Полезные инструменты</span>}
                   </NavLink>
                 </SidebarMenuButton>
                 <SidebarMenuSub>

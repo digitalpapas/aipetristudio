@@ -108,7 +108,7 @@ export function AppSidebar() {
                 <SidebarMenuButton asChild>
                   <NavLink to="/dashboard/prompt-generator" className={getNavCls}>
                     <Wrench className="mr-2 h-4 w-4" />
-                    {state !== "collapsed" && <span>Полезные инструменты</span>}
+                    {state !== "collapsed" && <span>Инструменты</span>}
                   </NavLink>
                 </SidebarMenuButton>
                 <SidebarMenuSub>

@@ -24,6 +24,7 @@ import PersonalityUnpackingPage from "./pages/dashboard/PersonalityUnpacking";
 import AIBotsPage from "./pages/dashboard/AIBots";
 import RoadmapPage from "./pages/dashboard/Roadmap";
 import ContentFactoryPage from "./pages/dashboard/ContentFactory";
+import PromptGeneratorPage from "./pages/dashboard/PromptGenerator";
 
 const queryClient = new QueryClient();
 
@@ -242,6 +243,16 @@ const App = () => {
                 <ProtectedRoute>
                   <DashboardLayout>
                     <ContentFactoryPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/prompt-generator"
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <PromptGeneratorPage />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

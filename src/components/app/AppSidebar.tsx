@@ -112,6 +112,14 @@ export function AppSidebar() {
                   </NavLink>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/dashboard/prompt-generator" end className={getNavCls}>
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    {state !== "collapsed" && <span>Промпт генератор</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

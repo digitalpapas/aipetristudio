@@ -12,18 +12,21 @@ export interface CreateNotificationData {
 export const createNotification = async (data: CreateNotificationData) => {
   try {
     const { data: result, error } = await supabase
-      .rpc('create_validated_notification', {
-        p_user_id: data.user_id,
-        p_title: data.title,
-        p_message: data.message || null,
-        p_type: data.type,
-        p_action_url: data.action_url || null,
-        p_research_id: null,
-        p_segment_id: null
-      });
+      .from('notifications')
+      .insert({
+        user_id: data.user_id,
+        title: data.title,
+        message: data.message || null,
+        type: data.type,
+        action_url: data.action_url || null,
+        research_id: null,
+        segment_id: null
+      })
+      .select('id')
+      .single();
 
     if (error) throw error;
-    return { success: true, notificationId: result };
+    return { success: true, notificationId: result?.id };
   } catch (error) {
     console.error('Error creating notification:', error);
     return { success: false, error };
@@ -38,18 +41,21 @@ export const createResearchCompletedNotification = async (
 ) => {
   try {
     const { data: result, error } = await supabase
-      .rpc('create_validated_notification', {
-        p_user_id: userId,
-        p_title: 'Исследование завершено',
-        p_message: `Ваше исследование "${projectName}" готово к просмотру`,
-        p_type: 'research',
-        p_action_url: `/dashboard/research/${projectId}`,
-        p_research_id: projectId,
-        p_segment_id: null
-      });
+      .from('notifications')
+      .insert({
+        user_id: userId,
+        title: 'Исследование завершено',
+        message: `Ваше исследование "${projectName}" готово к просмотру`,
+        type: 'research',
+        action_url: `/dashboard/research/${projectId}`,
+        research_id: projectId,
+        segment_id: null
+      })
+      .select('id')
+      .single();
 
     if (error) throw error;
-    return { success: true, notificationId: result };
+    return { success: true, notificationId: result?.id };
   } catch (error) {
     console.error('Error creating research notification:', error);
     return { success: false, error };
@@ -66,18 +72,21 @@ export const createSegmentAnalysisNotification = async (
 ) => {
   try {
     const { data: result, error } = await supabase
-      .rpc('create_validated_notification', {
-        p_user_id: userId,
-        p_title: 'Анализ сегмента завершен',
-        p_message: `Анализ "${analysisName}" для сегмента ${segmentName || segmentId} готов к просмотру`,
-        p_type: 'research',
-        p_action_url: `/dashboard/research/${projectId}/segment/${segmentId}`,
-        p_research_id: projectId,
-        p_segment_id: segmentId
-      });
+      .from('notifications')
+      .insert({
+        user_id: userId,
+        title: 'Анализ сегмента завершен',
+        message: `Анализ "${analysisName}" для сегмента ${segmentName || segmentId} готов к просмотру`,
+        type: 'research',
+        action_url: `/dashboard/research/${projectId}/segment/${segmentId}`,
+        research_id: projectId,
+        segment_id: segmentId
+      })
+      .select('id')
+      .single();
 
     if (error) throw error;
-    return { success: true, notificationId: result };
+    return { success: true, notificationId: result?.id };
   } catch (error) {
     console.error('Error creating segment analysis notification:', error);
     return { success: false, error };
@@ -126,18 +135,21 @@ export const createAnalysisErrorNotification = async (
 ) => {
   try {
     const { data: result, error } = await supabase
-      .rpc('create_validated_notification', {
-        p_user_id: userId,
-        p_title: 'Ошибка анализа',
-        p_message: `${errorMessage}. Попробуйте запустить анализ еще раз.`,
-        p_type: 'system',
-        p_action_url: `/dashboard/research/${projectId}/segment/${segmentId}`,
-        p_research_id: projectId,
-        p_segment_id: segmentId
-      });
+      .from('notifications')
+      .insert({
+        user_id: userId,
+        title: 'Ошибка анализа',
+        message: `${errorMessage}. Попробуйте запустить анализ еще раз.`,
+        type: 'system',
+        action_url: `/dashboard/research/${projectId}/segment/${segmentId}`,
+        research_id: projectId,
+        segment_id: segmentId
+      })
+      .select('id')
+      .single();
 
     if (error) throw error;
-    return { success: true, notificationId: result };
+    return { success: true, notificationId: result?.id };
   } catch (error) {
     console.error('Error creating analysis error notification:', error);
     return { success: false, error };

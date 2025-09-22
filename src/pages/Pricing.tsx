@@ -1,12 +1,30 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import { EnterpriseContactModal } from "@/components/ui/enterprise-contact-modal";
+import { useAuth } from "@/contexts/AuthContext";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const PricingPage = () => {
   const [isEnterpriseModalOpen, setIsEnterpriseModalOpen] = useState(false);
+  const { user } = useAuth();
+  const { status } = useSubscription();
+  const navigate = useNavigate();
+  
+  const SUBSCRIPTION_URL = 'https://neurosetipraktika.payform.ru/subscription/2510594';
+
+  const handleProButtonClick = () => {
+    if (!user) {
+      // Если пользователь не авторизован - редирект на логин с возвратом на pricing
+      navigate('/auth/login?redirect=/pricing');
+    } else if (status === 'demo') {
+      // Если авторизован и статус demo - открыть ссылку подписки
+      window.open(SUBSCRIPTION_URL, '_blank');
+    }
+    // Если статус 'pro' - кнопка будет показывать "Ваш текущий тариф" и не будет кликабельной
+  };
 
   // SEO: title, description, canonical, structured data
   useEffect(() => {
@@ -160,8 +178,12 @@ const PricingPage = () => {
                 <p className="text-sm text-muted-foreground mb-4 md:mb-6 min-h-[3rem]">
                   Полный доступ с расширенной аналитикой для маркетологов
                 </p>
-                <Button asChild className="w-full py-2.5 px-4 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-medium">
-                  <Link to="/register">Начать за 2,900₽</Link>
+                <Button 
+                  onClick={handleProButtonClick}
+                  disabled={status === 'pro'}
+                  className="w-full py-2.5 px-4 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-medium disabled:bg-muted disabled:text-muted-foreground disabled:cursor-default"
+                >
+                  {status === 'pro' ? 'Ваш текущий тариф' : 'Начать за 2,900₽'}
                 </Button>
                 <hr className="my-4 md:my-6 border-border" />
                 <div className="space-y-2">

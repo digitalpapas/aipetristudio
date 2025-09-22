@@ -10,7 +10,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 const PricingPage = () => {
   const [isEnterpriseModalOpen, setIsEnterpriseModalOpen] = useState(false);
   const { user } = useAuth();
-  const { status } = useSubscription();
+  const { status, daysLeft, hasActiveSubscription } = useSubscription();
   const navigate = useNavigate();
   
   const SUBSCRIPTION_URL = 'https://neurosetipraktika.payform.ru/subscription/2510594';
@@ -18,7 +18,7 @@ const PricingPage = () => {
   const handleProButtonClick = () => {
     if (!user) {
       // Если пользователь не авторизован - редирект на логин с возвратом на pricing
-      navigate('/auth/login?redirect=/pricing');
+      navigate('/login?redirect=/pricing');
     } else if (status === 'demo') {
       // Если авторизован и статус demo - открыть ссылку подписки
       window.open(SUBSCRIPTION_URL, '_blank');
@@ -183,7 +183,18 @@ const PricingPage = () => {
                   disabled={status === 'pro'}
                   className="w-full py-2.5 px-4 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 font-medium disabled:bg-muted disabled:text-muted-foreground disabled:cursor-default"
                 >
-                  {status === 'pro' ? 'Ваш текущий тариф' : 'Начать за 2,900₽'}
+                  {status === 'pro' ? (
+                    <div className="text-center">
+                      <div>Ваш текущий тариф ✓</div>
+                      {daysLeft !== null && (
+                        <div className="text-xs opacity-75 mt-1">
+                          {daysLeft > 0 ? `Осталось ${daysLeft} дн.` : 'Подписка истекла'}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    'Начать за 2,900₽'
+                  )}
                 </Button>
                 <hr className="my-4 md:my-6 border-border" />
                 <div className="space-y-2">

@@ -5,6 +5,11 @@ export interface Profile {
   user_id: string;
   full_name: string | null;
   avatar_url: string | null;
+  subscription_status: string | null;
+  subscription_expires_at: string | null;
+  trial_used: boolean | null;
+  researches_count: number | null;
+  segments_count: number | null;
 }
 
 export async function getProfile(userId: string): Promise<{ data: Profile | null; error: any }> {
@@ -19,7 +24,15 @@ export async function getProfile(userId: string): Promise<{ data: Profile | null
 
 export async function updateProfile(
   userId: string, 
-  updates: { full_name?: string; avatar_url?: string }
+  updates: { 
+    full_name?: string; 
+    avatar_url?: string;
+    subscription_status?: string;
+    subscription_expires_at?: string;
+    trial_used?: boolean;
+    researches_count?: number;
+    segments_count?: number;
+  }
 ): Promise<{ data: Profile | null; error: any }> {
   const { data, error } = await supabase
     .from('profiles')

@@ -14,6 +14,7 @@ import * as AuthRoutes from "./pages/auth";
 import DashboardLayout from "./pages/dashboard/Layout";
 import DashboardHome from "./pages/dashboard/Index";
 import ProfilePage from "./pages/dashboard/Profile";
+import SubscriptionPage from "./pages/account/Subscription";
 import PricingPage from "./pages/Pricing";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentError from "./pages/PaymentError";
@@ -331,6 +332,16 @@ const App = () => {
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="/pricing" element={<DashboardLayout><PricingPage /></DashboardLayout>} />
+            <Route 
+              path="/account/subscription" 
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <SubscriptionPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } 
+            />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-error" element={<PaymentError />} />
             <Route path="*" element={<NotFound />} />

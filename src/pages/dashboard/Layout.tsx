@@ -19,6 +19,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isDashboard = location.pathname === "/dashboard";
   const pageLabel = location.pathname === "/pricing"
     ? "Тарифы"
+    : location.pathname === "/account/subscription"
+    ? "Тарифы"
     : location.pathname === "/dashboard/profile"
     ? "Профиль"
     : location.pathname === "/demo"

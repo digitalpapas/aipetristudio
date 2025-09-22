@@ -1,1 +1,4 @@
 project_id = "chomgtqknhwfzirrjyro"
+
+[functions.prodamus-webhook]
+verify_jwt = false

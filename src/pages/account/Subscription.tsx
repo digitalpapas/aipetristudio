@@ -6,9 +6,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, CreditCard, User, AlertCircle, ExternalLink } from "lucide-react";
+import { Calendar, CreditCard, User, AlertCircle, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 interface Payment {
   id: string;
@@ -26,6 +27,7 @@ const SubscriptionPage = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [subscriptionExpiry, setSubscriptionExpiry] = useState<Date | null>(null);
+  const navigate = useNavigate();
 
   const SUBSCRIPTION_URL = 'https://neurosetipraktika.payform.ru/subscription/2510594';
 
@@ -229,10 +231,10 @@ Email: ${user?.email}
               </div>
               
               <Button 
-                onClick={() => window.open(SUBSCRIPTION_URL, '_blank')}
+                onClick={() => navigate('/pricing')}
                 className="w-full sm:w-auto"
               >
-                <ExternalLink className="w-4 h-4 mr-2" />
+                <ArrowRight className="w-4 h-4 mr-2" />
                 Обновить до Pro за 2,900₽
               </Button>
             </div>

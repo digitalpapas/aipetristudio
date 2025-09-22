@@ -15,6 +15,8 @@ import DashboardLayout from "./pages/dashboard/Layout";
 import DashboardHome from "./pages/dashboard/Index";
 import ProfilePage from "./pages/dashboard/Profile";
 import PricingPage from "./pages/Pricing";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentError from "./pages/PaymentError";
 import ResearchNewPage from "./pages/dashboard/ResearchNew";
 import ResearchResultPage from "./pages/dashboard/ResearchResult";
 import ResearchSegmentPage from "./pages/dashboard/ResearchSegment";
@@ -329,6 +331,8 @@ const App = () => {
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="/pricing" element={<DashboardLayout><PricingPage /></DashboardLayout>} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-error" element={<PaymentError />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

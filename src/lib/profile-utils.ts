@@ -10,6 +10,7 @@ export interface Profile {
   trial_used: boolean | null;
   researches_count: number | null;
   segments_count: number | null;
+  prodamus_subscription_id: string | null;
 }
 
 export async function getProfile(userId: string): Promise<{ data: Profile | null; error: any }> {
@@ -32,6 +33,7 @@ export async function updateProfile(
     trial_used?: boolean;
     researches_count?: number;
     segments_count?: number;
+    prodamus_subscription_id?: string;
   }
 ): Promise<{ data: Profile | null; error: any }> {
   const { data, error } = await supabase

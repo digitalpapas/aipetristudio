@@ -18,6 +18,9 @@ export interface UseSubscriptionReturn {
   daysLeft: number | null;
   limits: SubscriptionLimits;
   refresh: () => Promise<void>;
+  hasActiveSubscription: boolean;
+  subscriptionId: string | null;
+  cancelSubscription: () => Promise<{ success: boolean; error?: string }>;
 }
 
 const SUBSCRIPTION_LIMITS: Record<string, SubscriptionLimits> = {
@@ -49,6 +52,7 @@ export const useSubscription = (): UseSubscriptionReturn => {
   const [status, setStatus] = useState<'demo' | 'pro' | 'enterprise'>('demo');
   const [isLoading, setIsLoading] = useState(true);
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
+  const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
 
   const calculateDaysLeft = (expiresAt: string | null): number | null => {
     if (!expiresAt) return null;
@@ -108,6 +112,7 @@ export const useSubscription = (): UseSubscriptionReturn => {
         console.error('Error fetching profile:', error);
         setStatus('demo');
         setDaysLeft(null);
+        setSubscriptionId(null);
         return;
       }
 
@@ -115,6 +120,7 @@ export const useSubscription = (): UseSubscriptionReturn => {
         console.log('No profile found, defaulting to demo');
         setStatus('demo');
         setDaysLeft(null);
+        setSubscriptionId(null);
         return;
       }
 
@@ -126,6 +132,7 @@ export const useSubscription = (): UseSubscriptionReturn => {
       );
 
       setStatus(currentStatus as 'demo' | 'pro' | 'enterprise');
+      setSubscriptionId(profile.prodamus_subscription_id);
       
       // Calculate days left only for paid subscriptions
       if (currentStatus !== 'demo' && profile.subscription_expires_at) {
@@ -138,6 +145,7 @@ export const useSubscription = (): UseSubscriptionReturn => {
       console.error('Error in fetchSubscriptionData:', error);
       setStatus('demo');
       setDaysLeft(null);
+      setSubscriptionId(null);
     } finally {
       setIsLoading(false);
     }
@@ -152,7 +160,39 @@ export const useSubscription = (): UseSubscriptionReturn => {
     return currentLimits[feature] as boolean;
   };
 
+  const cancelSubscription = async (): Promise<{ success: boolean; error?: string }> => {
+    if (!user || !subscriptionId) {
+      return { success: false, error: 'Нет активной подписки для отмены' };
+    }
+
+    try {
+      // Update subscription status to demo and clear subscription data
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          subscription_status: 'demo',
+          subscription_expires_at: null,
+          prodamus_subscription_id: null
+        })
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        console.error('Error cancelling subscription:', updateError);
+        return { success: false, error: 'Ошибка при отмене подписки' };
+      }
+
+      // Refresh subscription data
+      await fetchSubscriptionData();
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error in cancelSubscription:', error);
+      return { success: false, error: 'Произошла ошибка при отмене подписки' };
+    }
+  };
+
   const limits = SUBSCRIPTION_LIMITS[status];
+  const hasActiveSubscription = status !== 'demo' && (daysLeft === null || daysLeft > 0);
 
   // Initial load and auth state changes
   useEffect(() => {
@@ -192,5 +232,8 @@ export const useSubscription = (): UseSubscriptionReturn => {
     daysLeft,
     limits,
     refresh,
+    hasActiveSubscription,
+    subscriptionId,
+    cancelSubscription,
   };
 };

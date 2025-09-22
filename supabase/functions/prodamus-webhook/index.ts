@@ -16,6 +16,8 @@ interface ProdamusWebhookData {
   }>;
   order_sum: number;
   payment_date: string;
+  subscription_id?: string;
+  payment_type?: string;
 }
 
 serve(async (req) => {
@@ -52,7 +54,7 @@ serve(async (req) => {
       });
     }
 
-    const { customer_email, order_id, order_sum, products } = webhookData;
+    const { customer_email, order_id, order_sum, products, subscription_id, payment_type } = webhookData;
 
     // Find user by email in auth.users table
     const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
@@ -74,17 +76,31 @@ serve(async (req) => {
 
     console.log('Found user:', user.id, user.email);
 
+    // Determine payment type: if subscription_id is provided and equals '2510594', it's a subscription
+    const isSubscriptionPayment = subscription_id === '2510594';
+    const isRecurring = payment_type === 'recurring' || (isSubscriptionPayment && payment_type !== 'initial');
+    
+    console.log('Payment type:', { isSubscriptionPayment, isRecurring, subscription_id, payment_type });
+
     // Calculate subscription expiration date (30 days from now)
     const expirationDate = new Date();
     expirationDate.setDate(expirationDate.getDate() + 30);
 
+    // Prepare profile update data
+    const profileUpdateData: any = {
+      subscription_status: 'pro',
+      subscription_expires_at: expirationDate.toISOString(),
+    };
+
+    // If this is the first subscription payment, save the subscription ID
+    if (isSubscriptionPayment && !isRecurring) {
+      profileUpdateData.prodamus_subscription_id = subscription_id;
+    }
+
     // Update user's subscription status and expiration
     const { error: profileUpdateError } = await supabaseAdmin
       .from('profiles')
-      .update({
-        subscription_status: 'pro',
-        subscription_expires_at: expirationDate.toISOString(),
-      })
+      .update(profileUpdateData)
       .eq('user_id', user.id);
 
     if (profileUpdateError) {
@@ -97,7 +113,7 @@ serve(async (req) => {
     // Determine plan from products
     const planName = products.length > 0 ? products[0].name : 'Pro Plan';
 
-    // Save payment information
+    // Save payment information with new fields
     const { error: paymentError } = await supabaseAdmin
       .from('payments')
       .insert({
@@ -106,6 +122,8 @@ serve(async (req) => {
         amount: order_sum,
         plan: planName,
         prodamus_order_id: order_id,
+        prodamus_subscription_id: isSubscriptionPayment ? subscription_id : null,
+        payment_type: isRecurring ? 'recurring' : 'initial',
         status: 'completed',
       });
 

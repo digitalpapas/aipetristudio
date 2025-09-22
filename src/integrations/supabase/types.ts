@@ -241,8 +241,10 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          payment_type: string | null
           plan: string
           prodamus_order_id: string
+          prodamus_subscription_id: string | null
           status: string
           user_id: string
         }
@@ -251,8 +253,10 @@ export type Database = {
           created_at?: string
           email: string
           id?: string
+          payment_type?: string | null
           plan: string
           prodamus_order_id: string
+          prodamus_subscription_id?: string | null
           status?: string
           user_id: string
         }
@@ -261,8 +265,10 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          payment_type?: string | null
           plan?: string
           prodamus_order_id?: string
+          prodamus_subscription_id?: string | null
           status?: string
           user_id?: string
         }
@@ -274,6 +280,7 @@ export type Database = {
           created_at: string | null
           full_name: string | null
           id: string
+          prodamus_subscription_id: string | null
           researches_count: number | null
           segments_count: number | null
           subscription_expires_at: string | null
@@ -287,6 +294,7 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
+          prodamus_subscription_id?: string | null
           researches_count?: number | null
           segments_count?: number | null
           subscription_expires_at?: string | null
@@ -300,6 +308,7 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
+          prodamus_subscription_id?: string | null
           researches_count?: number | null
           segments_count?: number | null
           subscription_expires_at?: string | null

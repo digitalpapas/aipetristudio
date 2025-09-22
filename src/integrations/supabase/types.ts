@@ -235,12 +235,50 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          email: string
+          id: string
+          plan: string
+          prodamus_order_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          email: string
+          id?: string
+          plan: string
+          prodamus_order_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          email?: string
+          id?: string
+          plan?: string
+          prodamus_order_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string | null
           full_name: string | null
           id: string
+          researches_count: number | null
+          segments_count: number | null
+          subscription_expires_at: string | null
+          subscription_status: string | null
+          trial_used: boolean | null
           updated_at: string | null
           user_id: string
         }
@@ -249,6 +287,11 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
+          researches_count?: number | null
+          segments_count?: number | null
+          subscription_expires_at?: string | null
+          subscription_status?: string | null
+          trial_used?: boolean | null
           updated_at?: string | null
           user_id: string
         }
@@ -257,6 +300,11 @@ export type Database = {
           created_at?: string | null
           full_name?: string | null
           id?: string
+          researches_count?: number | null
+          segments_count?: number | null
+          subscription_expires_at?: string | null
+          subscription_status?: string | null
+          trial_used?: boolean | null
           updated_at?: string | null
           user_id?: string
         }

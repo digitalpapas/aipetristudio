@@ -135,7 +135,7 @@ Email: ${user?.email}
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
               <span className="text-muted-foreground">Статус:</span>
               {getStatusBadge()}
             </div>

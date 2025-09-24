@@ -13,32 +13,48 @@ const supabase = createClient(
 );
 
 serve(async (req) => {
+  console.log('\n🚀 === DIRECT SEGMENT ANALYSIS STARTED ===');
+  console.log('Request method:', req.method);
+  console.log('Request URL:', req.url);
+  
   if (req.method === 'OPTIONS') {
+    console.log('✅ CORS preflight request handled');
     return new Response(null, { headers: corsHeaders });
   }
 
   let projectId: string | undefined;
+  const startTime = Date.now();
 
   try {
+    // Check environment variables first
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    
+    console.log('🔧 Environment check:');
+    console.log('- Supabase URL:', supabaseUrl ? '✅ Set' : '❌ Missing');
+    console.log('- Supabase Key:', supabaseKey ? '✅ Set' : '❌ Missing');
+    console.log('- OpenAI Key:', openAIApiKey ? '✅ Set' : '❌ Missing');
+    
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key не настроен. Обратитесь к администратору.');
+    }
     // Parse request body only once
+    console.log('📝 Parsing request body...');
     const requestData = await req.json();
     const { projectName, description, userId } = requestData;
     projectId = requestData.projectId;
     
-    console.log('=== STARTING ANALYSIS ===');
-    console.log('Project:', projectName);
-    console.log('ProjectId:', projectId);
-    console.log('UserId:', userId);
-    console.log('Description length:', description?.length || 0);
+    console.log('📊 === ANALYSIS PARAMETERS ===');
+    console.log('- Project:', projectName);
+    console.log('- ProjectId:', projectId);
+    console.log('- UserId:', userId);
+    console.log('- Description length:', description?.length || 0);
 
     // Validate required fields
     if (!projectName || !description || !userId) {
-      throw new Error('Missing required fields: projectName, description, or userId');
-    }
-
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
+      console.error('❌ Missing required fields');
+      throw new Error('Отсутствуют обязательные поля: название проекта, описание или ID пользователя');
     }
 
     // If projectId is provided, verify ownership and update status
@@ -156,31 +172,40 @@ serve(async (req) => {
     const run1 = await runResponse1.json();
     console.log('First agent run started:', run1.id);
 
-    // Wait for first agent completion
+    // Wait for first agent completion - reduced timeout for Edge Function limits
     let run1Status = run1;
     let attempts = 0;
-    const maxAttempts = 60; // 2 minutes max
+    const maxAttempts = 40; // 80 seconds max (40 * 2s)
     
     while (run1Status.status === 'queued' || run1Status.status === 'in_progress') {
       if (attempts >= maxAttempts) {
-        throw new Error('First agent timeout - please try again');
+        console.error('First agent timeout after', attempts * 2, 'seconds');
+        throw new Error('Первый агент превысил лимит времени (80 сек). Попробуйте еще раз.');
       }
       
       await new Promise(resolve => setTimeout(resolve, 2000));
-      const statusResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run1.id}`, {
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'OpenAI-Beta': 'assistants=v2'
-        }
-      });
       
-      if (!statusResponse.ok) {
-        console.error('Status check failed:', await statusResponse.text());
-        throw new Error('Failed to check agent status');
+      try {
+        const statusResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run1.id}`, {
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'OpenAI-Beta': 'assistants=v2'
+          }
+        });
+        
+        if (!statusResponse.ok) {
+          const errorText = await statusResponse.text();
+          console.error('Status check failed:', errorText);
+          throw new Error(`Ошибка проверки статуса: ${statusResponse.status}`);
+        }
+        
+        run1Status = await statusResponse.json();
+        console.log(`🤖 Первый агент [${attempts + 1}/${maxAttempts}]: ${run1Status.status}`);
+      } catch (fetchError) {
+        console.error('Network error checking status:', fetchError);
+        throw new Error('Ошибка сети при проверке статуса агента');
       }
       
-      run1Status = await statusResponse.json();
-      console.log(`First agent status [${attempts}/${maxAttempts}]:`, run1Status.status);
       attempts++;
     }
 
@@ -291,29 +316,40 @@ ${segmentsForSecondAgent}
     const run2 = await runResponse2.json();
     console.log('Second agent run started:', run2.id);
 
-    // Wait for second agent
+    // Wait for second agent - reduced timeout
     let run2Status = run2;
     attempts = 0;
+    const maxAttempts2 = 30; // 60 seconds max for second agent
     
     while (run2Status.status === 'queued' || run2Status.status === 'in_progress') {
-      if (attempts >= maxAttempts) {
-        throw new Error('Second agent timeout - please try again');
+      if (attempts >= maxAttempts2) {
+        console.error('Second agent timeout after', attempts * 2, 'seconds');
+        throw new Error('Второй агент превысил лимит времени (60 сек). Попробуйте еще раз.');
       }
       
       await new Promise(resolve => setTimeout(resolve, 2000));
-      const statusResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run2.id}`, {
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'OpenAI-Beta': 'assistants=v2'
-        }
-      });
       
-      if (!statusResponse.ok) {
-        throw new Error('Failed to check second agent status');
+      try {
+        const statusResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run2.id}`, {
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'OpenAI-Beta': 'assistants=v2'
+          }
+        });
+        
+        if (!statusResponse.ok) {
+          const errorText = await statusResponse.text();
+          console.error('Second agent status check failed:', errorText);
+          throw new Error(`Ошибка проверки статуса второго агента: ${statusResponse.status}`);
+        }
+        
+        run2Status = await statusResponse.json();
+        console.log(`🎯 Второй агент [${attempts + 1}/${maxAttempts2}]: ${run2Status.status}`);
+      } catch (fetchError) {
+        console.error('Network error checking second agent status:', fetchError);
+        throw new Error('Ошибка сети при проверке второго агента');
       }
       
-      run2Status = await statusResponse.json();
-      console.log(`Second agent status [${attempts}/${maxAttempts}]:`, run2Status.status);
       attempts++;
     }
 
@@ -458,18 +494,24 @@ ${segmentsForSecondAgent}
     }
 
     // Return successful response
+    const endTime = Date.now();
+    const duration = Math.round((endTime - startTime) / 1000);
+    
     const response = {
       success: true,
       projectId,
       segments: allSegments,
       topSegments: top3Data.map(t => t.id),
       topSegmentsData: top3Data,
-      resultText: firstAgentResult
+      resultText: firstAgentResult,
+      duration: duration
     };
     
-    console.log('\n=== RETURNING SUCCESS ===');
-    console.log('Response segments count:', response.segments.length);
-    console.log('Response top segments:', response.topSegments);
+    console.log('\n🎉 === ANALYSIS COMPLETED SUCCESSFULLY ===');
+    console.log('⏱️ Total duration:', duration, 'seconds');
+    console.log('📊 Generated segments:', response.segments.length);
+    console.log('🏆 Top segments:', response.topSegments);
+    console.log('💾 Database updated:', projectId ? 'Yes' : 'No');
     
     return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -477,12 +519,19 @@ ${segmentsForSecondAgent}
     });
 
   } catch (error) {
-    console.error('\n=== ERROR IN ANALYSIS ===');
-    console.error('Error details:', error);
+    const endTime = Date.now();
+    const duration = Math.round((endTime - startTime) / 1000);
+    
+    console.log('\n❌ === ANALYSIS ERROR ===');
+    console.error('Duration before error:', duration, 'seconds');
+    console.error('Error type:', error.constructor.name);
+    console.error('Error message:', error.message);
+    console.error('Stack trace:', error.stack);
     
     // Update database with error if we have projectId
     if (projectId) {
       try {
+        console.log('🔄 Updating database with error status...');
         await supabase
           .from('researches')
           .update({ 
@@ -490,14 +539,16 @@ ${segmentsForSecondAgent}
             error_message: error.message 
           })
           .eq('Project ID', projectId);
+        console.log('✅ Database updated with error status');
       } catch (updateError) {
-        console.error('Failed to update error status:', updateError);
+        console.error('❌ Failed to update error status:', updateError);
       }
     }
     
     return new Response(JSON.stringify({
-      error: error.message || 'Unknown error occurred',
-      success: false
+      error: error.message || 'Неизвестная ошибка при анализе',
+      success: false,
+      duration: duration
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

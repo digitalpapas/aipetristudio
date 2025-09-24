@@ -1208,9 +1208,9 @@ export default function ResearchNewPage() {
             </Button>
           </div>
           
-          <header className="flex items-center gap-3">
-            <Input value={title} readOnly className="max-w-md" />
-            <div className="text-sm text-muted-foreground">{new Date().toLocaleDateString("ru-RU")}</div>
+          <header className="flex items-center justify-between gap-2">
+            <Input value={title} readOnly className="flex-1 min-w-0" />
+            <div className="text-sm text-muted-foreground shrink-0 whitespace-nowrap">{new Date().toLocaleDateString("ru-RU")}</div>
           </header>
           
           <Card className="rounded-2xl">
@@ -1242,9 +1242,9 @@ export default function ResearchNewPage() {
             </Button>
           </div>
           
-          <header className="flex items-center gap-3">
-            <Input value={title} readOnly className="max-w-md" />
-            <div className="text-sm text-muted-foreground">{new Date().toLocaleDateString("ru-RU")}</div>
+          <header className="flex items-center justify-between gap-2">
+            <Input value={title} readOnly className="flex-1 min-w-0" />
+            <div className="text-sm text-muted-foreground shrink-0 whitespace-nowrap">{new Date().toLocaleDateString("ru-RU")}</div>
           </header>
           
           <Card className="rounded-2xl">
@@ -1326,7 +1326,7 @@ export default function ResearchNewPage() {
             </Button>
           </div>
           
-          <header className="flex items-center gap-3 mb-4">
+          <header className="flex items-center justify-between gap-2 mb-4">
             <Input 
               value={title} 
               onChange={(e) => {
@@ -1348,9 +1348,9 @@ export default function ResearchNewPage() {
               }}
               disabled={false}
               placeholder="Название исследования" 
-              className="max-w-md" 
+              className="flex-1 min-w-0" 
             />
-            <div className="text-sm text-muted-foreground">{new Date().toLocaleDateString("ru-RU")}</div>
+            <div className="text-sm text-muted-foreground shrink-0 whitespace-nowrap">{new Date().toLocaleDateString("ru-RU")}</div>
           </header>
           
           <Card className="rounded-2xl border-destructive/50 bg-destructive/5">

@@ -31,10 +31,6 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [telegram, setTelegram] = useState("");
-  const [phone, setPhone] = useState("");
-  const [telegramConnected, setTelegramConnected] = useState(false);
-
   useEffect(() => {
     document.title = "Профиль | AiPetri Studio";
     if (user) {
@@ -184,17 +180,6 @@ export default function ProfilePage() {
     toast("Контакты сохранены (локально). Интеграцию добавим при необходимости.");
   };
 
-  const onConnectTelegram = () => {
-    window.open("https://t.me/AIPetri_studiobot", "_blank");
-    setTelegramConnected(true);
-    toast("Откройте бота в Telegram и следуйте инструкциям для подключения");
-  };
-
-  const onDisconnectTelegram = () => {
-    setTelegramConnected(false);
-    toast("Telegram отключен");
-  };
-
   const onCancel = () => {
     setSelectedFile(null);
     setHasUnsavedChanges(false);
@@ -294,64 +279,6 @@ export default function ProfilePage() {
         </Card>
 
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                Подключение Telegram
-              </CardTitle>
-              <CardDescription>
-                Подключите Telegram для получения уведомлений и управления исследованиями с мобильного устройства
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {telegramConnected ? (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
-                    <Check className="h-5 w-5 text-green-600" />
-                    <div className="flex-1">
-                      <p className="font-medium text-green-800 dark:text-green-200">Telegram подключен успешно</p>
-                      <p className="text-sm text-green-600 dark:text-green-400">
-                        Теперь вы можете запускать исследования и получать уведомления прямо в Telegram
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => window.open("https://t.me/AIPetri_studiobot", "_blank")}
-                      className="flex items-center gap-2"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                      Открыть бота
-                    </Button>
-                    <Button variant="destructive" onClick={onDisconnectTelegram}>
-                      Отключить
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Возможности Telegram-бота:</h4>
-                    <ul className="text-sm text-blue-600 dark:text-blue-400 space-y-1">
-                      <li>• Запуск исследований прямо из чата</li>
-                      <li>• Получение уведомлений о завершении анализа</li>
-                      <li>• Быстрый доступ к результатам</li>
-                      <li>• Безопасная синхронизация с платформой</li>
-                    </ul>
-                  </div>
-                  <Button 
-                    onClick={onConnectTelegram} 
-                    className="bg-[#0088cc] hover:bg-[#0088cc]/90 text-white flex items-center gap-2"
-                  >
-                    <Send className="h-4 w-4" />
-                    Подключить Telegram
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
           <Card>
             <CardHeader>
               <CardTitle>Изменение пароля</CardTitle>

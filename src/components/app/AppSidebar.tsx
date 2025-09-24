@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const items = [
-  { title: "Исследование ЦА", url: "/dashboard", icon: LineChart },
   { title: "Профиль", url: "/dashboard/profile", icon: User },
   { title: "Тарифы", url: "/account/subscription", icon: ShoppingCart },
   { title: "AIPetri-чат", url: "/dashboard/chat", icon: MessageCircle },
@@ -77,6 +76,21 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        <SidebarGroup>
+          {state !== "collapsed" && <SidebarGroupLabel>только по подписке</SidebarGroupLabel>}
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/dashboard" end className={getNavCls}>
+                    <LineChart className="mr-2 h-4 w-4" />
+                    {state !== "collapsed" && <span>Исследование ЦА</span>}
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
       </SidebarContent>
       

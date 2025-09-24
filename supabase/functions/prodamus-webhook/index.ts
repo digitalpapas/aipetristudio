@@ -199,7 +199,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('=== Error processing Prodamus webhook ===');
     console.error('Error details:', error);
-    console.error('Stack trace:', error.stack);
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
     
     return new Response(JSON.stringify({ 
       success: false, 

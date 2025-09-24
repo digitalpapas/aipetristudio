@@ -341,6 +341,7 @@ serve(async (req) => {
         
       } catch (error) {
         console.error('Error processing initial research:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
         
         // Обновляем статус на error
         await supabase
@@ -350,7 +351,7 @@ serve(async (req) => {
         
         return new Response(JSON.stringify({ 
           error: 'Failed to process initial research',
-          details: error.message 
+          details: errorMessage 
         }), {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -443,7 +444,8 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error processing webhook:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

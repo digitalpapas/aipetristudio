@@ -100,7 +100,8 @@ serve(async (req) => {
             console.log(`TXT file decoded, length: ${textContent.length}`);
           } catch (error) {
             console.error('Error decoding TXT file:', error);
-            textContent = `[Ошибка чтения TXT файла: ${error.message}]`;
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+            textContent = `[Ошибка чтения TXT файла: ${errorMessage}]`;
           }
         } else if (CLOUDCONVERT_API_KEY && CLOUDCONVERT_API_KEY !== 'undefined') {
           // Для документов используем CloudConvert
@@ -140,7 +141,7 @@ serve(async (req) => {
           }
           
           const jobResult = await jobResponse.json();
-          const exportTask = jobResult.data.tasks.find(t => t.name === 'export');
+          const exportTask = jobResult.data.tasks.find((t: any) => t.name === 'export');
           
           if (exportTask?.result?.files?.[0]?.url) {
             const textResponse = await fetch(exportTask.result.files[0].url);
@@ -179,10 +180,11 @@ serve(async (req) => {
 
       } catch (error) {
         console.error(`Error processing file ${file.name}:`, error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         // Добавляем файл с ошибкой
         convertedFiles.push({
           filename: file.name,
-          content: `[Ошибка обработки файла: ${error.message}]`,
+          content: `[Ошибка обработки файла: ${errorMessage}]`,
           originalType: file.name.split('.').pop()?.toLowerCase()
         });
       }
@@ -204,9 +206,10 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in convert-files function:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return new Response(JSON.stringify({
       success: false,
-      error: error.message
+      error: errorMessage
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

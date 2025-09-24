@@ -136,11 +136,12 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        response: `Ошибка: ${error.message}`
+        error: errorMessage,
+        response: `Ошибка: ${errorMessage}`
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )

@@ -524,9 +524,14 @@ ${segmentsForSecondAgent}
     
     console.log('\n❌ === ANALYSIS ERROR ===');
     console.error('Duration before error:', duration, 'seconds');
-    console.error('Error type:', error.constructor.name);
-    console.error('Error message:', error.message);
-    console.error('Stack trace:', error.stack);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    const errorName = error instanceof Error ? error.constructor.name : 'Unknown';
+    const errorStack = error instanceof Error ? error.stack : 'No stack trace';
+    
+    console.error('Error type:', errorName);
+    console.error('Error message:', errorMessage);
+    console.error('Stack trace:', errorStack);
     
     // Update database with error if we have projectId
     if (projectId) {
@@ -536,7 +541,7 @@ ${segmentsForSecondAgent}
           .from('researches')
           .update({ 
             status: 'error',
-            error_message: error.message 
+            error_message: errorMessage 
           })
           .eq('Project ID', projectId);
         console.log('✅ Database updated with error status');
@@ -546,7 +551,7 @@ ${segmentsForSecondAgent}
     }
     
     return new Response(JSON.stringify({
-      error: error.message || 'Неизвестная ошибка при анализе',
+      error: errorMessage || 'Неизвестная ошибка при анализе',
       success: false,
       duration: duration
     }), {

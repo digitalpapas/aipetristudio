@@ -19,7 +19,7 @@ serve(async (req) => {
     runStarted: false,
     runCompleted: false,
     responseReceived: false,
-    error: null
+    error: null as string | null
   }
 
   try {
@@ -42,7 +42,8 @@ serve(async (req) => {
       diagnostics.assistantFound = !!assistant
       console.log('Assistant found:', assistant.name)
     } catch (e) {
-      throw new Error('Assistant not found: ' + e.message)
+      const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+      throw new Error('Assistant not found: ' + errorMessage)
     }
 
     // Создание thread
@@ -92,19 +93,20 @@ serve(async (req) => {
       JSON.stringify({ 
         success: true,
         diagnostics,
-        response: lastMessage?.content[0]?.text?.value || 'No response'
+        response: (lastMessage?.content[0] as any)?.text?.value || 'No response'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
 
   } catch (error) {
-    diagnostics.error = error.message
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    diagnostics.error = errorMessage
     
     return new Response(
       JSON.stringify({ 
         success: false,
         diagnostics,
-        error: error.message
+        error: errorMessage
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )

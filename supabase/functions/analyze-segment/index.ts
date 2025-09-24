@@ -25,7 +25,7 @@ const ASSISTANT_IDS = {
 };
 
 // Инструкции для каждого типа анализа
-const ANALYSIS_INSTRUCTIONS = {
+const ANALYSIS_INSTRUCTIONS: { [key: string]: string } = {
   segment_description: 'Создай детальное описание этого сегмента по установленному формату.',
   bdf_analysis: 'Проведи BDF анализ для этого сегмента.',
   problems_analysis: 'Проанализируй боли, страхи, потребности и возражения этого сегмента.',
@@ -38,7 +38,7 @@ const ANALYSIS_INSTRUCTIONS = {
 };
 
 // Названия анализов для форматирования зависимостей
-const ANALYSIS_NAMES = {
+const ANALYSIS_NAMES: { [key: string]: string } = {
   segment_description: 'Описание сегмента',
   bdf_analysis: 'BDF анализ',
   problems_analysis: 'Боли, страхи, потребности, возражения',
@@ -65,7 +65,7 @@ serve(async (req) => {
     
     console.log(`Запуск анализа ${analysisType} для сегмента: ${segmentName}`);
 
-    const assistantId = ASSISTANT_IDS[analysisType];
+    const assistantId = ASSISTANT_IDS[analysisType as keyof typeof ASSISTANT_IDS];
     if (!assistantId) {
       throw new Error(`Неизвестный тип анализа: ${analysisType}`);
     }
@@ -255,8 +255,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Ошибка в Edge Function analyze-segment:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { 
         status: 500, 
         headers: { 

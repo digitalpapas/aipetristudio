@@ -11,7 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 const items = [
   { title: "Профиль", url: "/dashboard/profile", icon: User },
   { title: "Тарифы", url: "/account/subscription", icon: ShoppingCart },
-  { title: "AIPetri-чат", url: "/dashboard/chat", icon: MessageCircle },
 ];
 
 export function AppSidebar() {

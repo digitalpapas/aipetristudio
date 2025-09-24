@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar";
-import { LineChart, User, ShoppingCart, LogOut, MoreHorizontal, Brain, MessageCircle, Map, Wrench, CreditCard } from "lucide-react";
+import { LineChart, User, ShoppingCart, LogOut, MoreHorizontal, MessageCircle, CreditCard } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const items = [
+  { title: "Исследование ЦА", url: "/dashboard", icon: LineChart },
   { title: "Профиль", url: "/dashboard/profile", icon: User },
   { title: "Тарифы", url: "/account/subscription", icon: ShoppingCart },
   { title: "AIPetri-чат", url: "/dashboard/chat", icon: MessageCircle },
@@ -76,55 +77,6 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          {state !== "collapsed" && <SidebarGroupLabel>только по подписке</SidebarGroupLabel>}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/dashboard/roadmap" end className={getNavCls}>
-                    <Map className="mr-2 h-4 w-4" />
-                    {state !== "collapsed" && <span>Дорожная карта</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/dashboard/personality-unpacking" end className={getNavCls}>
-                    <Brain className="mr-2 h-4 w-4" />
-                    {state !== "collapsed" && <span>Распаковка личности</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/dashboard" end className={getNavCls}>
-                    <LineChart className="mr-2 h-4 w-4" />
-                    {state !== "collapsed" && <span>Исследование ЦА</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <NavLink to="/dashboard/prompt-generator" className={getNavCls}>
-                    <Wrench className="mr-2 h-4 w-4" />
-                    {state !== "collapsed" && <span>Инструменты</span>}
-                  </NavLink>
-                </SidebarMenuButton>
-                <SidebarMenuSub>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild>
-                      <NavLink to="/dashboard/prompt-generator" end className={getNavCls}>
-                        <MessageCircle className="mr-2 h-4 w-4" />
-                        {state !== "collapsed" && <span>Промпт генератор</span>}
-                      </NavLink>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                </SidebarMenuSub>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
 
       </SidebarContent>
       

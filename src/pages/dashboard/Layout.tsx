@@ -77,90 +77,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   setMobileMenuOpen(false);
                 }}
               >
-                Мои исследования
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => {
-                  navigate("/dashboard/roadmap");
-                  setMobileMenuOpen(false);
-                }}
-              >
-                Дорожная карта
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => {
-                  navigate("/dashboard/personality-unpacking");
-                  setMobileMenuOpen(false);
-                }}
-              >
-                Распаковка личности
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => {
-                  navigate("/dashboard");
-                  setMobileMenuOpen(false);
-                }}
-              >
-                Мои исследования
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => {
-                  navigate("/dashboard/research/new");
-                  setMobileMenuOpen(false);
-                }}
-              >
-                Новое исследование
-              </Button>
-              
-              <div className="border-t border-border my-2"></div>
-              
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => {
-                  navigate("/dashboard/ai-bots");
-                  setMobileMenuOpen(false);
-                }}
-              >
-                AI-боты
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => {
-                  navigate("/dashboard/ai-templates");
-                  setMobileMenuOpen(false);
-                }}
-              >
-                AI-шаблоны
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => {
-                  navigate("/dashboard/ai-images");
-                  setMobileMenuOpen(false);
-                }}
-              >
-                AI-изображения
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => {
-                  navigate("/dashboard/ai-videos");
-                  setMobileMenuOpen(false);
-                }}
-              >
-                AI-видео
+                Исследование ЦА
               </Button>
               <Button
                 variant="ghost"
@@ -176,21 +93,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 variant="ghost"
                 className="w-full justify-start"
                 onClick={() => {
-                  navigate("/pricing");
+                  navigate("/account/subscription");
                   setMobileMenuOpen(false);
                 }}
               >
                 Тарифы
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => {
-                  navigate("/dashboard/chat");
-                  setMobileMenuOpen(false);
-                }}
-              >
-                AIPetri-чат
               </Button>
               <Button
                 variant="ghost"
@@ -239,7 +146,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </header>
           
           {/* Main Content with mobile spacing */}
-          <main className="flex-1 p-3 md:p-4 pt-16 md:pt-8 lg:pt-3 mobile-safe-area overflow-x-safe">{children}</main>
+          <main className="flex-1 p-3 md:p-4 pt-20 md:pt-8 lg:pt-3 mobile-safe-area overflow-x-safe">{children}</main>
         </div>
       </div>
     </SidebarProvider>

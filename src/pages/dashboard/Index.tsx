@@ -442,8 +442,8 @@ export default function DashboardHome() {
               filter === f.key ? "bg-[hsl(var(--primary))] text-white" : "bg-[hsl(var(--secondary))]"
             }`}
           >
-            <span className="hidden sm:inline">{f.label}</span>
-            <span className="sm:hidden">{f.shortLabel || f.label}</span>
+            <span className="hidden md:inline">{f.label}</span>
+            <span className="md:hidden">{f.shortLabel || f.label}</span>
           </button>
         ))}
       </div>

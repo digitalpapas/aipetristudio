@@ -110,7 +110,6 @@ export default function ResearchNewPage() {
   const [idea, setIdea] = useState(getOriginalDescription(cachedData));
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<any>(null);
   const [originalAnalysisData, setOriginalAnalysisData] = useState<any>(null);
   const [error, setError] = useState(cachedData?.status === 'error');
   const [currentResearchId, setCurrentResearchId] = useState(recoveryId || "");
@@ -119,9 +118,6 @@ export default function ResearchNewPage() {
   // File conversion states
   const [conversionProgress, setConversionProgress] = useState<ConversionProgress[]>([]);
   const [isConverting, setIsConverting] = useState(false);
-  
-  // Selected segments state
-  const [selectedSegments, setSelectedSegments] = useState<number[]>([]);
   
   // AbortController для отмены запросов при размонтировании
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -197,16 +193,11 @@ export default function ResearchNewPage() {
               
               // Лог удален для предотвращения спама
               
-              setResults({
-                segments: formattedSegments,
-                topSegments: topSegmentsData?.map(t => t.segment_id) || [],
-                topSegmentsData: topSegmentsData || [], // Передаем полные данные
-                projectId: recoveryId
-              });
-              
+              // Сразу переходим на страницу результатов
               setLoadingRecovery(false);
               setLoading(false);
               setError(false);
+              navigate(`/dashboard/research/${recoveryId}`);
               return true;
             }
             return false;
@@ -221,12 +212,12 @@ export default function ResearchNewPage() {
               try {
                 const segments = JSON.parse(cachedSegments);
                 if (segments && segments.length > 0) {
-                  setResults({
-                    segments: segments,
-                    topSegments: [], // Загрузим из БД
-                    projectId: recoveryId
-                  });
+                  // Сразу переходим на страницу результатов
                   setLoadingRecovery(false);
+                  setLoading(false);
+                  setError(false);
+                  navigate(`/dashboard/research/${recoveryId}`);
+                  return;
                   setLoading(false);
                   setError(false);
                   return true;
@@ -302,23 +293,17 @@ export default function ResearchNewPage() {
                 console.warn('Could not parse description for top segments:', e);
               }
               
-              setResults({
-                segments: research.generated_segments,
-                topSegments: topSegments,
-                projectId: recoveryId,
-                resultText: JSON.stringify(research.generated_segments)
-              });
-              
               // Кэшируем сегменты для быстрого доступа
               sessionStorage.setItem(
                 `research_segments_${recoveryId}`,
                 JSON.stringify(research.generated_segments)
               );
               
-              // ВАЖНО: Сразу выключаем загрузку
+              // ВАЖНО: Сразу выключаем загрузку и переходим на страницу результатов
               setLoadingRecovery(false);
               setLoading(false);
               setError(false);
+              navigate(`/dashboard/research/${recoveryId}`);
               return;
             } else if (research.status === 'completed') {
               setError(false);
@@ -684,23 +669,22 @@ export default function ResearchNewPage() {
           };
           setOriginalAnalysisData(originalData);
           
-          // Показываем результаты с топ-сегментами
-          setResults({
-            segments: processedSegments, // Используем уже обработанные сегменты из Edge Function
-            topSegments: data.topSegments || [], // ID топ-3 от ИИ
-            projectId: data.projectId,
-            resultText: data.resultText
-          });
-          console.log('=== ANALYSIS RESPONSE (TEXT) ===');
-          console.log('Segments received:', processedSegments?.length);
-          console.log('Top segments received:', data.topSegments);
-          console.log('RAW DATA from Edge Function:', data);
-          console.log('Setting results with top segments:', data.topSegments);
-          
           // Создаем уведомление об успешном завершении
           await createNotification(researchId, title, 'success');
           
+          // Обновляем статус исследования до 'completed' для корректного показа результатов
+          await supabase
+            .from('researches')
+            .update({ 
+              status: 'completed',
+              "segmentsCount": processedSegments.length
+            })
+            .eq('Project ID', researchId);
+          
           setLoading(false);
+          
+          // Сразу переходим на страницу результатов вместо показа промежуточной страницы
+          navigate(`/dashboard/research/${researchId}`);
           return;
         } else {
           throw new Error(data.error || "Неизвестная ошибка");
@@ -787,18 +771,22 @@ export default function ResearchNewPage() {
             );
           }
           
-          // Показываем результаты с топ-сегментами
-          setResults({
-            segments: processedSegments, // Используем уже обработанные сегменты из Edge Function
-            topSegments: data.topSegments || [], // ID топ-3
-            projectId: data.projectId,
-            resultText: data.resultText
-          });
-          
           // Создаем уведомление об успешном завершении
           await createNotification(researchId, title, 'success');
           
+          // Обновляем статус исследования до 'completed' для корректного показа результатов
+          await supabase
+            .from('researches')
+            .update({ 
+              status: 'completed',
+              "segmentsCount": processedSegments.length
+            })
+            .eq('Project ID', researchId);
+          
           setLoading(false);
+          
+          // Сразу переходим на страницу результатов вместо показа промежуточной страницы
+          navigate(`/dashboard/research/${researchId}`);
           return;
         } else {
           throw new Error(data.error || "Неизвестная ошибка");
@@ -936,8 +924,6 @@ export default function ResearchNewPage() {
       });
       localStorage.setItem('research', JSON.stringify(finalUpdatedList));
 
-      setResults(result);
-      
       // Перенаправляем на страницу исследования при успехе
       navigate(`/dashboard/research/${currentResearchId}`);
       
@@ -1026,10 +1012,9 @@ export default function ResearchNewPage() {
     }
   };
 
-  // Определяем текущее состояние для четкого разделения (приоритет: результаты > ошибка > загрузка)
+  // Определяем текущее состояние для четкого разделения (приоритет: ошибка > загрузка)
   const currentState = 
     error ? 'error' : 
-    results ? 'results' : // Если есть результаты - показываем их
     loadingRecovery ? 'loading-recovery' : 
     loading ? 'loading' : 
     'form';
@@ -1328,31 +1313,6 @@ export default function ResearchNewPage() {
               )}
             </CardContent>
           </Card>
-        </section>
-      )}
-
-      {/* Состояние результатов */}
-      {currentState === 'results' && (
-        <section className="space-y-4">
-          <SegmentCards 
-            segments={results.segments || []}
-            topSegments={results.topSegments} // Передаем топ-3
-            selectedSegments={selectedSegments} // Передаем выбранные сегменты
-            researchTitle={title}
-            researchId={results.projectId || currentResearchId || recoveryId} // Передаем правильный ID для сохранения в БД
-            originalData={originalAnalysisData}
-            onRegenerate={(newSegments, newTopSegments) => {
-              setResults({
-                ...results,
-                segments: newSegments,
-                topSegments: newTopSegments
-              });
-            }}
-            onSelectedSegmentsChange={(selectedIds) => {
-              console.log('✅ Сегменты выбраны и сохранены:', selectedIds);
-              setSelectedSegments(selectedIds); // Сохраняем выбранные сегменты в состояние
-            }}
-          />
         </section>
       )}
 

@@ -530,17 +530,19 @@ export default function ResearchResultPage() {
         console.log('📡 Real-time subscription status:', status);
       });
 
-    // Initial fetch on mount to avoid empty state until first realtime event
-    fetchResearchData();
-    fetchAllSegments();
-    fetchTopSegments();
+    // Initial fetch on mount (wait for auth)
+    if (user?.id) {
+      fetchResearchData();
+      fetchAllSegments();
+      fetchTopSegments();
+    }
 
 
     return () => {
       console.log('🔌 Unsubscribing from real-time updates');
       supabase.removeChannel(channel);
     };
-  }, [id, navigate]);
+  }, [id, navigate, user?.id]);
 
   // Обновляем useEffect для синхронизации localTitle
   useEffect(() => {

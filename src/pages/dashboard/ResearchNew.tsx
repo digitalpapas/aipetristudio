@@ -171,9 +171,11 @@ export default function ResearchNewPage() {
       .channel(`research-progress-${targetId}`)
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'researches', filter: `"Project ID"=eq.${targetId}` },
+        { event: 'UPDATE', schema: 'public', table: 'researches' },
         (payload) => {
-          const newStatus = (payload as any).new?.status;
+          const newData = (payload as any).new;
+          if (newData?.["Project ID"] !== targetId) return;
+          const newStatus = newData?.status;
           console.log('📡 Realtime: research status update', newStatus);
           if (newStatus === 'completed') {
             navigate(`/dashboard/research/${targetId}`);

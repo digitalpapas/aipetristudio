@@ -472,14 +472,18 @@ export default function ResearchResultPage() {
 
     const channel = supabase
       .channel(`research-${id}-realtime`)
+      // Listen to any segment changes and filter client-side (column has a space)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'segments', filter: `"Project ID"=eq.${id}` },
+        { event: '*', schema: 'public', table: 'segments' },
         (payload) => {
+          const row = (payload as any).new || (payload as any).old;
+          if (row?.["Project ID"] !== id) return;
           console.log('🔄 Segments table changed:', payload.eventType);
           fetchAllSegments();
         }
       )
+      // top_segments uses project_id without spaces, safe to filter server-side
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'top_segments', filter: `project_id=eq.${id}` },
@@ -488,12 +492,14 @@ export default function ResearchResultPage() {
           fetchTopSegments();
         }
       )
+      // Research status updates: filter client-side due to spaced column name
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'researches', filter: `"Project ID"=eq.${id}` },
+        { event: 'UPDATE', schema: 'public', table: 'researches' },
         (payload) => {
           console.log('🔄 Research status changed:', payload);
           const newData = (payload as any).new;
+          if (newData?.["Project ID"] !== id) return;
           const newStatus = newData?.status;
           
           if (newStatus === 'processing') {

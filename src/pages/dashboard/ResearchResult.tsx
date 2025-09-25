@@ -306,6 +306,33 @@ export default function ResearchResultPage() {
     loadDataFromSupabase();
   }, [id, user?.id, navigate]);
 
+  // Local fallback: parse research.generated_segments if DB is empty
+  useEffect(() => {
+    if (!id) return;
+    if (allGeneratedSegments && allGeneratedSegments.length > 0) return;
+    const raw = (research as any)?.generated_segments;
+    if (!raw) return;
+    let parsed: any = raw;
+    try { if (typeof raw === 'string') parsed = JSON.parse(raw); } catch {}
+    let source: any[] | null = null;
+    if (Array.isArray(parsed)) {
+      source = parsed;
+    } else if (parsed && Array.isArray(parsed.segments)) {
+      source = parsed.segments;
+    }
+    if (source && source.length) {
+      const formatted = source.map((s: any, idx: number) => ({
+        id: s.id ?? idx + 1,
+        title: s.title ?? s.name ?? `Сегмент ${idx + 1}`,
+        description: s.description ?? s.desc ?? '',
+        problems: s.problems,
+        message: s.message,
+      }));
+      setAllGeneratedSegments(formatted);
+      localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(formatted));
+    }
+  }, [id, research, allGeneratedSegments?.length]);
+
   // Создаем debounced функцию сохранения
   const debouncedSave = useCallback(
     debounce(async (newName: string) => {

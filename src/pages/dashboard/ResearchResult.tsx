@@ -67,7 +67,7 @@ export default function ResearchResultPage() {
         // Обеспечиваем наличие базовых полей для отображения
         title: foundResearch.title || foundResearch["Project name"] || "Исследование",
         "Project name": foundResearch["Project name"] || foundResearch.title || "Исследование",
-        status: foundResearch.status || "completed"
+        status: foundResearch.status || "completed" // Сохраняем реальный статус
       };
     }
     
@@ -77,7 +77,7 @@ export default function ResearchResultPage() {
       id: id,
       title: "Загружается...",
       "Project name": "Загружается...",
-      status: "completed" // для показа основного интерфейса
+      status: "loading" // специальный статус для начальной загрузки
     };
   });
   
@@ -483,6 +483,9 @@ export default function ResearchResultPage() {
         description: "Идёт создание новых сегментов с учётом ваших комментариев"
       });
 
+      // Перенаправляем на страницу загрузки (важно делать это после обновления состояния)
+      navigate(`/dashboard/research/${id}`);
+
     } catch (error) {
       console.error('Error during regeneration with comment:', error);
       
@@ -724,7 +727,7 @@ export default function ResearchResultPage() {
   }
 
   // Если исследование в процессе генерации
-  if (research?.status === "processing" || research?.status === "generating") {
+  if (research?.status === "processing" || research?.status === "generating" || research?.status === "loading") {
     return (
       <main className="space-y-5">
         <div className="flex items-center gap-3 mb-4">
@@ -744,11 +747,11 @@ export default function ResearchResultPage() {
             <Input 
               value={localTitle} 
               onChange={(e) => handleNameChange(e.target.value)}
-              disabled={research?.status === "processing" || research?.status === "generating"}
-              className={`${research?.status === "processing" || research?.status === "generating" ? "bg-muted text-muted-foreground cursor-not-allowed pr-10" : ""}`}
-              title={research?.status === "processing" || research?.status === "generating" ? "Редактирование заблокировано во время генерации сегментов" : ""}
+              disabled={research?.status === "processing" || research?.status === "generating" || research?.status === "loading"}
+              className={`${research?.status === "processing" || research?.status === "generating" || research?.status === "loading" ? "bg-muted text-muted-foreground cursor-not-allowed pr-10" : ""}`}
+              title={research?.status === "processing" || research?.status === "generating" || research?.status === "loading" ? "Редактирование заблокировано во время генерации сегментов" : ""}
             />
-            {(research?.status === "processing" || research?.status === "generating") && (
+            {(research?.status === "processing" || research?.status === "generating" || research?.status === "loading") && (
               <Lock className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             )}
           </div>
@@ -758,9 +761,13 @@ export default function ResearchResultPage() {
         <Card className="rounded-2xl">
           <CardContent className="text-center py-8">
             <Loader2 className="h-12 w-12 mx-auto animate-spin text-primary mb-4" />
-            <h3 className="font-semibold mb-2">Генерируем сегменты...</h3>
+            <h3 className="font-semibold mb-2">
+              {research?.status === "processing" ? "Анализируем данные..." : "Генерируем сегменты..."}
+            </h3>
             <p className="text-muted-foreground">
-              Анализируем данные и создаем целевые аудитории
+              {research?.status === "processing" 
+                ? "Это может занять несколько минут" 
+                : "Анализируем данные и создаем целевые аудитории"}
             </p>
           </CardContent>
         </Card>

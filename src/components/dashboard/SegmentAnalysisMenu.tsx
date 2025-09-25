@@ -63,8 +63,8 @@ const ANALYSIS_OPTIONS: AnalysisOption[] = [
   
   // Основные категории анализа
   { id: "bdf_analysis", name: "BDF", category: "analysis", description: "Комплексный анализ убеждений, желаний и чувств аудитории" },
-  { id: "problems_analysis", name: "Боли страхи потребности возражения", category: "analysis", description: "Анализ проблематики и барьеров аудитории" },
-  { id: "solutions_analysis", name: "Работа с болями страхами потребностями и возражениями", category: "analysis", description: "Стратегии работы с проблемами аудитории" },
+  { id: "problems_analysis", name: "Боли страхи потребности\nвозражения", category: "analysis", description: "Анализ проблематики и барьеров аудитории" },
+  { id: "solutions_analysis", name: "Работа с болями страхами\nпотребностями и возражениями", category: "analysis", description: "Стратегии работы с проблемами аудитории" },
   { id: "jtbd_analysis", name: "JTBD", category: "analysis", description: "Анализ Jobs to be Done - задач пользователей" },
   { id: "content_themes", name: "Темы для контента", category: "analysis", description: "Контентная стратегия для аудитории" },
   { id: "user_personas", name: "User personas (5 шт)", category: "analysis", description: "Детализированные персоны пользователей" },
@@ -90,89 +90,206 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
   const { toast } = useCustomToast();
   const { user } = useAuth();
   
-  const [selectedOptions, setSelectedOptions] = useState<string[]>(["segment_description"]);
-  const [completedAnalyses, setCompletedAnalyses] = useState<string[]>([]);
-  const [analyzingTypes, setAnalyzingTypes] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [deletingAnalysis, setDeletingAnalysis] = useState<string | null>(null);
-
-  // Простая функция для загрузки завершенных анализов
-  const loadCompletedAnalyses = async () => {
+  // Safe storage functions with quota handling and auto-cleanup (MOVED TO TOP)
+  const clearOldData = () => {
     try {
-      const { data, error } = await getCompletedAnalyses(researchId, parseInt(segmentId));
-      if (!error && data) {
-        const completed = data.map((analysis: any) => analysis.analysis_type);
-        setCompletedAnalyses(completed);
-      }
+      const keys = Object.keys(localStorage);
+      const analysisKeys = keys.filter(key => key.includes('segment-analysis-') || key.includes('analyzing-'));
+      
+      // Удаляем старые записи анализов (старше 7 дней)
+      const weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      analysisKeys.forEach(key => {
+        try {
+          const data = localStorage.getItem(key);
+          if (data) {
+            const parsed = JSON.parse(data);
+            const updatedAt = new Date(parsed.updatedAt || parsed.startedAt).getTime();
+            if (updatedAt < weekAgo) {
+              try {
+                localStorage.removeItem(key);
+              } catch (e) {
+                console.warn(`Failed to remove old key: ${key}`);
+              }
+            }
+          }
+        } catch (e) {
+          try {
+            localStorage.removeItem(key);
+          } catch (removeError) {
+            console.warn(`Failed to remove corrupted key: ${key}`);
+          }
+        }
+      });
     } catch (error) {
-      console.error('Error loading completed analyses:', error);
+      console.warn('Failed to clear old data:', error);
     }
   };
 
-  // Простая функция для загрузки анализирующихся типов
-  const loadAnalyzingTypes = async () => {
+  const safeSetItem = (key: string, value: string, useSession = false) => {
+    try {
+      const storage = useSession ? sessionStorage : localStorage;
+      storage.setItem(key, value);
+    } catch (error) {
+      console.warn(`Storage quota exceeded for key: ${key}`);
+      try {
+        // Очищаем старые данные и пробуем снова
+        if (!useSession) {
+          clearOldData();
+          // Используем sessionStorage как fallback после очистки
+          sessionStorage.setItem(key, value);
+        } else {
+          // Для sessionStorage просто не сохраняем при ошибке
+          console.warn('SessionStorage также недоступен');
+        }
+      } catch (retryError) {
+        console.error('All storage methods failed for key:', key);
+      }
+    }
+  };
+
+  const safeGetItem = (key: string, useSession = false) => {
+    try {
+      const storage = useSession ? sessionStorage : localStorage;
+      return storage.getItem(key);
+    } catch (error) {
+      console.warn(`Failed to read from storage: ${key}`);
+      return null;
+    }
+  };
+
+  const safeRemoveItem = (key: string, useSession = false) => {
+    try {
+      const storage = useSession ? sessionStorage : localStorage;
+      storage.removeItem(key);
+    } catch (error) {
+      console.warn(`Failed to remove from storage: ${key}`);
+    }
+  };
+
+  // Get localStorage key for analysis status
+  const getAnalysisKey = (analysisType: string) => `analyzing-${researchId}-${segmentId}-${analysisType}`;
+
+  // Now useState can safely use the helper functions
+  const [selectedOptions, setSelectedOptions] = useState<string[]>(["segment_description"]);
+  const [completedAnalyses, setCompletedAnalyses] = useState<string[]>(() => {
+    // Инициализация из localStorage для мгновенного отображения
+    const storageKey = `segment-analysis-${researchId}-${segmentId}`;
+    const saved = safeGetItem(storageKey);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        return data.completed || [];
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  });
+
+  const [analyzingTypes, setAnalyzingTypes] = useState<string[]>(() => {
+    // Проверяем анализирующиеся типы из sessionStorage (временные данные)
     const analyzing: string[] = [];
-    
-    // Проверяем sessionStorage
     ANALYSIS_OPTIONS.forEach(option => {
       const key = `analyzing-${researchId}-${segmentId}-${option.id}`;
-      const data = sessionStorage.getItem(key);
+      if (sessionStorage.getItem(key)) {
+        analyzing.push(option.id);
+      }
+    });
+    return analyzing;
+  });
+   const [isLoading, setIsLoading] = useState(false);
+  const [deletingAnalysis, setDeletingAnalysis] = useState<string | null>(null);
+
+  // Check sessionStorage for currently analyzing types
+  const loadAnalyzingTypes = () => {
+    const analyzing: string[] = [];
+    const now = Date.now();
+    const TIMEOUT = 30 * 60 * 1000; // 30 минут таймаут
+    
+    ANALYSIS_OPTIONS.forEach(option => {
+      const key = getAnalysisKey(option.id);
+      const data = safeGetItem(key, true); // используем sessionStorage
       if (data) {
         try {
           const parsed = JSON.parse(data);
           const startedAt = new Date(parsed.startedAt).getTime();
-          const now = Date.now();
           
-          // Если анализ идет меньше 30 минут
-          if (now - startedAt < 30 * 60 * 1000) {
-            analyzing.push(option.id);
+          // Если анализ идет больше 30 минут - считаем его зависшим
+          if (now - startedAt > TIMEOUT) {
+            safeRemoveItem(key, true);
           } else {
-            sessionStorage.removeItem(key);
+            analyzing.push(option.id);
           }
         } catch (e) {
-          sessionStorage.removeItem(key);
+          safeRemoveItem(key, true);
         }
       }
     });
-
-    // Проверяем БД на анализы в процессе
-    try {
-      const { data: processingData } = await supabase
-        .from('segment_analyses')
-        .select('analysis_type, created_at')
-        .match({
-          'Project ID': researchId,
-          'Сегмент ID': Number(segmentId),
-          'status': 'processing'
-        });
-
-      if (processingData) {
-        const now = Date.now();
-        processingData.forEach((analysis: any) => {
-          const createdAt = new Date(analysis.created_at).getTime();
-          if (now - createdAt < 30 * 60 * 1000) {
-            if (!analyzing.includes(analysis.analysis_type)) {
-              analyzing.push(analysis.analysis_type);
-            }
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Error checking processing analyses:', error);
-    }
-    
     setAnalyzingTypes(analyzing);
   };
 
-  // Инициализация данных
+  // Единая функция для загрузки всех данных
+  const loadAllAnalysisData = async () => {
+    try {
+        // Сохраняем в localStorage для быстрой загрузки при следующем входе
+        const storageKey = `segment-analysis-${researchId}-${segmentId}`;
+        const saved = safeGetItem(storageKey);
+        if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          if (data.completed && data.completed.length > 0) {
+            setCompletedAnalyses(data.completed);
+          }
+        } catch (e) {
+          console.error('Error parsing localStorage data:', e);
+        }
+      }
+      
+      // Затем загружаем актуальные данные из Supabase в фоне
+      console.log('Loading analysis data for:', { researchId, segmentId, userId: user?.id });
+      
+      // Загружаем завершенные анализы из Supabase
+      const { data: supabaseAnalyses, error } = await getCompletedAnalyses(researchId, parseInt(segmentId));
+      
+      if (!error && supabaseAnalyses) {
+        const completedFromSupabase = supabaseAnalyses.map((analysis: any) => analysis.analysis_type);
+        setCompletedAnalyses(completedFromSupabase);
+        
+        // Сохраняем в localStorage для быстрой загрузки при следующем входе
+        const storageKey = `segment-analysis-${researchId}-${segmentId}`;
+        safeSetItem(storageKey, JSON.stringify({
+          completed: completedFromSupabase,
+          updatedAt: new Date().toISOString()
+        }));
+        console.log('Loaded completed analyses:', completedFromSupabase);
+        
+        // Очищаем статус "анализируется" для завершенных анализов
+        completedFromSupabase.forEach(analysisType => {
+          const key = getAnalysisKey(analysisType);
+          const data = safeGetItem(key, true); // используем sessionStorage
+          if (data) {
+            safeRemoveItem(key, true);
+            // Убираем из списка анализирующихся
+            setAnalyzingTypes(prev => prev.filter(type => type !== analysisType));
+          }
+        });
+      }
+
+      // Загружаем статус анализирующихся типов из localStorage
+      loadAnalyzingTypes();
+    } catch (error) {
+      console.error('Error loading analysis data:', error);
+    }
+  };
+
+  // Инициализация данных при монтировании компонента
   useEffect(() => {
     if (user?.id) {
-      loadCompletedAnalyses();
-      loadAnalyzingTypes();
+      loadAllAnalysisData();
     }
   }, [researchId, segmentId, user?.id]);
 
-  // Подписка на real-time обновления
+  // Подписка на real-time обновления segment_analyses
   useEffect(() => {
     if (!user?.id) return;
 
@@ -187,19 +304,31 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
         },
         (payload) => {
           const row: any = (payload as any).new || (payload as any).old;
-          if (row?.["Project ID"] === researchId && row?.["Сегмент ID"] === Number(segmentId)) {
-            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-              const analysisType = (payload as any).new?.analysis_type;
-              if (analysisType) {
-                // Убираем из анализирующихся
-                const key = `analyzing-${researchId}-${segmentId}-${analysisType}`;
-                sessionStorage.removeItem(key);
-                setAnalyzingTypes(prev => prev.filter(type => type !== analysisType));
-                
-                // Обновляем завершенные
-                loadCompletedAnalyses();
-              }
+          const pid = row?.["Project ID"];
+          const sid = row?.["Сегмент ID"];
+          if (pid !== researchId || sid !== Number(segmentId)) return;
+
+          console.log('Real-time segment analysis update:', payload);
+          console.log('Event type:', payload.eventType);
+
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            // Извлекаем тип анализа из полученных данных
+            const completedAnalysisType = (payload as any).new?.analysis_type;
+
+            if (completedAnalysisType) {
+              // Убираем из анализирующихся СРАЗУ
+              const analysisKey = getAnalysisKey(completedAnalysisType);
+              safeRemoveItem(analysisKey, true); // используем sessionStorage
+              setAnalyzingTypes(prev => prev.filter(type => type !== completedAnalysisType));
+
+              // Добавляем в завершенные СРАЗУ
+              setCompletedAnalyses(prev => (
+                prev.includes(completedAnalysisType) ? prev : [...prev, completedAnalysisType]
+              ));
             }
+
+            // Перезагружаем все данные для синхронизации
+            loadAllAnalysisData();
           }
         }
       )
@@ -207,16 +336,33 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
 
     return () => {
       supabase.removeChannel(channel);
-    };
+    }
   }, [researchId, segmentId, user?.id]);
+
+  // Периодическая проверка для синхронизации статусов
+  useEffect(() => {
+    if (analyzingTypes.length === 0) return;
+    
+    const interval = setInterval(() => {
+      loadAllAnalysisData();
+    }, 5000); // Проверка каждые 5 секунд
+    
+    return () => clearInterval(interval);
+  }, [analyzingTypes.length]);
+
+  // Убрана периодическая проверка - теперь анализ синхронный
 
   const handleOptionToggle = (optionId: string) => {
     const option = ANALYSIS_OPTIONS.find(opt => opt.id === optionId);
     if (!option || option.required || completedAnalyses.includes(optionId)) return;
 
+    // Проверяем, завершен ли анализ описания сегмента
     const segmentDescriptionCompleted = completedAnalyses.includes("segment_description");
+    
+    // Блокируем все остальные опции до завершения описания сегмента
     if (!segmentDescriptionCompleted && option.id !== "segment_description") return;
 
+    // Проверяем зависимости для специфических разделов
     if (option.id === "solutions_analysis" && !completedAnalyses.includes("problems_analysis")) return;
     
     if (option.id === "content_themes") {
@@ -229,6 +375,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
       if (!allAnalysisOptions.every(id => completedAnalyses.includes(id))) return;
     }
 
+    // Для финального отчета проверяем, что все остальные анализы завершены
     if (option.id === "final_report") {
       const allAnalysisOptions = ANALYSIS_OPTIONS.filter(opt => opt.category === "analysis");
       const allAnalysisCompleted = allAnalysisOptions.every(opt => completedAnalyses.includes(opt.id));
@@ -243,380 +390,859 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
   };
 
   const handleStartAnalysis = async () => {
-    if (selectedOptions.length === 0 || isLoading) return;
+    if (selectedOptions.length === 0) return;
+
+    // Проверяем доступность storage перед началом
+    try {
+      const testKey = `test-storage-${Date.now()}`;
+      safeSetItem(testKey, 'test');
+      safeRemoveItem(testKey);
+    } catch (storageError) {
+      // Очищаем старые данные при проблемах с хранилищем
+      clearOldData();
+      
+      toast({
+        type: "warning",
+        title: "Внимание",
+        description: "Обнаружены проблемы с хранилищем. Старые данные очищены для продолжения работы.",
+        duration: 3000
+      });
+    }
+
+    // Фильтруем только те анализы, которые еще не выполняются и не завершены
+    const optionsToAnalyze = selectedOptions.filter(
+      optionId => !analyzingTypes.includes(optionId) && !completedAnalyses.includes(optionId)
+    );
+
+    if (optionsToAnalyze.length === 0) {
+      toast({
+        type: "error",
+        title: "Нет доступных анализов",
+        description: "Все выбранные анализы уже выполнены или выполняются"
+      });
+      return;
+    }
 
     setIsLoading(true);
-    onAnalysisStart?.(selectedOptions);
-
+    
     try {
-      for (const analysisType of selectedOptions) {
-        if (completedAnalyses.includes(analysisType) || analyzingTypes.includes(analysisType)) continue;
+      // Получаем данные сегмента из Supabase ОДИН РАЗ для всех анализов
+      const { data: segmentData, error: segmentError } = await supabase
+        .from('segments')
+        .select('*')
+        .eq('Project ID', researchId)
+        .eq('Сегмент ID', parseInt(segmentId))
+        .single();
 
-        // Сохраняем статус в sessionStorage
-        const key = `analyzing-${researchId}-${segmentId}-${analysisType}`;
-        sessionStorage.setItem(key, JSON.stringify({
+      if (segmentError) {
+        console.error('Error loading segment data:', segmentError);
+        toast({
+          type: "warning",
+          title: "Предупреждение",
+          description: "Использованы данные по умолчанию для сегмента"
+        });
+      }
+
+      const segmentTitle = segmentData?.["Название сегмента"] || `Сегмент ${segmentId}`;
+      const segmentDescription = segmentData?.description || 'Описание недоступно';
+      
+      // Показываем тост о начале анализов
+      const analysisNames = optionsToAnalyze.map(id => 
+        ANALYSIS_OPTIONS.find(opt => opt.id === id)?.name || id
+      ).join(", ");
+      
+      toast({
+        type: "info",
+        title: optionsToAnalyze.length === 1 ? "Анализ запущен" : "Анализы запущены",
+        description: optionsToAnalyze.length === 1 
+          ? `Выполняется: ${analysisNames}`
+          : `Параллельная обработка: ${analysisNames}`,
+        duration: 5000
+      });
+
+      // Сохраняем статус всех анализов в sessionStorage (временные данные)
+      optionsToAnalyze.forEach(analysisType => {
+        const analysisKey = getAnalysisKey(analysisType);
+        safeSetItem(analysisKey, JSON.stringify({
+          status: 'processing',
           startedAt: new Date().toISOString(),
-          analysisType
-        }));
+          analysisType: analysisType
+        }), true); // используем sessionStorage
+      });
 
-        // Обновляем состояние
-        setAnalyzingTypes(prev => [...prev, analysisType]);
+      // Добавляем все в список анализирующихся
+      setAnalyzingTypes(prev => [...prev, ...optionsToAnalyze]);
 
-        // Получаем данные сегмента перед анализом
-        let segmentName = '';
-        let segmentDescription = '';
+      // ПАРАЛЛЕЛЬНЫЙ ЗАПУСК всех анализов
+      const analysisPromises = optionsToAnalyze.map(async (analysisType) => {
+        const selectedAnalysisName = ANALYSIS_OPTIONS.find(opt => opt.id === analysisType)?.name || analysisType;
         
         try {
-          const { data: segmentData } = await supabase
-            .from('segments')
-            .select('*')
-            .eq('Project ID', researchId)
-            .eq('Сегмент ID', parseInt(segmentId))
-            .single();
+          console.log(`Начинаем анализ: ${selectedAnalysisName}`);
           
-          if (segmentData) {
-            segmentName = segmentData['Название сегмента'] || `Сегмент ${segmentId}`;
-            segmentDescription = segmentData['Описание сегмента'] || '';
-          }
-        } catch (error) {
-          console.error('Error loading segment data:', error);
-          segmentName = `Сегмент ${segmentId}`;
-        }
-
-        try {
+          // Вызываем OpenAI Assistant для каждого типа анализа
           const result = await analyzeSegment({
             researchId,
             segmentId: parseInt(segmentId),
-            segmentName,
-            segmentDescription,
+            segmentName: segmentTitle,
+            segmentDescription: segmentDescription,
+            analysisType: analysisType
+          });
+          
+          // Сохраняем результат в Supabase
+          const { error: saveError } = await saveSegmentAnalysis(
+            researchId,
+            parseInt(segmentId),
+            segmentTitle,
             analysisType,
-          });
-
-          if (result?.text) {
-            await saveSegmentAnalysis(researchId, parseInt(segmentId), segmentName, analysisType, result.text);
-            
-            toast({
-              type: "success",
-              title: "Анализ завершен",
-              description: `${ANALYSIS_OPTIONS.find(opt => opt.id === analysisType)?.name} готов`
-            });
+            {
+              text: result.text,
+              analysis_result: result.text,
+              timestamp: new Date().toISOString()
+            }
+          );
+          
+          if (saveError) {
+            console.error(`Error saving analysis ${analysisType}:`, saveError);
+            throw new Error(`Не удалось сохранить результат анализа "${selectedAnalysisName}"`);
           }
-        } catch (error) {
-          console.error(`Error analyzing ${analysisType}:`, error);
-          toast({
-            type: "error", 
-            title: "Ошибка анализа",
-            description: `Не удалось выполнить ${ANALYSIS_OPTIONS.find(opt => opt.id === analysisType)?.name}`
-          });
-        } finally {
-          // Убираем из анализирующихся
-          sessionStorage.removeItem(key);
+          
+          // Убираем из анализирующихся этот конкретный анализ
+          const analysisKey = getAnalysisKey(analysisType);
+          safeRemoveItem(analysisKey, true); // используем sessionStorage
           setAnalyzingTypes(prev => prev.filter(type => type !== analysisType));
+          
+          // Добавляем в завершенные
+          setCompletedAnalyses(prev => {
+            if (!prev.includes(analysisType)) {
+              const updated = [...prev, analysisType];
+              
+              // Обновляем localStorage кеш
+              const storageKey = `segment-analysis-${researchId}-${segmentId}`;
+              safeSetItem(storageKey, JSON.stringify({
+                completed: updated,
+                updatedAt: new Date().toISOString()
+              }));
+              
+              return updated;
+            }
+            return prev;
+          });
+          
+          // Показываем уведомление о завершении конкретного анализа
+          toast({
+            type: "success",
+            title: "Анализ завершен",
+            description: `${selectedAnalysisName} успешно выполнен`,
+            duration: 3000
+          });
+          
+          return { success: true, analysisType, name: selectedAnalysisName };
+          
+        } catch (error) {
+          console.error(`Ошибка анализа ${analysisType}:`, error);
+          
+          // Убираем статус анализа при ошибке
+          const analysisKey = getAnalysisKey(analysisType);
+          safeRemoveItem(analysisKey, true); // используем sessionStorage
+          setAnalyzingTypes(prev => prev.filter(type => type !== analysisType));
+          
+          // Показываем уведомление об ошибке конкретного анализа
+        toast({
+          type: "error",
+          title: "Ошибка анализа",
+          description: `Не удалось выполнить "${selectedAnalysisName}"`,
+          duration: 5000
+        });
+          
+          return { success: false, analysisType, name: selectedAnalysisName, error };
         }
+      });
+
+      // Ждем завершения ВСЕХ анализов
+      const results = await Promise.allSettled(analysisPromises);
+      
+      // Подсчитываем результаты
+      const successful = results.filter(r => r.status === 'fulfilled' && r.value?.success).length;
+      const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value?.success)).length;
+      
+      // Перезагружаем данные для обновления UI
+      await loadAllAnalysisData();
+      
+      // Итоговое уведомление
+      if (successful > 0 && failed === 0) {
+        const analysisWord = getAnalysisWord(successful);
+        const verbForm = getVerbForm(successful);
+        
+        toast({
+          type: "success",
+          title: successful === 1 
+            ? "Анализ успешно завершен" 
+            : `Все ${successful} ${analysisWord} успешно ${verbForm}`,
+          description: "Данные сохранены и готовы к просмотру",
+          duration: 5000
+        });
+      } else if (successful > 0 && failed > 0) {
+        const successWord = getAnalysisWord(successful);
+        const failedWord = getAnalysisWord(failed);
+        
+        toast({
+          type: "warning",
+          title: "Анализы завершены с предупреждениями",
+          description: `Успешно: ${successful} ${successWord}, С ошибками: ${failed} ${failedWord}`,
+          duration: 5000
+        });
+      } else if (failed > 0 && successful === 0) {
+        const analysisWord = getAnalysisWord(failed);
+        
+        toast({
+          type: "error",
+          title: failed === 1 
+            ? "Анализ не выполнен"
+            : "Анализы не выполнены",
+          description: failed === 1 
+            ? "Не удалось выполнить анализ"
+            : `Не удалось выполнить ${failed} ${analysisWord}`,
+          duration: 5000
+        });
       }
 
-      // Обновляем завершенные анализы
-      await loadCompletedAnalyses();
+      // Очищаем выбранные (кроме обязательных)
+      setSelectedOptions(["segment_description"]);
+      onAnalysisStart?.(optionsToAnalyze);
+      
+    } catch (error) {
+      console.error("Критическая ошибка запуска анализов:", error);
+      toast({
+        type: "error",
+        title: "Критическая ошибка",
+        description: error instanceof Error ? error.message : "Произошла неизвестная ошибка"
+      });
+      
+      // Очищаем все статусы анализов при критической ошибке
+      optionsToAnalyze.forEach(analysisType => {
+        const analysisKey = getAnalysisKey(analysisType);
+        safeRemoveItem(analysisKey, true); // используем sessionStorage
+      });
+      setAnalyzingTypes(prev => prev.filter(type => !optionsToAnalyze.includes(type)));
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDeleteAnalysis = async (analysisType: string) => {
-    if (deletingAnalysis) return;
-    
     setDeletingAnalysis(analysisType);
     
     try {
+      // Удаляем из Supabase
       const { error } = await deleteSegmentAnalysis(researchId, parseInt(segmentId), analysisType);
       
       if (error) {
+        console.error('Error deleting analysis from Supabase:', error);
         toast({
           type: "error",
           title: "Ошибка",
-          description: "Не удалось удалить анализ"
+          description: "Не удалось удалить анализ из базы данных"
         });
-      } else {
-        setCompletedAnalyses(prev => prev.filter(type => type !== analysisType));
-        toast({
-          type: "success", 
-          title: "Анализ удален",
-          description: "Анализ успешно удален"
-        });
+        return;
       }
+
+      // Удаляем из localStorage
+      const resultKey = `segment-analysis-${researchId}-${segmentId}-${analysisType}`;
+      safeRemoveItem(resultKey);
+
+      // Обновляем список завершенных анализов
+      const storageKey = `segment-analysis-${researchId}-${segmentId}`;
+      const saved = safeGetItem(storageKey);
+      const data = saved ? JSON.parse(saved) : { completed: [] };
+      
+      const updatedCompleted = (data.completed || []).filter((id: string) => id !== analysisType);
+      const updatedData = { ...data, completed: updatedCompleted };
+      safeSetItem(storageKey, JSON.stringify(updatedData));
+
+      // Обновляем состояние
+      setCompletedAnalyses(prev => prev.filter(id => id !== analysisType));
+
+      const analysisName = ANALYSIS_OPTIONS.find(opt => opt.id === analysisType)?.name || analysisType;
+      toast({
+        type: "delete",
+        title: "Анализ удален",
+        description: `Анализ "${analysisName}" успешно удален и снова доступен для выполнения.`
+      });
+
     } catch (error) {
-      console.error('Error deleting analysis:', error);
+      console.error("Ошибка удаления анализа:", error);
       toast({
         type: "error",
         title: "Ошибка",
-        description: "Произошла ошибка при удалении"
+        description: "Произошла ошибка при удалении анализа"
       });
     } finally {
       setDeletingAnalysis(null);
     }
   };
 
-  const selectedCount = selectedOptions.length;
-  const completedCount = completedAnalyses.length;
-  const totalCount = ANALYSIS_OPTIONS.length;
+  const canDeleteAnalysis = (analysisType: string) => {
+    // Нельзя удалить "Описание сегмента" если есть другие завершенные анализы
+    if (analysisType === "segment_description") {
+      const otherCompleted = completedAnalyses.filter(id => id !== "segment_description");
+      return otherCompleted.length === 0;
+    }
+    return true;
+  };
+
+  // Функция для получения сообщения о требуемых анализах для разблокировки
+  const getUnlockMessage = (optionId: string) => {
+    const getAnalysisNameById = (id: string) => {
+      return ANALYSIS_OPTIONS.find(opt => opt.id === id)?.name || id;
+    };
+
+    if (optionId === "solutions_analysis") {
+      const required = ["problems_analysis"];
+      const missing = required.filter(id => !completedAnalyses.includes(id));
+      if (missing.length > 0) {
+        return `Чтобы открыть раздел завершите анализ: ${missing.map(getAnalysisNameById).join(", ")}`;
+      }
+    }
+
+    if (optionId === "content_themes") {
+      const required = ["bdf_analysis", "problems_analysis", "solutions_analysis", "jtbd_analysis", "user_personas"];
+      const missing = required.filter(id => !completedAnalyses.includes(id));
+      if (missing.length > 0) {
+        return `Чтобы открыть раздел завершите анализы: ${missing.map(getAnalysisNameById).join(", ")}`;
+      }
+    }
+
+    if (optionId === "niche_integration") {
+      const required = ["bdf_analysis", "problems_analysis", "solutions_analysis", "jtbd_analysis", "user_personas", "content_themes"];
+      const missing = required.filter(id => !completedAnalyses.includes(id));
+      if (missing.length > 0) {
+        return `Чтобы открыть раздел завершите анализы: ${missing.map(getAnalysisNameById).join(", ")}`;
+      }
+    }
+
+    if (optionId === "final_report") {
+      const allAnalysisOptions = ANALYSIS_OPTIONS.filter(opt => opt.category === "analysis");
+      const missing = allAnalysisOptions.filter(opt => !completedAnalyses.includes(opt.id));
+      if (missing.length > 0) {
+        return `Чтобы открыть раздел завершите анализы: ${missing.map(opt => opt.name).join(", ")}`;
+      }
+    }
+
+    if (!completedAnalyses.includes("segment_description")) {
+      return "Чтобы открыть раздел завершите анализ: Описание сегмента";
+    }
+
+    return null;
+  };
+
+
+  const getOptionStatus = (optionId: string) => {
+    // Check if analysis is currently processing
+    if (analyzingTypes.includes(optionId)) {
+      return "processing";
+    }
+    
+    if (completedAnalyses.includes(optionId)) {
+      return "completed";
+    }
+    
+    if (selectedOptions.includes(optionId)) {
+      return "selected";
+    }
+    
+    return "available";
+  };
 
   const groupedOptions = ANALYSIS_OPTIONS.reduce((acc, option) => {
-    if (!acc[option.category]) {
-      acc[option.category] = [];
-    }
+    if (!acc[option.category]) acc[option.category] = [];
     acc[option.category].push(option);
     return acc;
   }, {} as Record<string, AnalysisOption[]>);
 
+  const selectedCount = selectedOptions.filter(id => !completedAnalyses.includes(id)).length;
+  const segmentDescriptionCompleted = completedAnalyses.includes("segment_description");
+
   return (
-    <TooltipProvider>
-      <div className="flex flex-col gap-6 p-6">
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Готовые анализы</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-success">{completedCount}</div>
-              <p className="text-xs text-muted-foreground">
-                {completedCount} {getAnalysisWord(completedCount)} {getVerbForm(completedCount)}
-              </p>
-            </CardContent>
-          </Card>
+    <TooltipProvider delayDuration={0}>
+      <Card className="w-full mx-auto max-w-none overflow-hidden">
+      <CardHeader className="px-4 sm:px-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 overflow-hidden">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg min-w-0">
+            <Brain className="h-5 w-5 flex-shrink-0" />
+            <span className="truncate">Параметры анализа</span>
+          </CardTitle>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0 pr-3 pt-3">
+            {/* Кнопка начать анализ */}
+            <Button 
+              onClick={handleStartAnalysis}
+              disabled={selectedCount === 0 || isLoading}
+              size="sm"
+              className="flex items-center gap-2 min-w-0 shrink-0"
+            >
+              {isLoading ? (
+                <>
+                  <Clock className="h-4 w-4 animate-spin" />
+                  <span className="hidden sm:inline">
+                    {selectedCount === 1 ? "Анализируем..." : "Запускаем анализы..."}
+                  </span>
+                  <span className="sm:hidden">Анализ...</span>
+                </>
+              ) : analyzingTypes.length > 0 ? (
+                <>
+                  <Clock className="h-4 w-4 animate-pulse" />
+                  <span className="hidden sm:inline">
+                    Выполняется: {analyzingTypes.length} {getAnalysisWord(analyzingTypes.length)}
+                  </span>
+                  <span className="sm:hidden">Идет анализ</span>
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    {selectedCount === 1 
+                      ? "Начать анализ"
+                      : selectedCount > 1
+                      ? `Начать анализ (${selectedCount})`
+                      : "Начать анализ"
+                    }
+                  </span>
+                  <span className="sm:hidden">
+                    {selectedCount > 1 ? `Начать (${selectedCount})` : "Начать"}
+                  </span>
+                </>
+              )}
+            </Button>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">В процессе</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-primary">{analyzingTypes.length}</div>
-              <p className="text-xs text-muted-foreground">
-                {analyzingTypes.length > 0 ? "Анализ выполняется" : "Нет активных анализов"}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Выбрано</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-secondary">{selectedCount}</div>
-              <p className="text-xs text-muted-foreground">
-                из {totalCount} доступных
-              </p>
-            </CardContent>
-          </Card>
+            {/* Кнопка выделить все с лампочкой в углу */}
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Получаем только доступные опции с учетом всех ограничений
+                  const availableOptions = ANALYSIS_OPTIONS.filter(option => {
+                    // Пропускаем уже завершенные и анализирующиеся
+                    if (completedAnalyses.includes(option.id) || analyzingTypes.includes(option.id)) {
+                      return false;
+                    }
+                    
+                    // Обязательная опция всегда доступна
+                    if (option.required) {
+                      return true;
+                    }
+                    
+                    // Проверяем базовое условие - описание сегмента должно быть завершено
+                    if (!segmentDescriptionCompleted && option.id !== "segment_description") {
+                      return false;
+                    }
+                    
+                    // Проверяем зависимости для специфических разделов
+                    if (option.id === "solutions_analysis" && !completedAnalyses.includes("problems_analysis")) {
+                      return false;
+                    }
+                    
+                    if (option.id === "content_themes") {
+                      const requiredForContent = ["bdf_analysis", "problems_analysis", "solutions_analysis", "jtbd_analysis", "user_personas"];
+                      return requiredForContent.every(id => completedAnalyses.includes(id));
+                    }
+                    
+                    if (option.id === "niche_integration") {
+                      const allAnalysisOptions = ["bdf_analysis", "problems_analysis", "solutions_analysis", "jtbd_analysis", "content_themes", "user_personas"];
+                      return allAnalysisOptions.every(id => completedAnalyses.includes(id));
+                    }
+                    
+                    if (option.id === "final_report") {
+                      const allAnalysisOptions = ANALYSIS_OPTIONS.filter(opt => opt.category === "analysis");
+                      return allAnalysisOptions.every(opt => completedAnalyses.includes(opt.id));
+                    }
+                    
+                    return true;
+                  });
+                  
+                  const availableIds = availableOptions.map(opt => opt.id);
+                  const allAvailableSelected = availableIds.every(id => selectedOptions.includes(id));
+                  
+                  if (allAvailableSelected) {
+                    // Если все доступные уже выделены, снимаем выделение с них
+                    setSelectedOptions(prev => prev.filter(id => !availableIds.includes(id)));
+                  } else {
+                    // Если не все выделены, выделяем все доступные
+                    const newSelected = [...new Set([...selectedOptions, ...availableIds])];
+                    setSelectedOptions(newSelected);
+                  }
+                }}
+                className="text-xs shrink-0"
+              >
+                <CheckCheck className={`h-3 w-3 mr-1 ${(() => {
+                  const availableOptions = ANALYSIS_OPTIONS.filter(option => {
+                    if (completedAnalyses.includes(option.id) || analyzingTypes.includes(option.id)) {
+                      return false;
+                    }
+                    if (option.required) {
+                      return true;
+                    }
+                    if (!segmentDescriptionCompleted && option.id !== "segment_description") {
+                      return false;
+                    }
+                    if (option.id === "solutions_analysis" && !completedAnalyses.includes("problems_analysis")) {
+                      return false;
+                    }
+                    if (option.id === "content_themes") {
+                      const requiredForContent = ["bdf_analysis", "problems_analysis", "solutions_analysis", "jtbd_analysis", "user_personas"];
+                      return requiredForContent.every(id => completedAnalyses.includes(id));
+                    }
+                    if (option.id === "niche_integration") {
+                      const allAnalysisOptions = ["bdf_analysis", "problems_analysis", "solutions_analysis", "jtbd_analysis", "content_themes", "user_personas"];
+                      return allAnalysisOptions.every(id => completedAnalyses.includes(id));
+                    }
+                    if (option.id === "final_report") {
+                      const allAnalysisOptions = ANALYSIS_OPTIONS.filter(opt => opt.category === "analysis");
+                      return allAnalysisOptions.every(opt => completedAnalyses.includes(opt.id));
+                    }
+                    return true;
+                  });
+                  const availableIds = availableOptions.map(opt => opt.id);
+                  const allAvailableSelected = availableIds.every(id => selectedOptions.includes(id)) && availableIds.length > 0;
+                  return allAvailableSelected ? "text-green-600" : "";
+                })()}`}
+                />
+                Все
+              </Button>
+              
+              {/* Лампочка в углу кнопки */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="absolute -top-2 -right-2 bg-yellow-400 rounded-full w-5 h-5 flex items-center justify-center cursor-help z-50">
+                    <Lightbulb className="h-3 w-3 text-yellow-800" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p className="text-sm">
+                    Выделите все доступные анализы для параллельного запуска. Это позволит получить результаты всех исследований одновременно и сэкономить время.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" />
+              <span>{completedAnalyses.length}</span>
+              <span className="hidden sm:inline ml-1">завершено</span>
+            </Badge>
+          </div>
         </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-6 px-4 sm:px-6">
+        {/* Завершенные анализы как кнопки, сгруппированные по категориям */}
+        {completedAnalyses.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="font-medium text-sm flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-green-600" />
+              Готовые результаты анализа
+            </h4>
+            
+            {/* Информационное сообщение */}
+            <div className="relative bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4 mt-3 mb-4 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent animate-pulse"></div>
+              <div className="relative flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-foreground mb-1">
+                    Готовые анализы
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Нажмите на любой анализ, чтобы просмотреть детальные результаты и получить инсайты
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {Object.entries(groupedOptions).map(([category, options]) => {
+              const completedInCategory = options.filter(option => completedAnalyses.includes(option.id));
+              if (completedInCategory.length === 0) return null;
+              
+              const IconComponent = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS];
+              const categoryName = CATEGORY_NAMES[category as keyof typeof CATEGORY_NAMES];
+              
+              return (
+                <div key={`completed-${category}`} className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <IconComponent className="h-4 w-4" />
+                    {categoryName}
+                  </div>
+                   <div className="grid gap-2 pl-1 sm:pl-2 md:pl-6 pr-4">
+                    {completedInCategory.map((option) => (
+                       <div key={option.id} className="relative min-w-0">
+                            <Button
+                              variant="outline"
+                              className="justify-start h-auto p-2 sm:p-3 text-left w-full hover:bg-primary/5 hover:border-primary/30 transition-all duration-200 group cursor-pointer min-w-0 whitespace-normal"
+                              onClick={() => onViewResult?.(option.id)}
+                           >
+                               <div className="flex items-start gap-2 sm:gap-3 w-full">
+                                 <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                 <div className="flex-1 min-w-0 max-w-full">
+                                   <div className="font-medium group-hover:text-primary transition-colors text-sm break-words whitespace-pre-line">
+                                     {option.name}
+                                   </div>
+                                    {option.description && (
+                                      <div className="text-xs text-muted-foreground mt-1 break-words leading-relaxed">
+                                        {option.description}
+                                      </div>
+                                    )}
+                                 </div>
+                               </div>
+                          </Button>
+                         
+                         {canDeleteAnalysis(option.id) && (
+                           <AlertDialog>
+                             <AlertDialogTrigger asChild>
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 className="absolute top-2 right-2 h-6 w-6 p-0 text-destructive hover:text-destructive-foreground hover:bg-destructive"
+                                 disabled={deletingAnalysis === option.id}
+                               >
+                                 {deletingAnalysis === option.id ? (
+                                   <Clock className="h-3 w-3 animate-spin" />
+                                 ) : (
+                                   <Trash2 className="h-3 w-3" />
+                                 )}
+                               </Button>
+                             </AlertDialogTrigger>
+                             <AlertDialogContent>
+                               <AlertDialogHeader>
+                                 <AlertDialogTitle>Удалить анализ?</AlertDialogTitle>
+                                 <AlertDialogDescription>
+                                   Вы действительно хотите удалить анализ "{option.name}"? 
+                                   Это действие нельзя отменить. Данные будут удалены из базы данных 
+                                   и локального хранилища, а анализ снова станет доступным для выполнения.
+                                 </AlertDialogDescription>
+                               </AlertDialogHeader>
+                               <AlertDialogFooter>
+                                 <AlertDialogCancel>Отмена</AlertDialogCancel>
+                                 <AlertDialogAction 
+                                   onClick={() => handleDeleteAnalysis(option.id)}
+                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                 >
+                                   Удалить
+                                 </AlertDialogAction>
+                               </AlertDialogFooter>
+                             </AlertDialogContent>
+                           </AlertDialog>
+                         )}
+                       </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+            <Separator />
+          </div>
+        )}
 
-        {Object.entries(groupedOptions).map(([category, options]) => {
-          const Icon = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS];
-          return (
-            <Card key={category} className="overflow-hidden">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Icon className="h-5 w-5" />
-                  {CATEGORY_NAMES[category as keyof typeof CATEGORY_NAMES]}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="max-h-96">
-                  <div className="space-y-3">
-                    {options.map((option) => {
-                      const isCompleted = completedAnalyses.includes(option.id);
-                      const isAnalyzing = analyzingTypes.includes(option.id);
-                      const isSelected = selectedOptions.includes(option.id);
-                      const isRequired = option.required;
+        {!segmentDescriptionCompleted && (
+          <div className="flex items-center gap-3 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+            <Lock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            <div className="text-sm text-amber-800 dark:text-amber-200">
+              <p className="font-medium">Сначала выполните анализ описания сегмента</p>
+              <p className="text-xs opacity-80">После этого откроются дополнительные возможности анализа</p>
+            </div>
+          </div>
+        )}
+        
+        {/* Заголовок для доступных анализов */}
+        {(() => {
+          // Проверяем, есть ли доступные для выбора анализы
+          const hasAvailableAnalyses = Object.values(groupedOptions).some(options => 
+            options.some(option => !completedAnalyses.includes(option.id))
+          );
+          
+          return hasAvailableAnalyses && (
+            <div className="space-y-3">
+              <h4 className="font-medium text-sm flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-yellow-600" />
+                Доступные анализы
+              </h4>
+              
+              {/* Информационное сообщение для доступных анализов */}
+              <div className="relative bg-gradient-to-r from-yellow-500/10 via-yellow-500/5 to-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mt-3 mb-4 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-500/5 to-transparent animate-pulse"></div>
+                <div className="relative flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 bg-yellow-500/10 rounded-full flex items-center justify-center">
+                    <Sparkles className="h-4 w-4 text-yellow-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-foreground mb-1">
+                      Выберите анализы для запуска
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Отметьте нужные анализы и нажмите "Начать анализ"
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
-                      let isDisabled = false;
-                      let disabledReason = "";
-
-                      if (isCompleted || isAnalyzing) {
-                        isDisabled = true;
-                      } else {
-                        const segmentDescriptionCompleted = completedAnalyses.includes("segment_description");
-                        if (!segmentDescriptionCompleted && option.id !== "segment_description") {
-                          isDisabled = true;
-                          disabledReason = "Сначала завершите описание сегмента";
-                        }
-
-                        if (option.id === "solutions_analysis" && !completedAnalyses.includes("problems_analysis")) {
-                          isDisabled = true;
-                          disabledReason = "Сначала завершите анализ проблем";
-                        }
-
-                        if (option.id === "content_themes") {
-                          const requiredForContent = ["segment_description", "bdf_analysis", "problems_analysis", "solutions_analysis", "jtbd_analysis", "user_personas"];
-                          if (!requiredForContent.every(id => completedAnalyses.includes(id))) {
-                            isDisabled = true;
-                            disabledReason = "Завершите все предыдущие анализы";
-                          }
-                        }
-
-                        if (option.id === "niche_integration") {
-                          const allAnalysisOptions = ["bdf_analysis", "problems_analysis", "solutions_analysis", "jtbd_analysis", "content_themes", "user_personas"];
-                          if (!allAnalysisOptions.every(id => completedAnalyses.includes(id))) {
-                            isDisabled = true;
-                            disabledReason = "Завершите все анализы аудитории";
-                          }
-                        }
-
-                        if (option.id === "final_report") {
-                          const allAnalysisOptions = ANALYSIS_OPTIONS.filter(opt => opt.category === "analysis");
-                          if (!allAnalysisOptions.every(opt => completedAnalyses.includes(opt.id))) {
-                            isDisabled = true;
-                            disabledReason = "Завершите все анализы";
-                          }
-                        }
+        
+        <ScrollArea className="h-96 md:h-96 max-h-[70vh] overflow-x-hidden">
+          <div className="space-y-6 pr-2 sm:pr-4 overflow-hidden">
+            {Object.entries(groupedOptions).map(([category, options]) => {
+              const IconComponent = CATEGORY_ICONS[category as keyof typeof CATEGORY_ICONS];
+              const categoryName = CATEGORY_NAMES[category as keyof typeof CATEGORY_NAMES];
+              
+              // Фильтруем незавершенные опции для текущей категории
+              const availableOptions = options.filter(option => !completedAnalyses.includes(option.id));
+              
+              // Если нет доступных опций в категории, не показываем ее
+              if (availableOptions.length === 0) return null;
+              
+              return (
+                <div key={category} className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <IconComponent className="h-4 w-4 text-muted-foreground" />
+                    <h4 className="font-medium text-sm">{categoryName}</h4>
+                  </div>
+                  
+                   <div className="grid gap-2 pl-1 sm:pl-2 md:pl-6 overflow-hidden">
+                     {availableOptions.map((option) => {
+                       const status = getOptionStatus(option.id);
+                      const isDisabled = option.required || status === "completed";
+                      
+                      // Блокировка до завершения описания сегмента
+                      const isLockedUntilSegment = !segmentDescriptionCompleted && option.id !== "segment_description";
+                      
+                      // Проверяем зависимости для специфических разделов
+                      let isLockedByDependency = false;
+                      
+                      if (option.id === "solutions_analysis") {
+                        isLockedByDependency = !completedAnalyses.includes("problems_analysis");
+                       } else if (option.id === "content_themes") {
+                         const requiredForContent = ["bdf_analysis", "problems_analysis", "solutions_analysis", "jtbd_analysis", "user_personas"];
+                         isLockedByDependency = !requiredForContent.every(id => completedAnalyses.includes(id));
+                      } else if (option.id === "niche_integration") {
+                        const allAnalysisOptions = ["bdf_analysis", "problems_analysis", "solutions_analysis", "jtbd_analysis", "content_themes", "user_personas"];
+                        isLockedByDependency = !allAnalysisOptions.every(id => completedAnalyses.includes(id));
                       }
-
-                      const OptionElement = (
-                        <div 
-                          className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
-                            isCompleted ? 'bg-success/10 border-success/30' :
-                            isAnalyzing ? 'bg-primary/10 border-primary/30' :
-                            isSelected ? 'bg-secondary/20 border-secondary' :
-                            isDisabled ? 'bg-muted/50 border-muted' :
-                            'bg-background border-border hover:border-primary/50'
-                          }`}
-                        >
-                          <div className="flex items-center space-x-3 flex-1">
-                            <div className="flex-shrink-0">
-                              {isCompleted ? (
-                                <CheckCircle2 className="h-5 w-5 text-success" />
-                              ) : isAnalyzing ? (
-                                <div className="flex items-center space-x-2">
-                                  <Spinner className="h-4 w-4" />
-                                </div>
-                              ) : isDisabled ? (
-                                <Lock className="h-5 w-5 text-muted-foreground" />
-                              ) : (
-                                <Checkbox
-                                  checked={isSelected}
-                                  onCheckedChange={() => handleOptionToggle(option.id)}
-                                  disabled={isDisabled}
-                                />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
-                                <h4 className={`font-medium whitespace-pre-line ${
-                                  isCompleted ? 'text-success' :
-                                  isAnalyzing ? 'text-primary' :
-                                  isDisabled ? 'text-muted-foreground' : ''
-                                }`}>
-                                  {option.name}
-                                </h4>
-                                {isRequired && (
-                                  <Badge variant="outline" className="text-xs">
-                                    Обязательный
-                                  </Badge>
-                                )}
-                                {isAnalyzing && (
-                                  <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
-                                    Анализируется
-                                  </Badge>
-                                )}
-                              </div>
-                              <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">
-                                {option.description}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {isCompleted && (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => onViewResult?.(option.id)}
-                                  className="text-xs"
+                      
+                      // Для финального отчета проверяем доступность
+                      const isFinalReport = option.id === "final_report";
+                      const allAnalysisOptions = ANALYSIS_OPTIONS.filter(opt => opt.category === "analysis");
+                      const allAnalysisCompleted = allAnalysisOptions.every(opt => completedAnalyses.includes(opt.id));
+                      const finalReportAvailable = isFinalReport && allAnalysisCompleted && !completedAnalyses.includes(option.id);
+                      
+                      // Блокируем финальный отчет если не все анализы завершены
+                      const finalReportDisabled = isFinalReport && !allAnalysisCompleted;
+                      
+                      return (
+                         <div 
+                           key={option.id} 
+                           className={`relative flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 rounded-lg border transition-colors min-w-0 max-w-full overflow-hidden ${
+                             finalReportAvailable 
+                               ? "border-primary bg-primary/5 hover:bg-primary/10" 
+                               : "hover:bg-muted/50"
+                           } ${(finalReportDisabled || isLockedUntilSegment || isLockedByDependency) ? "opacity-50" : ""}`}
+                         >
+                           {/* Замочек для заблокированных опций с tooltip */}
+                           {(isLockedUntilSegment || isLockedByDependency || finalReportDisabled) && (
+                             <div className="absolute inset-0 flex items-center justify-center bg-white/60 dark:bg-gray-900/60 rounded-lg backdrop-blur-sm">
+                               <Tooltip>
+                                 <TooltipTrigger asChild>
+                                   <div className="cursor-help p-2">
+                                     <Lock className="h-5 w-5 text-muted-foreground" />
+                                   </div>
+                                 </TooltipTrigger>
+                                 <TooltipContent 
+                                   side="right"
+                                   align="end"
+                                   sideOffset={15}
+                                   className="z-50 !bg-white dark:!bg-gray-900 border border-gray-400 dark:border-gray-500 shadow-2xl max-w-xs p-4 !opacity-100"
+                                 >
+                                 <div className="space-y-2">
+                                   <div className="flex items-center gap-2">
+                                     <Lock className="h-4 w-4 text-amber-600" />
+                                     <p className="font-bold text-sm text-black dark:text-white">
+                                       Раздел заблокирован
+                                     </p>
+                                   </div>
+                                   <p className="text-sm text-black dark:text-white leading-relaxed font-medium">
+                                     {getUnlockMessage(option.id) || "Раздел заблокирован"}
+                                   </p>
+                                 </div>
+                               </TooltipContent>
+                               </Tooltip>
+                             </div>
+                           )}
+                            <Checkbox
+                              id={option.id}
+                              checked={selectedOptions.includes(option.id) || completedAnalyses.includes(option.id)}
+                              onCheckedChange={() => handleOptionToggle(option.id)}
+                              disabled={isDisabled || finalReportDisabled || isLockedUntilSegment || isLockedByDependency || status === "processing"}
+                              className="mt-0.5"
+                            />
+                          
+                           <div className="flex-1 space-y-1 min-w-0 max-w-full overflow-hidden">
+                             <div className="flex flex-wrap items-center gap-1 sm:gap-2 min-w-0">
+                               <label 
+                                  htmlFor={option.id}
+                                  className={`text-sm font-medium cursor-pointer break-words leading-tight ${isDisabled ? 'text-muted-foreground' : ''}`}
                                 >
-                                  <Eye className="h-3 w-3" />
-                                </Button>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      variant="ghost" 
-                                      size="sm"
-                                      disabled={deletingAnalysis === option.id}
-                                      className="text-xs text-destructive hover:text-destructive"
-                                    >
-                                      {deletingAnalysis === option.id ? (
-                                        <Spinner className="h-3 w-3" />
-                                      ) : (
-                                        <Trash2 className="h-3 w-3" />
-                                      )}
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>Удалить анализ?</AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        Вы уверены, что хотите удалить "{option.name}"? Это действие нельзя отменить.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Отмена</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={() => handleDeleteAnalysis(option.id)}
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      >
-                                        Удалить
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </>
-                            )}
+                                  {option.name}
+                                </label>
+                              
+                              {status === "completed" && (
+                                <Badge variant="default" className="h-5 text-xs">
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                                  Готово
+                                </Badge>
+                              )}
+                              
+                               {status === "processing" && (
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="h-6 text-xs bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-700 border-blue-300 flex items-center gap-1 px-2">
+                                      <div className="relative">
+                                        <Spinner size="sm" className="h-3 w-3" />
+                                      </div>
+                                      <span className="font-medium hidden sm:inline">Анализирую</span>
+                                      <div className="flex gap-0.5 ml-1">
+                                        <span className="w-1 h-1 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                                        <span className="w-1 h-1 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                                        <span className="w-1 h-1 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                                      </div>
+                                    </Badge>
+                                  </div>
+                                )}
+                               
+                               {option.required && (
+                                 <Badge variant="secondary" className="h-5 text-xs">
+                                   Обязательно
+                                 </Badge>
+                               )}
+                            </div>
+                            
+                              {option.description && (
+                                <p className="text-xs text-muted-foreground line-clamp-3 sm:line-clamp-2 break-all overflow-hidden max-w-full leading-relaxed">
+                                  {option.description}
+                                </p>
+                              )}
                           </div>
-                        </div>
-                      );
-
-                      return isDisabled && disabledReason ? (
-                        <Tooltip key={option.id}>
-                          <TooltipTrigger asChild>
-                            {OptionElement}
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{disabledReason}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        <div key={option.id}>
-                          {OptionElement}
                         </div>
                       );
                     })}
                   </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-          );
-        })}
-
-        <div className="flex justify-center pt-4">
-          <Button 
-            onClick={handleStartAnalysis}
-            disabled={selectedCount === 0 || isLoading || analyzingTypes.length > 0}
-            size="lg"
-            className="min-w-[200px]"
-          >
-            {isLoading || analyzingTypes.length > 0 ? (
-              <>
-                <Spinner className="mr-2 h-4 w-4" />
-                Анализ в процессе...
-              </>
-            ) : (
-              <>
-                <Play className="mr-2 h-4 w-4" />
-                Начать анализ ({selectedCount})
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
+                </div>
+              );
+            })}
+          </div>
+        </ScrollArea>
+        
+      </CardContent>
+    </Card>
     </TooltipProvider>
   );
 }

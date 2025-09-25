@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Loader2, Trash2, RefreshCw, Lock, Eye, ArrowRight, X, Star } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { ArrowLeft, Loader2, Trash2, RefreshCw, Lock, Eye, ArrowRight, X, Star, MessageSquare } from "lucide-react";
 import SegmentCards from "@/components/dashboard/SegmentCards";
 import { useCustomToast } from "@/hooks/use-custom-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +23,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function ResearchResultPage() {
   const { id } = useParams();
@@ -103,6 +112,12 @@ export default function ResearchResultPage() {
   const [segmentToDelete, setSegmentToDelete] = useState<number | null>(null);
 
   const [isRetrying, setIsRetrying] = useState(false);
+  
+  // Состояния для модального окна перегенерации с комментарием
+  const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
+  const [regenerateComment, setRegenerateComment] = useState('');
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  
   // Removed isLoading state - show interface immediately like ResearchSegmentPage
   
   // Move useMemo to top level to prevent hooks rendering error
@@ -382,6 +397,99 @@ export default function ResearchResultPage() {
       title: "В разработке",
       description: "Функция дублирования скоро будет доступна"
     });
+  };
+
+  const handleRegenerateWithComment = async () => {
+    if (!regenerateComment.trim()) {
+      toast({
+        type: "error",
+        title: "Ошибка",
+        description: "Пожалуйста, введите комментарий"
+      });
+      return;
+    }
+
+    if (!research || !user?.id) return;
+    
+    setIsRegenerating(true);
+    
+    try {
+      // Получаем текущие сегменты из состояния
+      const currentSegments = allGeneratedSegments.length > 0 ? allGeneratedSegments : segments;
+      
+      if (!currentSegments || currentSegments.length === 0) {
+        toast({
+          type: "error",
+          title: "Ошибка",
+          description: "Не найдены текущие сегменты для перегенерации"
+        });
+        setIsRegenerating(false);
+        return;
+      }
+
+      // Обновляем статус исследования
+      await updateResearch(id!, { status: "processing" });
+      
+      // Обновляем localStorage
+      const allResearch = JSON.parse(localStorage.getItem('research') || '[]');
+      const updatedResearch = allResearch.map((r: any) => 
+        r.id === id ? { ...r, status: "processing" } : r
+      );
+      localStorage.setItem('research', JSON.stringify(updatedResearch));
+      
+      // Формируем данные для отправки в edge function
+      const requestData = {
+        research_id: id,
+        user_id: user.id,
+        user_comment: regenerateComment.trim(),
+        current_segments: currentSegments,
+        original_research: {
+          project_name: research["Project name"] || research.title,
+          description: research.description || ""
+        }
+      };
+
+      console.log("Отправляем запрос на перегенерацию с комментарием:", requestData);
+
+      // Вызываем edge function для перегенерации с комментарием
+      const { data, error } = await supabase.functions.invoke('full-regenerate-with-comments', {
+        body: requestData
+      });
+
+      if (error) {
+        console.error('Error calling regenerate-with-comments function:', error);
+        throw new Error(error.message || 'Ошибка при вызове функции перегенерации');
+      }
+
+      console.log("Результат перегенерации:", data);
+
+      // Закрываем модальное окно и очищаем комментарий
+      setShowRegenerateDialog(false);
+      setRegenerateComment('');
+      
+      toast({
+        type: "success",
+        title: "Перегенерация запущена",
+        description: "Идёт создание новых сегментов с учётом ваших комментариев"
+      });
+
+      // Перенаправляем на страницу исследования для ожидания результатов
+      navigate(`/dashboard/research/${id}`);
+
+    } catch (error) {
+      console.error('Error during regeneration with comment:', error);
+      
+      // Возвращаем статус обратно
+      await updateResearch(id!, { status: "completed" });
+      
+      toast({
+        type: "error",
+        title: "Ошибка перегенерации",
+        description: error instanceof Error ? error.message : "Произошла ошибка при перегенерации сегментов"
+      });
+    } finally {
+      setIsRegenerating(false);
+    }
   };
 
   const handleRetryAnalysis = async () => {
@@ -773,7 +881,7 @@ export default function ResearchResultPage() {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => {/* TODO: добавить функциональность перегенерации */}}
+            onClick={() => setShowRegenerateDialog(true)}
           >
             <span className="hidden lg:inline">Перегенерировать с комментарием</span>
             <span className="lg:hidden">🔄</span>
@@ -932,6 +1040,71 @@ export default function ResearchResultPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Модальное окно для перегенерации с комментарием */}
+      <Dialog open={showRegenerateDialog} onOpenChange={setShowRegenerateDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Перегенерировать с комментарием
+            </DialogTitle>
+            <DialogDescription>
+              Опишите, что вам не нравится в текущих сегментах или что вы хотели бы изменить. 
+              Будет создана полная перегенерация всех 20 сегментов и топ-3.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="comment" className="text-sm font-medium">
+                Ваш комментарий (максимум 500 символов)
+              </label>
+              <Textarea
+                id="comment"
+                placeholder="Например: Нужны более платежеспособные сегменты с возрастом 30-45 лет..."
+                value={regenerateComment}
+                onChange={(e) => setRegenerateComment(e.target.value.slice(0, 500))}
+                className="min-h-[100px] resize-none"
+                maxLength={500}
+              />
+              <div className="text-xs text-muted-foreground text-right">
+                {regenerateComment.length}/500
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRegenerateDialog(false);
+                setRegenerateComment('');
+              }}
+              disabled={isRegenerating}
+            >
+              Отмена
+            </Button>
+            <Button
+              onClick={handleRegenerateWithComment}
+              disabled={!regenerateComment.trim() || isRegenerating}
+              className="min-w-[120px]"
+            >
+              {isRegenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Генерация...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Перегенерировать
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

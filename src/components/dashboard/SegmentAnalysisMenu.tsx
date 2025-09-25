@@ -818,7 +818,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
               {/* Лампочка в углу кнопки */}
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="absolute -top-2 -right-2 bg-yellow-400 rounded-full w-5 h-5 flex items-center justify-center cursor-help">
+                  <div className="absolute -top-2 -right-2 bg-yellow-400 rounded-full w-5 h-5 flex items-center justify-center cursor-help z-50">
                     <Lightbulb className="h-3 w-3 text-yellow-800" />
                   </div>
                 </TooltipTrigger>

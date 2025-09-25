@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Plus, Check, Target, MessageSquare, Users, RefreshCw, Info, Eye, Crown, Sparkles } from "lucide-react";
 import { useCustomToast } from "@/hooks/use-custom-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { markSelectedSegments } from "@/lib/supabase-utils";
+import { markSelectedSegments, addSegmentToSelected, removeSegmentFromSelected } from "@/lib/supabase-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { parseSegments } from "@/lib/segment-parser";
 
@@ -228,12 +228,8 @@ export default function SegmentCards({
     console.log('🔍 Current selected segments before:', selectedSegments);
     
     try {
-      // Обновляем флаг is_selected в базе данных
-      const { error } = await supabase
-        .from('segments')
-        .update({ is_selected: true })
-        .eq('Project ID', researchId)
-        .eq('Сегмент ID', segmentId);
+      // Используем новую функцию для добавления БЕЗ сброса остальных
+      const { error } = await addSegmentToSelected(researchId, segmentId);
         
       if (error) {
         console.error('❌ Database error:', error);
@@ -269,6 +265,48 @@ export default function SegmentCards({
     }
   };
 
+  // Функция для удаления сегмента из выбранных (для страницы результатов)
+  const handleRemoveFromSelected = async (segmentId: number) => {
+    if (!user?.id || !researchId) return;
+    
+    console.log('🔄 Removing segment from selected:', segmentId);
+    
+    try {
+      // Используем функцию для удаления
+      const { error } = await removeSegmentFromSelected(researchId, segmentId);
+        
+      if (error) {
+        console.error('❌ Database error:', error);
+        toast({
+          type: "error",
+          title: "Ошибка",
+          description: "Не удалось убрать сегмент"
+        });
+        return;
+      }
+      
+      console.log('✅ Database updated successfully');
+      
+      // Обновляем локальное состояние СРАЗУ
+      const newSelected = selectedSegments.filter(id => id !== segmentId);
+      setSelectedSegments(newSelected);
+      onSelectedSegmentsChange?.(newSelected);
+      
+      toast({
+        type: "success",
+        title: "Сегмент убран",
+        description: `"${segments.find(s => s.id === segmentId)?.title}" убран из выбранных`
+      });
+    } catch (error) {
+      console.error('Error removing segment:', error);
+      toast({
+        type: "error", 
+        title: "Ошибка",
+        description: "Не удалось убрать сегмент"
+      });
+    }
+  };
+
   // Функция для обработки клика по сегменту (для страницы выбора сегментов)
   const handleSegmentToggle = (segmentId: number) => {
     console.log('🔄 HandleSegmentToggle called with:', segmentId);
@@ -276,9 +314,15 @@ export default function SegmentCards({
     console.log('🔍 Current selectedSegments:', selectedSegments);
     
     if (hideTopRecommendations) {
-      // В разделе результатов используем добавление
-      console.log('📋 Using handleAddToSelected (results page)');
-      handleAddToSelected(segmentId);
+      // В разделе результатов используем toggle: добавление/удаление
+      const isCurrentlySelected = selectedSegments.includes(segmentId);
+      if (isCurrentlySelected) {
+        console.log('📋 Using handleRemoveFromSelected (results page)');
+        handleRemoveFromSelected(segmentId);
+      } else {
+        console.log('📋 Using handleAddToSelected (results page)');
+        handleAddToSelected(segmentId);
+      }
     } else {
       // На странице выбора сегментов используем обычное переключение
       console.log('🔄 Using toggleSegment (selection page)');

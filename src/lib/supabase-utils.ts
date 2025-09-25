@@ -172,7 +172,43 @@ export async function saveSegments(
   return { data: existingSegments as Segment[], error: null };
 }
 
-// Новая функция для отметки выбранных сегментов
+// Функция для добавления одного сегмента к выбранным (НЕ сбрасывая остальные)
+export async function addSegmentToSelected(
+  projectId: string,
+  segmentId: number
+): Promise<{ error: any }> {
+  try {
+    const { error } = await supabase
+      .from('segments')
+      .update({ is_selected: true })
+      .eq('Project ID', projectId)
+      .eq('Сегмент ID', segmentId);
+    
+    return { error };
+  } catch (error) {
+    return { error };
+  }
+}
+
+// Функция для удаления одного сегмента из выбранных
+export async function removeSegmentFromSelected(
+  projectId: string,
+  segmentId: number
+): Promise<{ error: any }> {
+  try {
+    const { error } = await supabase
+      .from('segments')
+      .update({ is_selected: false })
+      .eq('Project ID', projectId)
+      .eq('Сегмент ID', segmentId);
+    
+    return { error };
+  } catch (error) {
+    return { error };
+  }
+}
+
+// Новая функция для отметки выбранных сегментов (ЗАМЕНЯЕТ все выбранные)
 export async function markSelectedSegments(
   projectId: string,
   selectedSegmentIds: number[]

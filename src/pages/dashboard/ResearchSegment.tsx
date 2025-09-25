@@ -213,6 +213,59 @@ export default function ResearchSegmentPage() {
     };
   }, [id, segmentId]);
 
+  // Fallback polling in case realtime events are delayed or unavailable
+  useEffect(() => {
+    if (!id || !segmentId) return;
+    let interval: number | undefined;
+    let timeout: number | undefined;
+    try {
+      const markerStr = localStorage.getItem('last-regeneration');
+      if (!markerStr) return;
+      const marker = JSON.parse(markerStr);
+      if (marker.researchId !== id || marker.segmentId !== parseInt(segmentId)) return;
+      const poll = async () => {
+        const { data, error } = await supabase
+          .from('segment_analyses')
+          .select('status, analysis_type, updated_at')
+          .eq('Project ID', id)
+          .eq('Сегмент ID', parseInt(segmentId))
+          .eq('analysis_type', marker.analysisType)
+          .order('updated_at', { ascending: false })
+          .maybeSingle();
+        if (error) {
+          console.warn('Polling error for regeneration', error);
+          return;
+        }
+        if (data?.status === 'completed') {
+          toast({ title: 'Анализ готов', description: 'Результаты обновлены' });
+          setSelectedAnalysisType(marker.analysisType);
+          setCurrentView('result');
+          localStorage.removeItem('last-regeneration');
+          if (interval) window.clearInterval(interval);
+          if (timeout) window.clearTimeout(timeout);
+        } else if (data?.status === 'error' || data?.status === 'failed') {
+          toast({ type: 'error', title: 'Ошибка анализа', description: 'Не удалось завершить перегенерацию' });
+          localStorage.removeItem('last-regeneration');
+          if (interval) window.clearInterval(interval);
+          if (timeout) window.clearTimeout(timeout);
+        }
+      };
+      // Start immediately, then poll every 2s
+      poll();
+      interval = window.setInterval(poll, 2000);
+      // Safety stop after 5 minutes
+      timeout = window.setTimeout(() => {
+        if (interval) window.clearInterval(interval);
+      }, 5 * 60 * 1000);
+    } catch (e) {
+      console.warn('Failed to start regeneration polling', e);
+    }
+    return () => {
+      if (interval) window.clearInterval(interval);
+      if (timeout) window.clearTimeout(timeout);
+    };
+  }, [id, segmentId]);
+
   return (
     <main className="flex flex-col min-h-full">
       {currentView === 'menu' && segmentName && (

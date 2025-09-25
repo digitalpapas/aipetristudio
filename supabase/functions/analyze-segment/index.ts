@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY') || Deno.env.get('OPEN_AI_API');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -61,13 +61,40 @@ serve(async (req) => {
       throw new Error('OpenAI API key не настроен');
     }
 
-    const { segmentName, segmentDescription, analysisType, dependencies } = await req.json();
+    const { researchId, segmentId, segmentName, segmentDescription, analysisType, dependencies } = await req.json();
     
-    console.log(`Запуск анализа ${analysisType} для сегмента: ${segmentName}`);
+    console.log(`Запуск анализа ${analysisType} для сегмента: ${segmentName} (project=${researchId}, segment=${segmentId})`);
 
     const assistantId = ASSISTANT_IDS[analysisType as keyof typeof ASSISTANT_IDS];
     if (!assistantId) {
       throw new Error(`Неизвестный тип анализа: ${analysisType}`);
+    }
+
+    // Init Supabase client with service role for DB writes
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // Mark analysis as processing in DB (idempotent-ish)
+    try {
+      const { data: existing } = await supabase
+        .from('segment_analyses')
+        .select('id')
+        .eq('Project ID', researchId)
+        .eq('Сегмент ID', segmentId)
+        .eq('analysis_type', analysisType)
+        .eq('status', 'processing')
+        .limit(1)
+        .maybeSingle();
+      if (!existing) {
+        await supabase.from('segment_analyses').insert({
+          'Project ID': researchId,
+          'Сегмент ID': segmentId,
+          'Название сегмента': segmentName,
+          analysis_type: analysisType,
+          status: 'processing'
+        });
+      }
+    } catch (e) {
+      console.warn('Не удалось создать запись processing (будем продолжать):', e);
     }
 
     // 1. Создаем thread
@@ -242,6 +269,30 @@ serve(async (req) => {
     }
 
     console.log(`Анализ ${analysisType} успешно завершен`);
+
+    // Save completed result to DB and cleanup processing rows
+    try {
+      const { error: saveError } = await supabase.from('segment_analyses').insert({
+        'Project ID': researchId,
+        'Сегмент ID': segmentId,
+        'Название сегмента': segmentName,
+        analysis_type: analysisType,
+        status: 'completed',
+        content: { text: resultText, analysis_result: resultText, timestamp: new Date().toISOString() }
+      });
+      if (saveError) console.error('DB save error:', saveError);
+
+      const { error: cleanupError } = await supabase
+        .from('segment_analyses')
+        .delete()
+        .eq('Project ID', researchId)
+        .eq('Сегмент ID', segmentId)
+        .eq('analysis_type', analysisType)
+        .eq('status', 'processing');
+      if (cleanupError) console.warn('Cleanup processing rows error:', cleanupError);
+    } catch (dbErr) {
+      console.error('DB operations failed:', dbErr);
+    }
 
     return new Response(
       JSON.stringify({ text: resultText }),

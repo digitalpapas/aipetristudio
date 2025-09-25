@@ -346,7 +346,8 @@ export async function getCompletedAnalyses(
     .from('segment_analyses')
     .select('analysis_type')
     .eq("Project ID", projectId)
-    .eq("Сегмент ID", segmentId);
+    .eq("Сегмент ID", segmentId)
+    .eq('status', 'completed');
 
   return { data, error };
 }

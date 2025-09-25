@@ -275,8 +275,24 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
         });
       }
 
-      // Загружаем статус анализирующихся типов из localStorage
+      // Загружаем статус анализирующихся типов из local/sessionStorage
       loadAnalyzingTypes();
+
+      // Также синхронизируемся с БД: берем записи со статусом processing
+      try {
+        const { data: processingRows } = await supabase
+          .from('segment_analyses')
+          .select('analysis_type, status')
+          .eq('Project ID', researchId)
+          .eq('Сегмент ID', parseInt(segmentId))
+          .eq('status', 'processing');
+        const processingTypes = (processingRows || []).map((r: any) => r.analysis_type);
+        if (processingTypes.length) {
+          setAnalyzingTypes(prev => Array.from(new Set([...(prev || []), ...processingTypes])));
+        }
+      } catch (e) {
+        console.warn('Failed to sync processing from DB:', e);
+      }
     } catch (error) {
       console.error('Error loading analysis data:', error);
     }
@@ -312,22 +328,29 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
           console.log('Event type:', payload.eventType);
 
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            // Извлекаем тип анализа из полученных данных
-            const completedAnalysisType = (payload as any).new?.analysis_type;
+            const newRow: any = (payload as any).new;
+            const completedAnalysisType = newRow?.analysis_type;
+            const status = newRow?.status;
 
-            if (completedAnalysisType) {
-              // Убираем из анализирующихся СРАЗУ
+            if (!completedAnalysisType) return;
+
+            if (status === 'processing') {
+              // Mark as processing
+              setAnalyzingTypes(prev => prev.includes(completedAnalysisType) ? prev : [...prev, completedAnalysisType]);
+            }
+
+            if (status === 'completed') {
+              // Remove from processing and add to completed
               const analysisKey = getAnalysisKey(completedAnalysisType);
-              safeRemoveItem(analysisKey, true); // используем sessionStorage
+              safeRemoveItem(analysisKey, true);
               setAnalyzingTypes(prev => prev.filter(type => type !== completedAnalysisType));
 
-              // Добавляем в завершенные СРАЗУ
               setCompletedAnalyses(prev => (
                 prev.includes(completedAnalysisType) ? prev : [...prev, completedAnalysisType]
               ));
             }
 
-            // Перезагружаем все данные для синхронизации
+            // Refresh data
             loadAllAnalysisData();
           }
         }
@@ -489,45 +512,13 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
             analysisType: analysisType
           });
           
-          // Сохраняем результат в Supabase
-          const { error: saveError } = await saveSegmentAnalysis(
-            researchId,
-            parseInt(segmentId),
-            segmentTitle,
-            analysisType,
-            {
-              text: result.text,
-              analysis_result: result.text,
-              timestamp: new Date().toISOString()
-            }
-          );
-          
-          if (saveError) {
-            console.error(`Error saving analysis ${analysisType}:`, saveError);
-            throw new Error(`Не удалось сохранить результат анализа "${selectedAnalysisName}"`);
-          }
-          
-          // Убираем из анализирующихся этот конкретный анализ
+          // Перенос сохранения результата в Edge Function.
+          // Здесь только локально снимаем флаг "в процессе" — остальное придет через realtime из БД
           const analysisKey = getAnalysisKey(analysisType);
           safeRemoveItem(analysisKey, true); // используем sessionStorage
           setAnalyzingTypes(prev => prev.filter(type => type !== analysisType));
           
-          // Добавляем в завершенные
-          setCompletedAnalyses(prev => {
-            if (!prev.includes(analysisType)) {
-              const updated = [...prev, analysisType];
-              
-              // Обновляем localStorage кеш
-              const storageKey = `segment-analysis-${researchId}-${segmentId}`;
-              safeSetItem(storageKey, JSON.stringify({
-                completed: updated,
-                updatedAt: new Date().toISOString()
-              }));
-              
-              return updated;
-            }
-            return prev;
-          });
+          // Не добавляем в completed вручную — дождемся realtime из БД
           
           // Показываем уведомление о завершении конкретного анализа
           toast({

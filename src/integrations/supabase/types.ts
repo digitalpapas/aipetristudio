@@ -362,6 +362,7 @@ export type Database = {
           created_at: string | null
           id: string
           "Project ID": string
+          status: string
           updated_at: string | null
           "Название сегмента": string | null
           "Сегмент ID": number
@@ -372,6 +373,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           "Project ID": string
+          status?: string
           updated_at?: string | null
           "Название сегмента"?: string | null
           "Сегмент ID": number
@@ -382,6 +384,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           "Project ID"?: string
+          status?: string
           updated_at?: string | null
           "Название сегмента"?: string | null
           "Сегмент ID"?: number

@@ -81,6 +81,8 @@ export async function analyzeSegment(request: AnalysisRequest): Promise<Analysis
     // Вызываем Edge Function
     const { data, error } = await supabase.functions.invoke('analyze-segment', {
       body: {
+        researchId: request.researchId,
+        segmentId: request.segmentId,
         segmentName: request.segmentName,
         segmentDescription: request.segmentDescription,
         analysisType: request.analysisType,

@@ -120,6 +120,27 @@ export default function ResearchResultPage() {
   
   // Removed isLoading state - show interface immediately like ResearchSegmentPage
   
+  // Safe localStorage setter with quota handling and compact payload for large arrays
+  const safeSave = useCallback((key: string, value: any) => {
+    try {
+      let payload = value;
+      if (Array.isArray(value) && key.endsWith('-all-segments')) {
+        // Store compact version to reduce size
+        payload = value.map((s: any) => ({
+          id: s.id,
+          title: s.title,
+          // limit description to 700 chars to fit quota comfortably
+          description: (s.description || '').slice(0, 700),
+          // do not persist problems/message to keep storage small
+        }));
+      }
+      localStorage.setItem(key, JSON.stringify(payload));
+    } catch (e) {
+      console.warn('localStorage save skipped due to quota for', key, e);
+      try { sessionStorage.setItem(key, JSON.stringify(value)); } catch {}
+    }
+  }, []);
+  
   // Move useMemo to top level to prevent hooks rendering error
   const selectedSegmentIds = useMemo(() => segments.map(s => s.id), [segments]);
   
@@ -203,8 +224,8 @@ export default function ResearchResultPage() {
             }));
             setSegments(formattedSegments);
             
-            // Sync segments with localStorage
-            localStorage.setItem(`research-${id}-segments`, JSON.stringify(formattedSegments));
+            // Sync segments with localStorage (safe)
+            safeSave(`research-${id}-segments`, formattedSegments);
           }
           
           // Load all generated segments directly from segments table (принудительно обновляем)
@@ -232,7 +253,7 @@ export default function ResearchResultPage() {
             console.log('✅ Successfully loaded all segments from database:', formattedAllSegments.length);
             console.log('📋 Sample segment:', formattedAllSegments[0]);
             setAllGeneratedSegments(formattedAllSegments);
-            localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(formattedAllSegments));
+            safeSave(`research-${id}-all-segments`, formattedAllSegments);
           } else {
             console.log('⚠️ No segments found in database. Trying research.generated_segments fallback');
             // Fallback 1: use generated_segments from research record if present (supports multiple shapes)
@@ -267,7 +288,7 @@ export default function ResearchResultPage() {
 
             if (fallbackFromResearch && fallbackFromResearch.length > 0) {
               setAllGeneratedSegments(fallbackFromResearch);
-              localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(fallbackFromResearch));
+              safeSave(`research-${id}-all-segments`, fallbackFromResearch);
             } else if (allSegmentsFromDB && allSegmentsFromDB.length > 0) {
               // Fallback 2: use selected segments if any
               const fallbackSegments = allSegmentsFromDB.map((segment: any) => ({
@@ -278,7 +299,7 @@ export default function ResearchResultPage() {
                 message: segment.message
               }));
               setAllGeneratedSegments(fallbackSegments);
-              localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(fallbackSegments));
+              safeSave(`research-${id}-all-segments`, fallbackSegments);
             }
           }
           
@@ -292,7 +313,7 @@ export default function ResearchResultPage() {
           if (topSegments && topSegments.length > 0) {
             setTopSegmentsData(topSegments);
             // Сохраняем топ сегменты в localStorage для мгновенного отображения
-            localStorage.setItem(`research-${id}-top-segments`, JSON.stringify(topSegments));
+            safeSave(`research-${id}-top-segments`, topSegments);
           }
           
           setDataLoaded(true);
@@ -329,7 +350,7 @@ export default function ResearchResultPage() {
         message: s.message,
       }));
       setAllGeneratedSegments(formatted);
-      localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(formatted));
+      safeSave(`research-${id}-all-segments`, formatted);
     }
   }, [id, research, allGeneratedSegments?.length]);
 
@@ -392,7 +413,7 @@ export default function ResearchResultPage() {
           message: segment.message,
         }));
         setAllGeneratedSegments(formatted);
-        localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(formatted));
+        safeSave(`research-${id}-all-segments`, formatted);
       }
     };
 
@@ -1095,7 +1116,7 @@ export default function ResearchResultPage() {
                   // Обновляем состояние выбранных сегментов в реальном времени
                   const newSelectedSegments = allGeneratedSegments.filter(seg => selectedIds.includes(seg.id));
                   setSegments(newSelectedSegments);
-                  localStorage.setItem(`research-${id}-segments`, JSON.stringify(newSelectedSegments));
+                  safeSave(`research-${id}-segments`, newSelectedSegments);
                 }}
               />
             ) : (

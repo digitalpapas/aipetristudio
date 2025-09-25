@@ -13,7 +13,7 @@ const PricingPage = () => {
   const { status, daysLeft, hasActiveSubscription } = useSubscription();
   const navigate = useNavigate();
   
-  const SUBSCRIPTION_URL = 'https://neurosetipraktika.payform.ru/?invoice_id=abf95cc11884f5d9845593f2a4b0f4b8&paylink=1';
+  const SUBSCRIPTION_URL = 'https://payform.ru/q69gDr2/';
 
   const handleProButtonClick = () => {
     if (!user) {

@@ -173,6 +173,27 @@ serve(async (req) => {
 
     console.log('Successfully updated user profile subscription');
 
+    // Сохраняем информацию о платеже
+    const { error: paymentError } = await supabaseAdmin
+      .from('payments')
+      .insert({
+        user_id: user.id,
+        email: customer_email,
+        amount: webhookData.order_sum,
+        plan: 'pro',
+        status: 'success',
+        prodamus_order_id: webhookData.order_id,
+        prodamus_subscription_id: webhookData.subscription_id || '2510594',
+        payment_type: webhookData.payment_type === 'recurring' ? 'recurring' : 'initial'
+      });
+
+    if (paymentError) {
+      console.error('Error saving payment:', paymentError);
+      // Не прерываем выполнение из-за ошибки сохранения платежа
+    } else {
+      console.log('Payment record saved successfully');
+    }
+
     // Создаем уведомление
     const { error: notificationError } = await supabaseAdmin
       .from('notifications')

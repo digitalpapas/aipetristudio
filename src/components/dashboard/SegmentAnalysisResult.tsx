@@ -599,53 +599,77 @@ export default function SegmentAnalysisResult({
     }
 
     console.log('Перегенерация с комментариями:', regenerateComments);
-    setLoading(true);
     setShowRegenerateDialog(false);
+    setRegenerateComments('');
 
     try {
-      const { data, error } = await supabase.functions.invoke('regenerate-with-comments', {
+      // Получаем зависимые данные для анализа
+      const ANALYSIS_DEPENDENCIES: Record<string, string[]> = {
+        segment_description: [],
+        bdf_analysis: ['segment_description'],
+        problems_analysis: ['segment_description'],
+        solutions_analysis: ['segment_description', 'problems_analysis'],
+        jtbd_analysis: ['segment_description'],
+        user_personas: ['segment_description'],
+        content_themes: ['segment_description', 'bdf_analysis', 'problems_analysis', 'solutions_analysis', 'jtbd_analysis', 'user_personas'],
+        niche_integration: ['segment_description', 'bdf_analysis', 'problems_analysis', 'solutions_analysis', 'jtbd_analysis', 'user_personas', 'content_themes'],
+        final_report: ['segment_description', 'bdf_analysis', 'problems_analysis', 'solutions_analysis', 'jtbd_analysis', 'user_personas', 'content_themes', 'niche_integration']
+      };
+
+      const dependencies = ANALYSIS_DEPENDENCIES[analysisType] || [];
+      let dependencyData: Record<string, string> = {};
+
+      // Загружаем зависимости
+      for (const dep of dependencies) {
+        const { data } = await getSegmentAnalysis(researchId, parseInt(segmentId), dep);
+        if (data && data.content) {
+          let text = '';
+          if (typeof data.content === 'string') {
+            try {
+              const parsed = JSON.parse(data.content);
+              text = parsed.text || data.content;
+            } catch {
+              text = data.content;
+            }
+          } else if (data.content.text) {
+            text = data.content.text;
+          } else if (data.content.analysis_result) {
+            text = data.content.analysis_result;
+          }
+          dependencyData[dep] = text;
+        }
+      }
+
+      // Вызываем новую функцию перегенерации
+      const { data, error } = await supabase.functions.invoke('regenerate-segment-analysis', {
         body: {
-          currentText: analysisResult || '',
+          researchId,
+          segmentId: parseInt(segmentId),
+          segmentName: segmentName || 'Неизвестный сегмент',
+          analysisType,
           userComments: regenerateComments,
-          segmentName: segmentName || 'Неизвестный сегмент'
+          dependencies: dependencyData
         }
       });
 
       if (error) {
         console.error('Ошибка перегенерации:', error);
-        throw new Error(error.message || 'Произошла ошибка при перегенерации');
-      }
-
-      if (data?.text) {
-        // Сохраняем в базе данных
-        const { error: updateError } = await supabase
-          .from('segment_analyses')
-          .update({
-            content: data.text
-          })
-          .eq('Project ID', researchId)
-          .eq('Сегмент ID', parseInt(segmentId))
-          .eq('analysis_type', analysisType);
-
-        if (updateError) {
-          console.error('Ошибка обновления в БД:', updateError);
-          throw new Error('Не удалось сохранить результат в базу данных');
-        }
-
-        // Обновляем локальное состояние
-        setAnalysisResult(data.text);
-
-        // Обновляем кэш
-        const cacheKey = `segment-analysis-${researchId}-${segmentId}-${analysisType}`;
-        SafeStorage.setWithTimestamp(cacheKey, { text: data.text });
-
         toast({
-          title: "Успешно",
-          description: "Анализ успешно адаптирован с учетом ваших комментариев",
+          type: "error", 
+          title: "Ошибка перегенерации",
+          description: error.message || 'Произошла ошибка при перегенерации'
         });
-      } else {
-        throw new Error('Не получен результат от ассистента');
+        return;
       }
+
+      toast({
+        title: "Перегенерация запущена",
+        description: "Анализ перегенерируется с учетом ваших комментариев. Вы получите уведомление о завершении.",
+      });
+
+      // Перенаправляем обратно к списку анализов
+      onBack();
+
     } catch (error) {
       console.error('Ошибка перегенерации:', error);
       toast({
@@ -653,9 +677,6 @@ export default function SegmentAnalysisResult({
         title: "Ошибка",
         description: error instanceof Error ? error.message : 'Произошла ошибка при перегенерации'
       });
-    } finally {
-      setLoading(false);
-      setRegenerateComments('');
     }
   };
 

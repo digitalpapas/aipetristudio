@@ -90,7 +90,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
   const { toast } = useCustomToast();
   const { user } = useAuth();
   
-  const [selectedOptions, setSelectedOptions] = useState<string[]>([\"segment_description\"]);
+  const [selectedOptions, setSelectedOptions] = useState<string[]>(["segment_description"]);
   const [completedAnalyses, setCompletedAnalyses] = useState<string[]>([]);
   const [analyzingTypes, setAnalyzingTypes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -137,16 +137,18 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
 
     // Проверяем БД на анализы в процессе
     try {
-      const result = await supabase
+      const { data: processingData } = await supabase
         .from('segment_analyses')
         .select('analysis_type, created_at')
-        .eq('Project ID', researchId)
-        .eq('Сегмент ID', Number(segmentId))
-        .eq('status', 'processing');
+        .match({
+          'Project ID': researchId,
+          'Сегмент ID': Number(segmentId),
+          'status': 'processing'
+        });
 
-      if (result.data) {
+      if (processingData) {
         const now = Date.now();
-        result.data.forEach(analysis => {
+        processingData.forEach((analysis: any) => {
           const createdAt = new Date(analysis.created_at).getTime();
           if (now - createdAt < 30 * 60 * 1000) {
             if (!analyzing.includes(analysis.analysis_type)) {
@@ -260,15 +262,38 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
         // Обновляем состояние
         setAnalyzingTypes(prev => [...prev, analysisType]);
 
+        // Получаем данные сегмента перед анализом
+        let segmentName = '';
+        let segmentDescription = '';
+        
+        try {
+          const { data: segmentData } = await supabase
+            .from('segments')
+            .select('*')
+            .eq('Project ID', researchId)
+            .eq('Сегмент ID', parseInt(segmentId))
+            .single();
+          
+          if (segmentData) {
+            segmentName = segmentData['Название сегмента'] || `Сегмент ${segmentId}`;
+            segmentDescription = segmentData['Описание сегмента'] || '';
+          }
+        } catch (error) {
+          console.error('Error loading segment data:', error);
+          segmentName = `Сегмент ${segmentId}`;
+        }
+
         try {
           const result = await analyzeSegment({
             researchId,
             segmentId: parseInt(segmentId),
+            segmentName,
+            segmentDescription,
             analysisType,
           });
 
-          if (result?.response) {
-            await saveSegmentAnalysis(researchId, parseInt(segmentId), `segment-${segmentId}`, analysisType, result.response);
+          if (result?.text) {
+            await saveSegmentAnalysis(researchId, parseInt(segmentId), segmentName, analysisType, result.text);
             
             toast({
               type: "success",

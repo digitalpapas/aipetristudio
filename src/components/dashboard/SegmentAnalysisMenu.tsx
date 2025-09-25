@@ -223,35 +223,32 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
           event: '*',
           schema: 'public',
           table: 'segment_analyses',
-          filter: `"Project ID"=eq.${researchId} AND "Сегмент ID"=eq.${segmentId}`
         },
         (payload) => {
+          const row: any = (payload as any).new || (payload as any).old;
+          const pid = row?.["Project ID"];
+          const sid = row?.["Сегмент ID"];
+          if (pid !== researchId || sid !== Number(segmentId)) return;
+
           console.log('Real-time segment analysis update:', payload);
           console.log('Event type:', payload.eventType);
-          console.log('New record:', payload.new);
-          console.log('Old record:', payload.old);
-          
+
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            console.log('Triggering data reload due to analysis completion');
-            
             // Извлекаем тип анализа из полученных данных
-            const completedAnalysisType = payload.new?.analysis_type;
-            
+            const completedAnalysisType = (payload as any).new?.analysis_type;
+
             if (completedAnalysisType) {
               // Убираем из анализирующихся СРАЗУ
               const analysisKey = getAnalysisKey(completedAnalysisType);
               localStorage.removeItem(analysisKey);
               setAnalyzingTypes(prev => prev.filter(type => type !== completedAnalysisType));
-              
+
               // Добавляем в завершенные СРАЗУ
-              setCompletedAnalyses(prev => {
-                if (!prev.includes(completedAnalysisType)) {
-                  return [...prev, completedAnalysisType];
-                }
-                return prev;
-              });
+              setCompletedAnalyses(prev => (
+                prev.includes(completedAnalysisType) ? prev : [...prev, completedAnalysisType]
+              ));
             }
-            
+
             // Перезагружаем все данные для синхронизации
             loadAllAnalysisData();
           }

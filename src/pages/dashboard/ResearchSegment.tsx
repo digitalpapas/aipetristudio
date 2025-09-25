@@ -164,20 +164,20 @@ export default function ResearchSegmentPage() {
           event: '*', // INSERT, UPDATE, DELETE
           schema: 'public',
           table: 'segment_analyses',
-          filter: `"Project ID"=eq.${id} AND "Сегмент ID"=eq.${segmentId}`
         },
         (payload) => {
+          const row: any = (payload as any).new || (payload as any).old;
+          const pid = row?.["Project ID"];
+          const sid = row?.["Сегмент ID"];
+          if (pid !== id || sid !== parseInt(segmentId)) return;
+
           console.log('Analysis changed:', {
-            event: payload.eventType,
-            segmentId: (payload.new as any)?.['Сегмент ID'] || (payload.old as any)?.['Сегмент ID'],
-            analysisType: (payload.new as any)?.analysis_type || (payload.old as any)?.analysis_type
+            event: (payload as any).eventType,
+            segmentId: sid,
+            analysisType: (payload as any).new?.analysis_type || (payload as any).old?.analysis_type
           });
-          
-          // Проверяем, что изменение относится к текущему сегменту
-          const affectedSegmentId = (payload.new as any)?.['Сегмент ID'] || (payload.old as any)?.['Сегмент ID'];
-          if (affectedSegmentId === parseInt(segmentId)) {
-            checkAnalysesCompletion();
-          }
+
+          checkAnalysesCompletion();
         }
       )
       .subscribe();

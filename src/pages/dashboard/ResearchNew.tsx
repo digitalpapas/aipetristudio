@@ -1081,7 +1081,10 @@ export default function ResearchNewPage() {
             {/* Поле описания проекта (показывается только для текстового типа) */}
             {dataType === "text" && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Опишите ваш проект <span className="text-xs text-muted-foreground">(минимум 100 символов)</span> <span className="text-destructive">*</span></label>
+                <label className="text-sm font-medium">
+                  <span className="inline-block">Опишите ваш проект <span className="text-xs text-muted-foreground">(минимум 100 символов)</span></span>
+                  <span className="text-destructive ml-1">*</span>
+                </label>
                 <Textarea 
                   value={idea} 
                   onChange={(e) => setIdea(e.target.value)} 

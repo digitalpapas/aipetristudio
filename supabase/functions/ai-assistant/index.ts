@@ -13,7 +13,7 @@ serve(async (req) => {
   try {
     const { systemPrompt, userMessage, threadId } = await req.json()
     
-    const openaiApiKey = Deno.env.get('OPEN_AI_API')
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || Deno.env.get('OPEN_AI_API')
     if (!openaiApiKey) {
       throw new Error('OpenAI API key not configured')
     }

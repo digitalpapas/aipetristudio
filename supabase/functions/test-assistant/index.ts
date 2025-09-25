@@ -24,7 +24,7 @@ serve(async (req) => {
 
   try {
     // Проверка ключа
-    const openaiApiKey = Deno.env.get('OPEN_AI_API')
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || Deno.env.get('OPEN_AI_API')
     diagnostics.keyPresent = !!openaiApiKey
     
     if (!openaiApiKey) {

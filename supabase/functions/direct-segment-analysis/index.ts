@@ -148,7 +148,7 @@ serve(async (req) => {
     }
 
     // Run first agent
-    const assistantId1 = 'asst_q3YzNQ3SGQKbAP0sEtoI8D4F';
+    const assistantId1 = 'asst_M4QJiIRuuDwgXFU3c5ojLcIz';
     console.log('Running first assistant:', assistantId1);
     
     const runResponse1 = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
@@ -292,7 +292,7 @@ ${segmentsForSecondAgent}
     }
 
     // Run second agent
-    const assistantId2 = 'asst_JH2EvjSw5lSWyvC978FE9bDI';
+    const assistantId2 = 'asst_xY4M3BWMAkr26PUSuVK0gmVE';
     console.log('Running second assistant:', assistantId2);
     
     const runResponse2 = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {

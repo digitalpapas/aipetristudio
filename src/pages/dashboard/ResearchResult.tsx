@@ -492,6 +492,37 @@ export default function ResearchResultPage() {
     }
   };
 
+  const handleResetStatus = async () => {
+    if (!research || !user?.id || !id) return;
+    
+    try {
+      await updateResearch(id, { status: "completed" });
+      
+      // Обновляем локальное состояние
+      setResearch({ ...research, status: "completed" });
+      
+      // Обновляем localStorage
+      const allResearch = JSON.parse(localStorage.getItem('research') || '[]');
+      const updatedResearch = allResearch.map((r: any) => 
+        r.id === id ? { ...r, status: "completed" } : r
+      );
+      localStorage.setItem('research', JSON.stringify(updatedResearch));
+      
+      toast({
+        type: "success",
+        title: "Статус сброшен",
+        description: "Теперь можно попробовать перегенерацию снова"
+      });
+    } catch (error) {
+      console.error('Error resetting status:', error);
+      toast({
+        type: "error",
+        title: "Ошибка",
+        description: "Не удалось сбросить статус"
+      });
+    }
+  };
+
   const handleRetryAnalysis = async () => {
     if (!research || !user?.id) return;
 
@@ -882,10 +913,21 @@ export default function ResearchResultPage() {
             variant="outline" 
             size="sm"
             onClick={() => setShowRegenerateDialog(true)}
+            disabled={research?.status === 'processing'}
           >
             <span className="hidden lg:inline">Перегенерировать с комментарием</span>
             <span className="lg:hidden">🔄</span>
           </Button>
+          {research?.status === 'processing' && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleResetStatus}
+            >
+              <span className="hidden lg:inline">Сбросить статус</span>
+              <span className="lg:hidden">🔄</span>
+            </Button>
+          )}
           <Button 
             variant="outline" 
             size="sm"

@@ -210,57 +210,6 @@ export default function ResearchResultPage() {
           // Load all generated segments directly from segments table (принудительно обновляем)
           console.log('🔍 Loading all segments directly from segments table for research:', id);
 
-  // Realtime: подписка на изменения сегментов и статуса исследования
-  useEffect(() => {
-    if (!id) return;
-
-    const fetchAllSegments = async () => {
-      const { data: allSegmentsData } = await supabase
-        .from('segments')
-        .select('*')
-        .eq('Project ID', id)
-        .order('Сегмент ID');
-
-      if (allSegmentsData && allSegmentsData.length > 0) {
-        const formatted = allSegmentsData.map((segment: any) => ({
-          id: segment['Сегмент ID'],
-          title: segment['Название сегмента'],
-          description: segment.description,
-          problems: segment.problems,
-          message: segment.message,
-        }));
-        setAllGeneratedSegments(formatted);
-        localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(formatted));
-      }
-    };
-
-    const channel = supabase
-      .channel(`research-${id}-changes`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'segments', filter: `Project ID=eq.${id}` },
-        () => {
-          fetchAllSegments();
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'researches', filter: `Project ID=eq.${id}` },
-        (payload) => {
-          const newStatus = (payload as any).new?.status;
-          if (newStatus === 'processing') {
-            navigate(`/dashboard/research/new?id=${id}`);
-          } else if (newStatus === 'completed') {
-            fetchAllSegments();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [id, navigate]);
 
           const { data: allSegmentsData, error: allSegmentsError } = await supabase
             .from('segments')
@@ -286,15 +235,37 @@ export default function ResearchResultPage() {
             localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(formattedAllSegments));
           } else {
             console.log('⚠️ No segments found in database. Trying research.generated_segments fallback');
-            // Fallback 1: use generated_segments from research record if present
-            if (data && Array.isArray((data as any).generated_segments) && (data as any).generated_segments.length > 0) {
-              const fallbackFromResearch = (data as any).generated_segments.map((segment: any, index: number) => ({
+            // Fallback 1: use generated_segments from research record if present (supports multiple shapes)
+            const rawGS = (data as any)?.generated_segments;
+            let parsedGS: any = rawGS;
+            try {
+              if (typeof rawGS === 'string') parsedGS = JSON.parse(rawGS);
+            } catch (e) {
+              console.warn('generated_segments parse error, using raw value');
+            }
+
+            let fallbackFromResearch: any[] | null = null;
+            if (Array.isArray(parsedGS)) {
+              // Shape: [{ id, title/name, description, problems, message }]
+              fallbackFromResearch = parsedGS.map((segment: any, index: number) => ({
                 id: segment.id ?? index + 1,
-                title: segment.title,
-                description: segment.description,
+                title: segment.title ?? segment.name,
+                description: segment.description ?? segment.desc,
                 problems: segment.problems,
                 message: segment.message
               }));
+            } else if (parsedGS && Array.isArray(parsedGS.segments)) {
+              // Shape: { principles: [...], segments: [...] }
+              fallbackFromResearch = parsedGS.segments.map((segment: any, index: number) => ({
+                id: segment.id ?? index + 1,
+                title: segment.title ?? segment.name,
+                description: segment.description ?? segment.desc,
+                problems: segment.problems,
+                message: segment.message
+              }));
+            }
+
+            if (fallbackFromResearch && fallbackFromResearch.length > 0) {
               setAllGeneratedSegments(fallbackFromResearch);
               localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(fallbackFromResearch));
             } else if (allSegmentsFromDB && allSegmentsFromDB.length > 0) {
@@ -373,6 +344,58 @@ export default function ResearchResultPage() {
     }, 1000), // Задержка 1 секунда
     [research, user?.id, id]
   );
+
+  // Realtime: подписка на изменения сегментов и статуса исследования (вынесено на верхний уровень)
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchAllSegments = async () => {
+      const { data: allSegmentsData } = await supabase
+        .from('segments')
+        .select('*')
+        .eq('Project ID', id)
+        .order('Сегмент ID');
+
+      if (allSegmentsData && allSegmentsData.length > 0) {
+        const formatted = allSegmentsData.map((segment: any) => ({
+          id: segment['Сегмент ID'],
+          title: segment['Название сегмента'],
+          description: segment.description,
+          problems: segment.problems,
+          message: segment.message,
+        }));
+        setAllGeneratedSegments(formatted);
+        localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(formatted));
+      }
+    };
+
+    const channel = supabase
+      .channel(`research-${id}-changes`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'segments', filter: `Project ID=eq.${id}` },
+        () => {
+          fetchAllSegments();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'researches', filter: `Project ID=eq.${id}` },
+        (payload) => {
+          const newStatus = (payload as any).new?.status;
+          if (newStatus === 'processing') {
+            navigate(`/dashboard/research/new?id=${id}`);
+          } else if (newStatus === 'completed') {
+            fetchAllSegments();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, navigate]);
 
   // Обновляем useEffect для синхронизации localTitle
   useEffect(() => {

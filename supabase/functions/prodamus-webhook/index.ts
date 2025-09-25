@@ -73,7 +73,7 @@ serve(async (req) => {
     console.log('Raw body:', bodyText);
     
     // Проверка подписи
-    const signature = req.headers.get('x-prodamus-signature') || req.headers.get('signature');
+    const signature = req.headers.get('x-prodamus-signature') || req.headers.get('signature') || req.headers.get('sign');
     console.log('Signature header:', signature);
     
     const isSignatureValid = await verifySignature(bodyText, signature || '', SECRET_KEY);
@@ -174,7 +174,7 @@ serve(async (req) => {
     const profileUpdateData = {
       subscription_status: 'pro',
       subscription_expires_at: expirationDate.toISOString(),
-      prodamus_subscription_id: '2510594'
+      prodamus_subscription_id: webhookData.subscription_id || '2510594'
     };
 
     console.log('Updating profile with data:', profileUpdateData);
@@ -186,7 +186,7 @@ serve(async (req) => {
         user_id: user.id,
         ...profileUpdateData,
         full_name: user.user_metadata?.full_name || customer_email.split('@')[0]
-      });
+      }, { onConflict: 'user_id' });
 
     if (profileError) {
       console.error('Error updating/creating profile:', profileError);

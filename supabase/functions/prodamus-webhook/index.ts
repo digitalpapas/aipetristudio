@@ -203,7 +203,7 @@ serve(async (req) => {
         email: customer_email,
         amount: webhookData.order_sum,
         plan: 'pro',
-        status: 'success',
+        status: 'completed',
         prodamus_order_id: webhookData.order_id,
         prodamus_subscription_id: webhookData.subscription_id || '2510594',
         payment_type: webhookData.payment_type === 'recurring' ? 'recurring' : 'initial'

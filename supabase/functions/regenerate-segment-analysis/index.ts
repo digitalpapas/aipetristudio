@@ -22,7 +22,7 @@ const ASSISTANT_IDS = {
   user_personas: 'asst_V0EoIILA29VE8rkNtUfAjWZr',
   niche_integration: 'asst_mx7nfoPMb8xOXbWlzFcc1BLC',
   final_report: 'asst_cL1PN5oSRaM4l5M1bHKaBHcO'
-};
+} as const;
 
 // Инструкции для каждого типа анализа
 const ANALYSIS_INSTRUCTIONS: { [key: string]: string } = {
@@ -37,34 +37,21 @@ const ANALYSIS_INSTRUCTIONS: { [key: string]: string } = {
   final_report: 'Создай комплексный аналитический отчет на основе всех проведенных анализов.'
 };
 
-// Названия анализов
+// Названия анализов для уведомлений
 const ANALYSIS_NAMES: { [key: string]: string } = {
   segment_description: 'Описание сегмента',
   bdf_analysis: 'BDF анализ',
-  problems_analysis: 'Боли, страхи, потребности, возражения',
+  problems_analysis: 'Боли, страхи, потребности',
   solutions_analysis: 'Работа с болями и возражениями',
   jtbd_analysis: 'JTBD анализ',
   user_personas: 'User Personas',
   content_themes: 'Темы для контента',
-  niche_integration: 'Уровни интеграции с нишей',
+  niche_integration: 'Интеграция с нишей',
   final_report: 'Аналитический отчет'
 };
 
-// Зависимости для каждого типа анализа
-const ANALYSIS_DEPENDENCIES: Record<string, string[]> = {
-  segment_description: [],
-  bdf_analysis: ['segment_description'],
-  problems_analysis: ['segment_description'],
-  solutions_analysis: ['segment_description', 'problems_analysis'],
-  jtbd_analysis: ['segment_description'],
-  user_personas: ['segment_description'],
-  content_themes: ['segment_description', 'bdf_analysis', 'problems_analysis', 'solutions_analysis', 'jtbd_analysis', 'user_personas'],
-  niche_integration: ['segment_description', 'bdf_analysis', 'problems_analysis', 'solutions_analysis', 'jtbd_analysis', 'user_personas', 'content_themes'],
-  final_report: ['segment_description', 'bdf_analysis', 'problems_analysis', 'solutions_analysis', 'jtbd_analysis', 'user_personas', 'content_themes', 'niche_integration']
-};
-
 serve(async (req) => {
-  // Handle CORS preflight requests
+  // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -74,20 +61,27 @@ serve(async (req) => {
       throw new Error('OpenAI API key не настроен');
     }
 
-    const { researchId, segmentId, segmentName, analysisType, userComments, dependencies } = await req.json();
-    
-    console.log(`Перегенерация ${analysisType} для сегмента: ${segmentName} (project=${researchId}, segment=${segmentId})`);
-    console.log(`Комментарии пользователя: ${userComments}`);
+    const body = await req.json();
+    const { researchId, segmentId, segmentName, analysisType, userComments, dependencies } = body ?? {};
+
+    if (!researchId || !segmentId || !analysisType) {
+      return new Response(JSON.stringify({ error: 'Некорректные параметры запроса' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
     const assistantId = ASSISTANT_IDS[analysisType as keyof typeof ASSISTANT_IDS];
     if (!assistantId) {
-      throw new Error(`Неизвестный тип анализа: ${analysisType}`);
+      return new Response(JSON.stringify({ error: `Неизвестный тип анализа: ${analysisType}` }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
-    // Init Supabase client with service role for DB writes
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Удаляем старые результаты анализа
+    // 1) Сброс старых данных и установка статуса processing
     await supabase
       .from('segment_analyses')
       .delete()
@@ -95,9 +89,6 @@ serve(async (req) => {
       .eq('Сегмент ID', segmentId)
       .eq('analysis_type', analysisType);
 
-    console.log('Старый анализ удален');
-
-    // Создаем запись с статусом processing
     await supabase.from('segment_analyses').insert({
       'Project ID': researchId,
       'Сегмент ID': segmentId,
@@ -106,278 +97,178 @@ serve(async (req) => {
       status: 'processing'
     });
 
-    console.log('Создана запись со статусом processing');
+    // 2) Вернуть ответ СРАЗУ, а всю тяжёлую работу — в фоне
+    const authHeader = req.headers.get('authorization') || '';
 
-    // 1. Создаем thread
-    const threadResponse = await fetch('https://api.openai.com/v1/threads', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v2'
-      }
-    });
-
-    if (!threadResponse.ok) {
-      const error = await threadResponse.text();
-      console.error('Thread creation error:', error);
-      throw new Error('Не удалось создать thread');
-    }
-
-    const thread = await threadResponse.json();
-    console.log(`Thread создан: ${thread.id}`);
-
-    // 2. Формируем сообщение с учетом комментариев
-    let message = `Название сегмента: ${segmentName}\n\n`;
-    
-    // Добавляем зависимости если есть
-    if (dependencies && Object.keys(dependencies).length > 0) {
-      Object.entries(dependencies).forEach(([key, value]) => {
-        const displayName = ANALYSIS_NAMES[key] || key;
-        message += `${displayName}:\n${value}\n\n`;
-      });
-    }
-    
-    // Добавляем комментарии пользователя
-    message += `КОММЕНТАРИИ ПОЛЬЗОВАТЕЛЯ ДЛЯ УЧЕТА:\n${userComments}\n\n`;
-    
-    // Добавляем инструкцию
-    const baseInstruction = ANALYSIS_INSTRUCTIONS[analysisType] || 'Проведи анализ сегмента.';
-    message += `${baseInstruction}\n\nОБЯЗательно учти комментарии пользователя и адаптируй анализ согласно его пожеланиям.`;
-
-    // 3. Добавляем сообщение в thread
-    const messageResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v2'
-      },
-      body: JSON.stringify({
-        role: 'user',
-        content: message
-      })
-    });
-
-    if (!messageResponse.ok) {
-      const error = await messageResponse.text();
-      console.error('Message creation error:', error);
-      throw new Error('Не удалось добавить сообщение');
-    }
-
-    console.log('Сообщение добавлено в thread');
-
-    // 4. Запускаем assistant
-    const runResponse = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v2'
-      },
-      body: JSON.stringify({
-        assistant_id: assistantId
-      })
-    });
-
-    if (!runResponse.ok) {
-      const error = await runResponse.text();
-      console.error('Run creation error:', error);
-      throw new Error('Не удалось запустить assistant');
-    }
-
-    const run = await runResponse.json();
-    console.log(`Assistant запущен: ${run.id}`);
-
-    // 5. Ждем завершения
-    let runStatus = run.status;
-    let attempts = 0;
-    const maxAttempts = 180; // 3 минуты
-
-    while (runStatus !== 'completed' && runStatus !== 'failed' && attempts < maxAttempts) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+    EdgeRuntime.waitUntil((async () => {
       try {
-        const statusResponse = await fetch(
-          `https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${OPENAI_API_KEY}`,
-              'OpenAI-Beta': 'assistants=v2'
-            },
-            signal: AbortSignal.timeout(10000)
+        console.log(`Перегенерация ${analysisType} запущена (project=${researchId}, segment=${segmentId})`);
+
+        // 2.1 Создаём thread
+        const threadResp = await fetch('https://api.openai.com/v1/threads', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+            'OpenAI-Beta': 'assistants=v2'
           }
-        );
+        });
+        if (!threadResp.ok) {
+          console.error('Thread creation error:', await threadResp.text());
+          throw new Error('Не удалось создать thread');
+        }
+        const thread = await threadResp.json();
 
-        if (!statusResponse.ok) {
-          const error = await statusResponse.text();
-          console.error('Status check error:', error);
-          attempts++;
-          continue;
+        // 2.2 Формируем сообщение
+        let message = `Название сегмента: ${segmentName}\n\n`;
+        if (dependencies && Object.keys(dependencies).length > 0) {
+          for (const [key, value] of Object.entries(dependencies)) {
+            const displayName = ANALYSIS_NAMES[key] || key;
+            message += `${displayName}:\n${value}\n\n`;
+          }
+        }
+        message += `КОММЕНТАРИИ ПОЛЬЗОВАТЕЛЯ ДЛЯ УЧЕТА:\n${userComments || ''}\n\n`;
+        const baseInstruction = ANALYSIS_INSTRUCTIONS[analysisType] || 'Проведи анализ сегмента.';
+        message += `${baseInstruction}\n\nОБЯЗательно учти комментарии пользователя и адаптируй анализ согласно его пожеланиям.`;
+
+        // 2.3 Добавляем сообщение
+        const msgResp = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+            'OpenAI-Beta': 'assistants=v2'
+          },
+          body: JSON.stringify({ role: 'user', content: message })
+        });
+        if (!msgResp.ok) {
+          console.error('Message creation error:', await msgResp.text());
+          throw new Error('Не удалось добавить сообщение');
         }
 
-        const statusData = await statusResponse.json();
-        runStatus = statusData.status;
-        attempts++;
-        
-        if (attempts % 10 === 0) {
-          console.log(`Перегенерация ${analysisType}: ожидание ${attempts} сек...`);
+        // 2.4 Запуск assistant
+        const runResp = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+            'OpenAI-Beta': 'assistants=v2'
+          },
+          body: JSON.stringify({ assistant_id: assistantId })
+        });
+        if (!runResp.ok) {
+          console.error('Run creation error:', await runResp.text());
+          throw new Error('Не удалось запустить assistant');
         }
-      } catch (error) {
-        console.error(`Ошибка проверки статуса (попытка ${attempts}):`, error);
-        attempts++;
-        continue;
-      }
-    }
+        const run = await runResp.json();
 
-    if (runStatus === 'failed') {
-      throw new Error('Assistant не смог обработать запрос');
-    }
-
-    if (attempts >= maxAttempts) {
-      throw new Error('Превышено время ожидания ответа');
-    }
-
-    console.log(`Перегенерация завершена за ${attempts} секунд`);
-
-    // 6. Получаем результат
-    const messagesResponse = await fetch(
-      `https://api.openai.com/v1/threads/${thread.id}/messages`,
-      {
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'OpenAI-Beta': 'assistants=v2'
-        }
-      }
-    );
-
-    if (!messagesResponse.ok) {
-      const error = await messagesResponse.text();
-      console.error('Messages fetch error:', error);
-      throw new Error('Не удалось получить сообщения');
-    }
-
-    const messages = await messagesResponse.json();
-    
-    // Находим последнее сообщение от assistant
-    const assistantMessage = messages.data.find((msg: any) => msg.role === 'assistant');
-    
-    if (!assistantMessage) {
-      throw new Error('Не получен ответ от assistant');
-    }
-
-    // Извлекаем текст из ответа
-    const content = assistantMessage.content[0];
-    let resultText = '';
-
-    if (content.type === 'text') {
-      try {
-        const parsed = JSON.parse(content.text.value);
-        resultText = parsed.text || content.text.value;
-      } catch {
-        resultText = content.text.value;
-      }
-    }
-
-    console.log(`Перегенерация ${analysisType} успешно завершена`);
-
-    // Обновляем запись в БД с результатом и статусом completed
-    const { error: saveError } = await supabase.from('segment_analyses')
-      .update({
-        status: 'completed',
-        content: { text: resultText, analysis_result: resultText, timestamp: new Date().toISOString() }
-      })
-      .eq('Project ID', researchId)
-      .eq('Сегмент ID', segmentId)
-      .eq('analysis_type', analysisType)
-      .eq('status', 'processing');
-      
-    if (saveError) {
-      console.error('DB update error:', saveError);
-      throw new Error('Не удалось сохранить результат');
-    }
-
-    // Создаем уведомление о завершении перегенерации
-    try {
-      const authHeader = req.headers.get('authorization');
-      if (authHeader) {
-        const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
-        if (user?.id) {
-          const analysisNames: Record<string, string> = {
-            'segment_description': 'Описание сегмента',
-            'user_personas': 'Пользовательские персоны',
-            'jtbd_analysis': 'Анализ Jobs-to-be-Done',
-            'solutions_analysis': 'Анализ решений',
-            'bdf_analysis': 'BDF анализ',
-            'problems_analysis': 'Боли, страхи, потребности',
-            'content_themes': 'Темы для контента',
-            'niche_integration': 'Интеграция с нишей',
-            'final_report': 'Финальный отчет'
-          };
-          
-          const analysisDisplayName = analysisNames[analysisType] || analysisType;
-          
-          const { error: notificationError } = await supabase
-            .from('notifications')
-            .insert({
-              user_id: user.id,
-              title: 'Перегенерация завершена',
-              message: `${analysisDisplayName} для сегмента "${segmentName}" обновлен с учетом ваших комментариев`,
-              type: 'research',
-              action_url: `/dashboard/research/${researchId}/segment/${segmentId}`,
-              research_id: researchId,
-              segment_id: segmentId
+        // 2.5 Ожидаем завершения (в фоне)
+        let status = run.status as string;
+        let attempts = 0;
+        const maxAttempts = 180; // ~3 минуты
+        while (!['completed','failed','cancelled','expired'].includes(status) && attempts < maxAttempts) {
+          await new Promise(r => setTimeout(r, 1000));
+          try {
+            const st = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
+              headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'OpenAI-Beta': 'assistants=v2' },
+              signal: AbortSignal.timeout(10000)
             });
-          
-          if (notificationError) {
-            console.error('Failed to create notification:', notificationError);
+            if (!st.ok) {
+              attempts++;
+              continue;
+            }
+            const stData = await st.json();
+            status = stData.status;
+            attempts++;
+          } catch (e) {
+            attempts++;
           }
         }
-      }
-    } catch (notifErr) {
-      console.warn('Failed to create notification:', notifErr);
-    }
+        if (status !== 'completed') throw new Error(`Run finished with status ${status}`);
 
-    return new Response(
-      JSON.stringify({ text: resultText }),
-      { 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
+        // 2.6 Получаем сообщения и вытаскиваем ответ
+        const msgs = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+          headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}`, 'OpenAI-Beta': 'assistants=v2' }
+        });
+        if (!msgs.ok) {
+          console.error('Messages fetch error:', await msgs.text());
+          throw new Error('Не удалось получить сообщения');
+        }
+        const messages = await msgs.json();
+        const assistantMessage = messages.data.find((m: any) => m.role === 'assistant');
+        if (!assistantMessage) throw new Error('Не получен ответ от assistant');
+
+        const content = assistantMessage.content?.[0];
+        let resultText = '';
+        if (content?.type === 'text') {
+          try {
+            const parsed = JSON.parse(content.text.value);
+            resultText = parsed.text || content.text.value;
+          } catch {
+            resultText = content.text.value;
+          }
+        }
+
+        // 2.7 Обновляем запись в БД
+        const { error: saveError } = await supabase.from('segment_analyses')
+          .update({
+            status: 'completed',
+            content: { text: resultText, analysis_result: resultText, timestamp: new Date().toISOString() }
+          })
+          .eq('Project ID', researchId)
+          .eq('Сегмент ID', segmentId)
+          .eq('analysis_type', analysisType)
+          .eq('status', 'processing');
+        if (saveError) throw saveError;
+
+        // 2.8 Создаём уведомление пользователю
+        try {
+          if (authHeader) {
+            const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+            if (user?.id) {
+              await supabase.from('notifications').insert({
+                user_id: user.id,
+                title: 'Перегенерация завершена',
+                message: `${ANALYSIS_NAMES[analysisType] || analysisType} для сегмента "${segmentName}" обновлен с учетом ваших комментариев`,
+                type: 'research',
+                action_url: `/dashboard/research/${researchId}/segment/${segmentId}`,
+                research_id: researchId,
+                segment_id: segmentId
+              });
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to create notification:', e);
+        }
+
+        console.log(`Перегенерация ${analysisType} успешно завершена`);
+      } catch (err) {
+        console.error('Background task error (regenerate):', err);
+        // Очистка processing записи в случае ошибки
+        try {
+          await supabase
+            .from('segment_analyses')
+            .delete()
+            .eq('Project ID', researchId)
+            .eq('Сегмент ID', segmentId)
+            .eq('analysis_type', analysisType)
+            .eq('status', 'processing');
+        } catch (cleanupError) {
+          console.error('Cleanup error:', cleanupError);
+        }
       }
-    );
+    })());
+
+    // Немедленный ответ
+    return new Response(JSON.stringify({ queued: true }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
 
   } catch (error) {
     console.error('Ошибка в Edge Function regenerate-segment-analysis:', error);
-    
-    // В случае ошибки удаляем запись processing (если она была создана)
-    try {
-      const requestData = await req.clone().json();
-      if (requestData.researchId && requestData.segmentId && requestData.analysisType) {
-        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-        await supabase
-          .from('segment_analyses')
-          .delete()
-          .eq('Project ID', requestData.researchId)
-          .eq('Сегмент ID', requestData.segmentId)
-          .eq('analysis_type', requestData.analysisType)
-          .eq('status', 'processing');
-      }
-    } catch (cleanupError) {
-      console.error('Cleanup error:', cleanupError);
-    }
-    
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      { 
-        status: 500, 
-        headers: { 
-          ...corsHeaders, 
-          'Content-Type': 'application/json' 
-        } 
-      }
-    );
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   }
 });

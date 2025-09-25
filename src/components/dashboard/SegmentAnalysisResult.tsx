@@ -667,10 +667,15 @@ export default function SegmentAnalysisResult({
         description: "Анализ перегенерируется с учетом ваших комментариев. Вы получите уведомление о завершении.",
       });
 
-      // Небольшая задержка чтобы toast показался, затем перенаправляем
+      // Перенаправляем на страницу исследования, чтобы пользователь наблюдал прогресс в списке
       setTimeout(() => {
-        onBack();
-      }, 1000);
+        try {
+          navigate(`/dashboard/research/${researchId}#selected-segments`);
+        } catch {
+          // fallback - вернуться назад, если navigate не сработал
+          onBack();
+        }
+      }, 400);
 
     } catch (error) {
       console.error('Ошибка перегенерации:', error);

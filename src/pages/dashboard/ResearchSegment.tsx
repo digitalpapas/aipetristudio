@@ -3,7 +3,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import SegmentAnalysisMenu from "@/components/dashboard/SegmentAnalysisMenu";
 import SegmentAnalysisResult from "@/components/dashboard/SegmentAnalysisResult";
-import FloatingAIAssistant from "@/components/dashboard/FloatingAIAssistant";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useCustomToast } from "@/hooks/use-custom-toast";
@@ -244,19 +243,6 @@ export default function ResearchSegmentPage() {
           />
         )}
       </div>
-      
-      {/* AI Ассистент доступен только в меню анализа */}
-      {currentView === 'menu' && (
-        <FloatingAIAssistant
-          key={`assistant-${missingAnalyses.length}-${missingAnalyses.join(',')}`}
-          segmentName={segmentName}
-          segmentId={segmentId}
-          researchId={id}
-          isLocked={isAssistantLocked}
-          missingAnalyses={missingAnalyses}
-          context="segment"
-        />
-      )}
     </main>
   );
 }

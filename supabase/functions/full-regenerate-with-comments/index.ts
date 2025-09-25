@@ -19,9 +19,15 @@ serve(async (req) => {
 
   console.log('🔄 Received full-regenerate-with-comments request');
 
+  let research_id: string | undefined;
+  let user_id: string | undefined;
+
   try {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { research_id, user_id, user_comment, current_segments, original_research } = await req.json();
+    const requestData = await req.json();
+    research_id = requestData.research_id;
+    user_id = requestData.user_id;
+    const { user_comment, current_segments, original_research } = requestData;
 
     console.log('📝 Request data:', {
       research_id,
@@ -42,19 +48,6 @@ serve(async (req) => {
       .eq('Project ID', research_id);
 
     console.log('✅ Updated research status to processing');
-
-    // Удаляем существующие сегменты
-    await supabase
-      .from('segments')
-      .delete()
-      .eq('Project ID', research_id);
-
-    await supabase
-      .from('top_segments')
-      .delete()
-      .eq('project_id', research_id);
-
-    console.log('🗑️ Deleted existing segments and top segments');
 
     // Формируем данные текущих сегментов для первого агента
     const segmentsForAnalysis = current_segments.map((segment: any, index: number) => ({
@@ -128,12 +121,18 @@ ${JSON.stringify(segmentsForAnalysis, null, 2)}
     const firstAgentContent = firstAgentData.choices[0].message.content;
     
     console.log('✅ First agent response received');
+    console.log('📝 First agent raw content:', firstAgentContent.substring(0, 500) + '...');
 
     let improvedSegments;
     try {
-      improvedSegments = JSON.parse(firstAgentContent);
+      // Пытаемся найти JSON в ответе
+      const jsonMatch = firstAgentContent.match(/\{[\s\S]*\}/);
+      const jsonString = jsonMatch ? jsonMatch[0] : firstAgentContent;
+      
+      improvedSegments = JSON.parse(jsonString);
     } catch (parseError) {
       console.error('❌ Error parsing first agent response:', parseError);
+      console.error('❌ Raw response:', firstAgentContent);
       throw new Error('Failed to parse first agent response');
     }
 
@@ -212,12 +211,18 @@ ${JSON.stringify(improvedSegments.segments, null, 2)}
     const secondAgentContent = secondAgentData.choices[0].message.content;
     
     console.log('✅ Second agent response received');
+    console.log('📝 Second agent raw content:', secondAgentContent.substring(0, 500) + '...');
 
     let topSegmentsAnalysis;
     try {
-      topSegmentsAnalysis = JSON.parse(secondAgentContent);
+      // Пытаемся найти JSON в ответе
+      const jsonMatch = secondAgentContent.match(/\{[\s\S]*\}/);
+      const jsonString = jsonMatch ? jsonMatch[0] : secondAgentContent;
+      
+      topSegmentsAnalysis = JSON.parse(jsonString);
     } catch (parseError) {
       console.error('❌ Error parsing second agent response:', parseError);
+      console.error('❌ Raw response:', secondAgentContent);
       throw new Error('Failed to parse second agent response');
     }
 
@@ -226,6 +231,21 @@ ${JSON.stringify(improvedSegments.segments, null, 2)}
     }
 
     console.log('🏆 Generated top segments:', topSegmentsAnalysis.top_segments.length);
+
+    // УДАЛЯЕМ старые данные только ПОСЛЕ успешной генерации новых
+    console.log('🗑️ Deleting old segments after successful generation...');
+    
+    await supabase
+      .from('segments')
+      .delete()
+      .eq('Project ID', research_id);
+
+    await supabase
+      .from('top_segments')
+      .delete()
+      .eq('project_id', research_id);
+
+    console.log('✅ Old segments deleted');
 
     // Сохраняем все сегменты в таблицу segments
     const segmentsToInsert = improvedSegments.segments.map((segment: any) => ({
@@ -310,7 +330,6 @@ ${JSON.stringify(improvedSegments.segments, null, 2)}
     // Пытаемся вернуть статус исследования обратно при ошибке
     try {
       const supabase = createClient(supabaseUrl, supabaseServiceKey);
-      const { research_id, user_id } = await req.json();
       
       if (research_id) {
         await supabase

@@ -87,10 +87,22 @@ const SubscriptionPage = () => {
     }
   };
 
-  const handleCancelSubscription = () => {
-    // Открываем email клиент для отправки запроса на отмену
-    const subject = 'Запрос на отмену подписки';
-    const body = `Здравствуйте!
+  const handleCancelSubscription = async () => {
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase.functions.invoke('cancel-subscription', {
+        body: {
+          subscriptionId: subscriptionId,
+          userEmail: user?.email
+        }
+      });
+
+      if (error) {
+        console.error('Error cancelling subscription:', error);
+        // Fallback to email method if API fails
+        const subject = 'Запрос на отмену подписки';
+        const body = `Здравствуйте!
 
 Прошу отменить мою подписку Pro.
 
@@ -98,9 +110,50 @@ ID подписки: ${subscriptionId}
 Email: ${user?.email}
 
 Спасибо.`;
-    
-    const mailtoUrl = `mailto:neuroseti.praktika@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.location.href = mailtoUrl;
+        
+        const mailtoUrl = `mailto:neuroseti.praktika@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = mailtoUrl;
+        return;
+      }
+
+      if (data?.success) {
+        // Force refresh subscription data
+        await fetchSubscriptionData();
+        // Show success message
+        console.log('Subscription cancelled successfully');
+      } else {
+        // Fallback to email method
+        const subject = 'Запрос на отмену подписки';
+        const body = `Здравствуйте!
+
+Прошу отменить мою подписку Pro.
+
+ID подписки: ${subscriptionId}
+Email: ${user?.email}
+
+Спасибо.`;
+        
+        const mailtoUrl = `mailto:neuroseti.praktika@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        window.location.href = mailtoUrl;
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      // Fallback to email method
+      const subject = 'Запрос на отмену подписки';
+      const body = `Здравствуйте!
+
+Прошу отменить мою подписку Pro.
+
+ID подписки: ${subscriptionId}
+Email: ${user?.email}
+
+Спасибо.`;
+      
+      const mailtoUrl = `mailto:neuroseti.praktika@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = mailtoUrl;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getStatusBadge = () => {
@@ -202,16 +255,21 @@ Email: ${user?.email}
                       Отмена подписки
                     </AlertDialogTitle>
                     <AlertDialogDescription className="space-y-2">
-                      <p>Для отмены подписки напишите на:</p>
-                      <p className="font-semibold">neuroseti.praktika@gmail.com</p>
-                      <p>Мы откроем почтовый клиент с готовым письмом.</p>
+                      <p>Вы уверены, что хотите отменить подписку?</p>
+                      <p className="text-sm text-muted-foreground">
+                        Подписка будет отменена автоматически через API Продамуса.
+                        В случае ошибки вы будете перенаправлены к отправке email.
+                      </p>
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Отмена</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleCancelSubscription}>
-                      Написать письмо
-                    </AlertDialogAction>
+                  <AlertDialogAction 
+                    disabled={isLoading}
+                    onClick={handleCancelSubscription}
+                  >
+                    {isLoading ? 'Отменяем...' : 'Отменить подписку'}
+                  </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>

@@ -12,6 +12,7 @@ import { saveSegmentAnalysis, getCompletedAnalyses } from "@/lib/supabase-utils"
 
 import { analyzeSegment } from "@/lib/openai-assistant";
 import { supabase } from "@/integrations/supabase/client";
+import { SafeStorage } from "@/lib/storage-utils";
 import { Play, CheckCircle2, Clock, Brain, AlertTriangle, Wrench, Target, MessageSquare, Users, FileText, Lock, Trash2, CheckCheck, AlertCircle, Sparkles, Zap, Trophy, XCircle, Eye, Lightbulb } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -257,10 +258,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
         
         // Сохраняем в localStorage для быстрой загрузки при следующем входе
         const storageKey = `segment-analysis-${researchId}-${segmentId}`;
-        safeSetItem(storageKey, JSON.stringify({
-          completed: completedFromSupabase,
-          updatedAt: new Date().toISOString()
-        }));
+        SafeStorage.setWithTimestamp(storageKey, { completed: completedFromSupabase });
         console.log('Loaded completed analyses:', completedFromSupabase);
         
         // Очищаем статус "анализируется" для завершенных анализов
@@ -486,11 +484,10 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
       // Сохраняем статус всех анализов в sessionStorage (временные данные)
       optionsToAnalyze.forEach(analysisType => {
         const analysisKey = getAnalysisKey(analysisType);
-        safeSetItem(analysisKey, JSON.stringify({
+        SafeStorage.setWithTimestamp(analysisKey, {
           status: 'processing',
-          startedAt: new Date().toISOString(),
           analysisType: analysisType
-        }), true); // используем sessionStorage
+        }, true); // используем sessionStorage
       });
 
       // Добавляем все в список анализирующихся
@@ -649,7 +646,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
       
       const updatedCompleted = (data.completed || []).filter((id: string) => id !== analysisType);
       const updatedData = { ...data, completed: updatedCompleted };
-      safeSetItem(storageKey, JSON.stringify(updatedData));
+      SafeStorage.setWithTimestamp(storageKey, updatedData);
 
       // Обновляем состояние
       setCompletedAnalyses(prev => prev.filter(id => id !== analysisType));

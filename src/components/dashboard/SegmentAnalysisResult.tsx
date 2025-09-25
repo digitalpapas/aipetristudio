@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Textarea } from "@/components/ui/textarea";
 import { getSegmentAnalysis, deleteSegmentAnalysis, saveBookmark, getBookmarks } from "@/lib/supabase-utils";
 import { useCustomToast } from "@/hooks/use-custom-toast";
+import { SafeStorage } from "@/lib/storage-utils";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageHeader } from "./PageHeader";
@@ -169,7 +170,7 @@ export default function SegmentAnalysisResult({
           if (data && data['Название сегмента']) {
             setSegmentName(data['Название сегмента']);
             // Сохраняем в localStorage для быстрого показа в следующий раз
-            localStorage.setItem(`segment-name-${researchId}-${segmentId}`, data['Название сегмента']);
+            SafeStorage.safeSetItem(`segment-name-${researchId}-${segmentId}`, data['Название сегмента']);
           }
         } catch (error) {
           console.error('Error loading segment name:', error);
@@ -214,10 +215,7 @@ export default function SegmentAnalysisResult({
           
           // Сохраняем в localStorage для быстрой загрузки в будущем
           const storageKey = `segment-analysis-${researchId}-${segmentId}-${analysisType}`;
-          localStorage.setItem(storageKey, JSON.stringify({
-            text: processedContent,
-            updatedAt: new Date().toISOString()
-          }));
+          SafeStorage.setWithTimestamp(storageKey, { text: processedContent });
           
           setAnalysisResult(processedContent);
           setLoading(false);
@@ -404,7 +402,7 @@ export default function SegmentAnalysisResult({
   // При обновлении bookmarkedTexts обновляем кеш
   useEffect(() => {
     const cacheKey = `bookmarks-count-${researchId}-${segmentId}`;
-    localStorage.setItem(cacheKey, JSON.stringify(bookmarkedTexts));
+    SafeStorage.setWithTimestamp(cacheKey, bookmarkedTexts);
   }, [bookmarkedTexts, researchId, segmentId]);
 
   // Фоновое обновление данных из Supabase
@@ -423,10 +421,7 @@ export default function SegmentAnalysisResult({
               
               // Обновляем localStorage
               const storageKey = `segment-analysis-${researchId}-${segmentId}-${analysisType}`;
-              localStorage.setItem(storageKey, JSON.stringify({
-                text: processedContent,
-                updatedAt: new Date().toISOString()
-              }));
+              SafeStorage.setWithTimestamp(storageKey, { text: processedContent });
             }
           }
         } catch (error) {
@@ -597,10 +592,7 @@ export default function SegmentAnalysisResult({
 
         // Обновляем кэш
         const cacheKey = `segment-analysis-${researchId}-${segmentId}-${analysisType}`;
-        localStorage.setItem(cacheKey, JSON.stringify({
-          text: data.text,
-          updatedAt: new Date().toISOString()
-        }));
+        SafeStorage.setWithTimestamp(cacheKey, { text: data.text });
 
         toast({
           title: "Успешно",
@@ -645,12 +637,12 @@ export default function SegmentAnalysisResult({
 
       // Обновляем список завершенных анализов
       const storageKey = `segment-analysis-${researchId}-${segmentId}`;
-      const saved = localStorage.getItem(storageKey);
+      const saved = SafeStorage.safeGetItem(storageKey);
       const data = saved ? JSON.parse(saved) : { completed: [] };
       
       const updatedCompleted = (data.completed || []).filter((id: string) => id !== analysisType);
       const updatedData = { ...data, completed: updatedCompleted };
-      localStorage.setItem(storageKey, JSON.stringify(updatedData));
+      SafeStorage.setWithTimestamp(storageKey, updatedData);
 
       toast({
         title: "Анализ удален",

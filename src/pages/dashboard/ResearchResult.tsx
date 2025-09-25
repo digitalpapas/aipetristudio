@@ -622,8 +622,8 @@ export default function ResearchResultPage() {
         description: "Идёт создание новых сегментов с учётом ваших комментариев"
       });
 
-      // Перенаправляем на страницу загрузки (важно делать это после обновления состояния)
-      navigate(`/dashboard/research/${id}`);
+      // Перенаправляем на страницу генерации (как при первоначальном "Начать анализ")
+      navigate(`/dashboard/research/new?id=${id}`);
 
     } catch (error) {
       console.error('Error during regeneration with comment:', error);

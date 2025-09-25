@@ -550,22 +550,33 @@ export default function ResearchResultPage() {
 
     if (!research || !user?.id) return;
     
-    setIsRegenerating(true);
+    // Получаем текущие сегменты из состояния
+    const currentSegments = allGeneratedSegments.length > 0 ? allGeneratedSegments : segments;
     
-    try {
-      // Получаем текущие сегменты из состояния
-      const currentSegments = allGeneratedSegments.length > 0 ? allGeneratedSegments : segments;
-      
-      if (!currentSegments || currentSegments.length === 0) {
-        toast({
-          type: "error",
-          title: "Ошибка",
-          description: "Не найдены текущие сегменты для перегенерации"
-        });
-        setIsRegenerating(false);
-        return;
-      }
+    if (!currentSegments || currentSegments.length === 0) {
+      toast({
+        type: "error",
+        title: "Ошибка",
+        description: "Не найдены текущие сегменты для перегенерации"
+      });
+      return;
+    }
 
+    // СРАЗУ закрываем модалку и перенаправляем
+    setShowRegenerateDialog(false);
+    setRegenerateComment('');
+    
+    toast({
+      type: "success",
+      title: "Перегенерация запущена",
+      description: "Идёт создание новых сегментов с учётом ваших комментариев"
+    });
+
+    // Перенаправляем на страницу генерации СРАЗУ
+    navigate(`/dashboard/research/new?id=${id}`);
+    
+    // В фоне выполняем операции перегенерации
+    try {
       // Обновляем статус исследования
       await updateResearch(id!, { status: "processing" });
       
@@ -602,29 +613,6 @@ export default function ResearchResultPage() {
 
       console.log("Результат перегенерации:", data);
 
-      // Закрываем модальное окно и очищаем комментарий
-      setShowRegenerateDialog(false);
-      setRegenerateComment('');
-
-      // Обновляем статус исследования на "processing" локально
-      setResearch({ ...research, status: "processing" });
-      
-      // Обновляем localStorage
-      const allResearchForRegenerate = JSON.parse(localStorage.getItem('research') || '[]');
-      const updatedResearchForRegenerate = allResearchForRegenerate.map((r: any) => 
-        r.id === id ? { ...r, status: "processing" } : r
-      );
-      localStorage.setItem('research', JSON.stringify(updatedResearchForRegenerate));
-      
-      toast({
-        type: "success",
-        title: "Перегенерация запущена",
-        description: "Идёт создание новых сегментов с учётом ваших комментариев"
-      });
-
-      // Перенаправляем на страницу генерации (как при первоначальном "Начать анализ")
-      navigate(`/dashboard/research/new?id=${id}`);
-
     } catch (error) {
       console.error('Error during regeneration with comment:', error);
       
@@ -636,8 +624,6 @@ export default function ResearchResultPage() {
         title: "Ошибка перегенерации",
         description: error instanceof Error ? error.message : "Произошла ошибка при перегенерации сегментов"
       });
-    } finally {
-      setIsRegenerating(false);
     }
   };
 

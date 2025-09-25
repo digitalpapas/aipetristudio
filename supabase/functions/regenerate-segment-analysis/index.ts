@@ -214,7 +214,8 @@ serve(async (req) => {
         const { error: saveError } = await supabase.from('segment_analyses')
           .update({
             status: 'completed',
-            content: { text: resultText, analysis_result: resultText, timestamp: new Date().toISOString() }
+            content: { text: resultText, analysis_result: resultText, timestamp: new Date().toISOString() },
+            updated_at: new Date().toISOString()
           })
           .eq('Project ID', researchId)
           .eq('Сегмент ID', segmentId)

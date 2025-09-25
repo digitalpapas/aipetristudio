@@ -160,10 +160,9 @@ export default function ResearchSegmentPage() {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*', // INSERT, UPDATE, DELETE
           schema: 'public',
-          table: 'segment_analyses',
-          filter: `Project ID=eq.${id}`
+          table: 'segment_analyses'
         },
         (payload) => {
           const newRow: any = (payload as any).new;
@@ -265,6 +264,35 @@ export default function ResearchSegmentPage() {
     return () => {
       if (interval) window.clearInterval(interval);
       if (timeout) window.clearTimeout(timeout);
+    };
+  }, [id, segmentId]);
+
+  // Lightweight polling to keep UI in sync even if realtime misses events
+  useEffect(() => {
+    if (!id || !segmentId) return;
+    let interval: number | undefined;
+
+    const poll = async () => {
+      try {
+        const { data } = await supabase
+          .from('segment_analyses')
+          .select('analysis_type, status')
+          .eq('Project ID', id)
+          .eq('Сегмент ID', parseInt(segmentId));
+        if (data) {
+          checkAnalysesCompletion();
+        }
+      } catch (e) {
+        console.warn('Sync polling failed', e);
+      }
+    };
+
+    // Start immediately, then poll every 3s
+    poll();
+    interval = window.setInterval(poll, 3000);
+
+    return () => {
+      if (interval) window.clearInterval(interval);
     };
   }, [id, segmentId]);
 

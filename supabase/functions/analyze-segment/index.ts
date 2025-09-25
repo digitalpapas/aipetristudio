@@ -13,15 +13,15 @@ const corsHeaders = {
 
 // Мапинг ассистентов
 const ASSISTANT_IDS = {
-  segment_description: 'asst_10Cv0Z4b1it6hQKgcEp79BA3',
-  bdf_analysis: 'asst_IPRanKKvpe0C0EahGCn6C8jC',
-  problems_analysis: 'asst_w6Ft5oUXeIDy49KTlOM7Dcq8',
-  solutions_analysis: 'asst_tQdZietpLTfIqFG2xnlwP88s',
-  jtbd_analysis: 'asst_p6FH4Gk4LtQsXgZbRKBbAGmk',
-  content_themes: 'asst_8ZyxI8n4LOsSRLQJc6G2TvcY',
-  user_personas: 'asst_mVyf19GJRFaTnzWUFwXbtz57',
-  niche_integration: 'asst_4lYMffKE4EnhuYbo0uTUlA5H',
-  final_report: 'asst_e9GpCvsBPC4xfrIdqMYX9CER'
+  segment_description: 'asst_ATmAWgMJVxY36BICB8ZztqyA',
+  bdf_analysis: 'asst_9yTcRpe2qhhuJBgNIJjwcuad',
+  problems_analysis: 'asst_5xID8YZzduQViDwwjbLvDUDr',
+  solutions_analysis: 'asst_2vYr6EfMDdAqhYElWi1lrhpb',
+  jtbd_analysis: 'asst_5wDdJO9vn3SiJDVDGy2JiBdi',
+  content_themes: 'asst_NnbBxrzI1Qf0f0pbgzpU9Oza',
+  user_personas: 'asst_V0EoIILA29VE8rkNtUfAjWZr',
+  niche_integration: 'asst_mx7nfoPMb8xOXbWlzFcc1BLC',
+  final_report: 'asst_cL1PN5oSRaM4l5M1bHKaBHcO'
 };
 
 // Инструкции для каждого типа анализа

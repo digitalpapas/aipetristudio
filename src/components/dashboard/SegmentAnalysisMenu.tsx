@@ -93,7 +93,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
   const [completedAnalyses, setCompletedAnalyses] = useState<string[]>(() => {
     // Инициализация из localStorage для мгновенного отображения
     const storageKey = `segment-analysis-${researchId}-${segmentId}`;
-    const saved = localStorage.getItem(storageKey);
+    const saved = safeGetItem(storageKey);
     if (saved) {
       try {
         const data = JSON.parse(saved);
@@ -106,11 +106,11 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
   });
 
   const [analyzingTypes, setAnalyzingTypes] = useState<string[]>(() => {
-    // Проверяем анализирующиеся типы из localStorage
+    // Проверяем анализирующиеся типы из sessionStorage (временные данные)
     const analyzing: string[] = [];
     ANALYSIS_OPTIONS.forEach(option => {
       const key = `analyzing-${researchId}-${segmentId}-${option.id}`;
-      if (localStorage.getItem(key)) {
+      if (sessionStorage.getItem(key)) {
         analyzing.push(option.id);
       }
     });
@@ -119,10 +119,82 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
   const [isLoading, setIsLoading] = useState(false);
   const [deletingAnalysis, setDeletingAnalysis] = useState<string | null>(null);
 
+  // Safe storage functions with quota handling and auto-cleanup
+  const clearOldData = () => {
+    try {
+      const keys = Object.keys(localStorage);
+      const analysisKeys = keys.filter(key => key.includes('segment-analysis-') || key.includes('analyzing-'));
+      
+      // Удаляем старые записи анализов (старше 7 дней)
+      const weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+      analysisKeys.forEach(key => {
+        try {
+          const data = localStorage.getItem(key);
+          if (data) {
+            const parsed = JSON.parse(data);
+            const updatedAt = new Date(parsed.updatedAt || parsed.startedAt).getTime();
+            if (updatedAt < weekAgo) {
+              localStorage.removeItem(key);
+            }
+          }
+        } catch (e) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (error) {
+      console.warn('Failed to clear old data:', error);
+    }
+  };
+
+  const safeSetItem = (key: string, value: string, useSession = false) => {
+    try {
+      const storage = useSession ? sessionStorage : localStorage;
+      storage.setItem(key, value);
+    } catch (error) {
+      console.warn(`Storage quota exceeded for key: ${key}`);
+      try {
+        // Очищаем старые данные и пробуем снова
+        if (!useSession) {
+          clearOldData();
+          localStorage.setItem(key, value);
+        } else {
+          // Для sessionStorage просто используем localStorage как fallback
+          localStorage.setItem(key, value);
+        }
+      } catch (retryError) {
+        try {
+          // Последний fallback - используем sessionStorage
+          sessionStorage.setItem(key, value);
+        } catch (sessionError) {
+          console.error('All storage methods failed for key:', key);
+        }
+      }
+    }
+  };
+
+  const safeGetItem = (key: string, useSession = false) => {
+    try {
+      const storage = useSession ? sessionStorage : localStorage;
+      return storage.getItem(key);
+    } catch (error) {
+      console.warn(`Failed to read from storage: ${key}`);
+      return null;
+    }
+  };
+
+  const safeRemoveItem = (key: string, useSession = false) => {
+    try {
+      const storage = useSession ? sessionStorage : localStorage;
+      storage.removeItem(key);
+    } catch (error) {
+      console.warn(`Failed to remove from storage: ${key}`);
+    }
+  };
+
   // Get localStorage key for analysis status
   const getAnalysisKey = (analysisType: string) => `analyzing-${researchId}-${segmentId}-${analysisType}`;
 
-  // Check localStorage for currently analyzing types
+  // Check sessionStorage for currently analyzing types
   const loadAnalyzingTypes = () => {
     const analyzing: string[] = [];
     const now = Date.now();
@@ -130,7 +202,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
     
     ANALYSIS_OPTIONS.forEach(option => {
       const key = getAnalysisKey(option.id);
-      const data = localStorage.getItem(key);
+      const data = safeGetItem(key, true); // используем sessionStorage
       if (data) {
         try {
           const parsed = JSON.parse(data);
@@ -138,12 +210,12 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
           
           // Если анализ идет больше 30 минут - считаем его зависшим
           if (now - startedAt > TIMEOUT) {
-            localStorage.removeItem(key);
+            safeRemoveItem(key, true);
           } else {
             analyzing.push(option.id);
           }
         } catch (e) {
-          localStorage.removeItem(key);
+          safeRemoveItem(key, true);
         }
       }
     });
@@ -153,10 +225,10 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
   // Единая функция для загрузки всех данных
   const loadAllAnalysisData = async () => {
     try {
-      // Сначала загружаем из localStorage для быстрого отображения
-      const storageKey = `segment-analysis-${researchId}-${segmentId}`;
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
+        // Сохраняем в localStorage для быстрой загрузки при следующем входе
+        const storageKey = `segment-analysis-${researchId}-${segmentId}`;
+        const saved = safeGetItem(storageKey);
+        if (saved) {
         try {
           const data = JSON.parse(saved);
           if (data.completed && data.completed.length > 0) {
@@ -179,7 +251,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
         
         // Сохраняем в localStorage для быстрой загрузки при следующем входе
         const storageKey = `segment-analysis-${researchId}-${segmentId}`;
-        localStorage.setItem(storageKey, JSON.stringify({
+        safeSetItem(storageKey, JSON.stringify({
           completed: completedFromSupabase,
           updatedAt: new Date().toISOString()
         }));
@@ -314,6 +386,23 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
   const handleStartAnalysis = async () => {
     if (selectedOptions.length === 0) return;
 
+    // Проверяем доступность storage перед началом
+    try {
+      const testKey = `test-storage-${Date.now()}`;
+      localStorage.setItem(testKey, 'test');
+      localStorage.removeItem(testKey);
+    } catch (storageError) {
+      // Очищаем старые данные при проблемах с хранилищем
+      clearOldData();
+      
+      toast({
+        type: "warning",
+        title: "Внимание",
+        description: "Обнаружены проблемы с хранилищем. Старые данные очищены для продолжения работы.",
+        duration: 3000
+      });
+    }
+
     // Фильтруем только те анализы, которые еще не выполняются и не завершены
     const optionsToAnalyze = selectedOptions.filter(
       optionId => !analyzingTypes.includes(optionId) && !completedAnalyses.includes(optionId)
@@ -365,14 +454,14 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
         duration: 5000
       });
 
-      // Сохраняем статус всех анализов в localStorage
+      // Сохраняем статус всех анализов в sessionStorage (временные данные)
       optionsToAnalyze.forEach(analysisType => {
         const analysisKey = getAnalysisKey(analysisType);
-        localStorage.setItem(analysisKey, JSON.stringify({
+        safeSetItem(analysisKey, JSON.stringify({
           status: 'processing',
           startedAt: new Date().toISOString(),
           analysisType: analysisType
-        }));
+        }), true); // используем sessionStorage
       });
 
       // Добавляем все в список анализирующихся

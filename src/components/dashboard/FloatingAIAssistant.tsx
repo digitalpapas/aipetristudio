@@ -36,6 +36,8 @@ export default function FloatingAIAssistant({
   missingAnalyses = [],
   context = "analysis"
 }: FloatingAIAssistantProps) {
+  // Компонент отключен по запросу пользователя
+  return null;
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);

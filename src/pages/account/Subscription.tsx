@@ -26,6 +26,7 @@ const SubscriptionPage = () => {
   const { status, daysLeft, hasActiveSubscription, subscriptionId } = useSubscription();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCancelling, setIsCancelling] = useState(false);
   const [subscriptionExpiry, setSubscriptionExpiry] = useState<Date | null>(null);
   const navigate = useNavigate();
 
@@ -89,7 +90,7 @@ const SubscriptionPage = () => {
 
   const handleCancelSubscription = async () => {
     try {
-      setIsLoading(true);
+      setIsCancelling(true);
       
       const { data, error } = await supabase.functions.invoke('cancel-subscription', {
         body: {
@@ -101,10 +102,10 @@ const SubscriptionPage = () => {
       if (error) {
         console.error('Error cancelling subscription:', error);
         // Fallback to email method if API fails
-        const subject = 'Запрос на отмену подписки';
+        const subject = 'Запрос на отмену автопродления';
         const body = `Здравствуйте!
 
-Прошу отменить мою подписку Pro.
+Прошу отменить автопродление для моей подписки Pro.
 
 ID подписки: ${subscriptionId}
 Email: ${user?.email}
@@ -119,14 +120,15 @@ Email: ${user?.email}
       if (data?.success) {
         // Force refresh subscription data
         await fetchSubscriptionData();
-        // Show success message
-        console.log('Subscription cancelled successfully');
+        console.log('Автопродление отменено успешно');
+        // Reload page to reflect changes
+        window.location.reload();
       } else {
         // Fallback to email method
-        const subject = 'Запрос на отмену подписки';
+        const subject = 'Запрос на отмену автопродления';
         const body = `Здравствуйте!
 
-Прошу отменить мою подписку Pro.
+Прошу отменить автопродление для моей подписки Pro.
 
 ID подписки: ${subscriptionId}
 Email: ${user?.email}
@@ -139,10 +141,10 @@ Email: ${user?.email}
     } catch (error) {
       console.error('Error:', error);
       // Fallback to email method
-      const subject = 'Запрос на отмену подписки';
+      const subject = 'Запрос на отмену автопродления';
       const body = `Здравствуйте!
 
-Прошу отменить мою подписку Pro.
+Прошу отменить автопродление для моей подписки Pro.
 
 ID подписки: ${subscriptionId}
 Email: ${user?.email}
@@ -152,7 +154,7 @@ Email: ${user?.email}
       const mailtoUrl = `mailto:neuroseti.praktika@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       window.location.href = mailtoUrl;
     } finally {
-      setIsLoading(false);
+      setIsCancelling(false);
     }
   };
 
@@ -196,7 +198,7 @@ Email: ${user?.email}
             {status === 'pro' && subscriptionExpiry && (
               <>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Следующий платёж:</span>
+                  <span className="text-muted-foreground">Действует до:</span>
                   <span className="font-medium">
                     {format(subscriptionExpiry, 'dd MMMM yyyy', { locale: ru })}
                   </span>
@@ -231,50 +233,64 @@ Email: ${user?.email}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {status === 'pro' ? (
-            <div className="space-y-4">
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-green-800 font-medium">
-                  Автоматическое продление: 2,900₽/месяц
-                </p>
-                <p className="text-green-700 text-sm mt-1">
-                  Подписка будет автоматически продлена в дату следующего платежа
-                </p>
-              </div>
-              
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="w-full sm:w-auto">
-                    Отменить подписку
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2">
-                      <AlertCircle className="w-5 h-5 text-destructive" />
-                      Отмена подписки
-                    </AlertDialogTitle>
-                    <AlertDialogDescription className="space-y-2">
-                      <p>Вы уверены, что хотите отменить подписку?</p>
-                      <p className="text-sm text-muted-foreground">
-                        Подписка будет отменена автоматически через API Продамуса.
-                        В случае ошибки вы будете перенаправлены к отправке email.
+            {status === 'pro' ? (
+              <div className="space-y-4">
+                {subscriptionId ? (
+                  <>
+                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-green-800 font-medium">
+                        Автопродление: включено (2,900₽/месяц)
                       </p>
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Отмена</AlertDialogCancel>
-                  <AlertDialogAction 
-                    disabled={isLoading}
-                    onClick={handleCancelSubscription}
-                  >
-                    {isLoading ? 'Отменяем...' : 'Отменить подписку'}
-                  </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          ) : (
+                      <p className="text-green-700 text-sm mt-1">
+                        Подписка будет автоматически продлена в дату окончания
+                      </p>
+                    </div>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" className="w-full sm:w-auto border-amber-200 text-amber-700 hover:bg-amber-50">
+                          Отменить автопродление
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle className="flex items-center gap-2">
+                            <AlertCircle className="w-5 h-5 text-amber-600" />
+                            Отмена автопродления
+                          </AlertDialogTitle>
+                          <AlertDialogDescription className="space-y-2">
+                            <p>Вы уверены, что хотите отменить автопродление?</p>
+                            <p className="text-sm text-muted-foreground">
+                              Ваша текущая подписка останется активной до окончания оплаченного периода.
+                              Автоматическое списание будет отключено.
+                            </p>
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Отмена</AlertDialogCancel>
+                          <AlertDialogAction 
+                            disabled={isCancelling}
+                            onClick={handleCancelSubscription}
+                            className="bg-amber-600 hover:bg-amber-700"
+                          >
+                            {isCancelling ? 'Отменяем...' : 'Отменить автопродление'}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </>
+                ) : (
+                  <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <p className="text-amber-800 font-medium">
+                      Автопродление: отключено
+                    </p>
+                    <p className="text-amber-700 text-sm mt-1">
+                      Подписка действует до окончания оплаченного периода. Для продления оформите новую подписку.
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
             <div className="space-y-4">
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-blue-800 font-medium mb-2">

@@ -3,5 +3,8 @@ project_id = "chomgtqknhwfzirrjyro"
 [functions.prodamus-webhook]
 verify_jwt = false
 
+[functions.cancel-subscription]
+verify_jwt = true
+
 [functions.regenerate-segment-analysis]
 verify_jwt = true

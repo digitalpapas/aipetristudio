@@ -107,7 +107,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Verify user owns this subscription
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('prodamus_subscription_id, subscription_status')
+      .select('prodamus_subscription_id, subscription_status, subscription_expires_at')
       .eq('user_id', user.id)
       .single();
 
@@ -155,9 +155,9 @@ const handler = async (req: Request): Promise<Response> => {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
-          subscription_status: 'demo',
-          subscription_expires_at: null,
-          prodamus_subscription_id: null
+          // Оставляем статус как есть - месяц уже оплачен
+          // Только убираем автопродление
+          prodamus_subscription_id: null // Убираем связь с подпиской для отключения автопродления
         })
         .eq('user_id', user.id);
 
@@ -169,7 +169,7 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: 'Subscription cancelled successfully' 
+          message: 'Автопродление отменено успешно' 
         }),
         { 
           status: 200, 

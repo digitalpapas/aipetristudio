@@ -773,18 +773,18 @@ export default function ResearchResultPage() {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={handleExport}
+            onClick={() => {/* TODO: добавить функциональность перегенерации */}}
           >
-            <span className="hidden lg:inline">Экспорт</span>
-            <span className="lg:hidden">📤</span>
+            <span className="hidden lg:inline">Перегенерировать с комментарием</span>
+            <span className="lg:hidden">🔄</span>
           </Button>
           <Button 
             variant="outline" 
             size="sm"
-            onClick={handleShare}
+            onClick={handleExport}
           >
-            <span className="hidden lg:inline">Поделиться</span>
-            <span className="lg:hidden">🔗</span>
+            <span className="hidden lg:inline">Экспорт</span>
+            <span className="lg:hidden">📤</span>
           </Button>
         </div>
       </header>

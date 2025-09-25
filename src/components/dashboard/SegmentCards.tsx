@@ -629,54 +629,6 @@ export default function SegmentCards({
           </div>
         )}
 
-        <div className="flex justify-center">
-          <Button
-            onClick={() => setShowCommentField(true)}
-            disabled={isLoading}
-            variant="outline"
-            className="gap-2"
-          >
-            <MessageSquare size={20} />
-            <span className="break-words">Перегенерировать с комментарием</span>
-          </Button>
-        </div>
-
-        {showCommentField && (
-          <div className="mt-4 p-4 bg-secondary/50 rounded-lg space-y-3">
-            <label className="block text-sm font-medium">
-              Что нужно изменить? (макс. 150 символов)
-            </label>
-            <Textarea
-              value={regenerateComment}
-              onChange={(e) => setRegenerateComment(e.target.value.slice(0, 150))}
-              placeholder="Например: Нужны более платежеспособные сегменты..."
-              className="resize-none h-20"
-              maxLength={150}
-            />
-            <div className="text-xs text-muted-foreground text-right">
-              {regenerateComment.length}/150
-            </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={() => handleRegenerate(true)}
-                disabled={!regenerateComment.trim() || isLoading}
-                className="flex-1"
-              >
-                Отправить
-              </Button>
-              <Button
-                onClick={() => {
-                  setShowCommentField(false);
-                  setRegenerateComment('');
-                }}
-                variant="outline"
-              >
-                Отмена
-              </Button>
-            </div>
-          </div>
-        )}
-
         {isLoading && (
           <div className="text-center py-4 text-muted-foreground">
             <div className="inline-flex items-center gap-2">

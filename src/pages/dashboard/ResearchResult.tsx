@@ -474,7 +474,7 @@ export default function ResearchResultPage() {
       .channel(`research-${id}-realtime`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'segments', filter: `Project ID=eq.${id}` },
+        { event: '*', schema: 'public', table: 'segments', filter: `"Project ID"=eq.${id}` },
         (payload) => {
           console.log('🔄 Segments table changed:', payload.eventType);
           fetchAllSegments();
@@ -490,7 +490,7 @@ export default function ResearchResultPage() {
       )
       .on(
         'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'researches', filter: `Project ID=eq.${id}` },
+        { event: 'UPDATE', schema: 'public', table: 'researches', filter: `"Project ID"=eq.${id}` },
         (payload) => {
           console.log('🔄 Research status changed:', payload);
           const newData = (payload as any).new;

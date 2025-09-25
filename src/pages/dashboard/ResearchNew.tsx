@@ -162,6 +162,31 @@ export default function ResearchNewPage() {
     };
   }, [loading, recoveryId]);
 
+  // Realtime: watch research status and auto-navigate on completion
+  useEffect(() => {
+    const targetId = recoveryId || currentResearchId;
+    if (!targetId) return;
+
+    const channel = supabase
+      .channel(`research-progress-${targetId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'researches', filter: `"Project ID"=eq.${targetId}` },
+        (payload) => {
+          const newStatus = (payload as any).new?.status;
+          console.log('📡 Realtime: research status update', newStatus);
+          if (newStatus === 'completed') {
+            navigate(`/dashboard/research/${targetId}`);
+          }
+        }
+      )
+      .subscribe((status) => console.log('📡 Realtime (new page) subscription status:', status));
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [recoveryId, currentResearchId, navigate]);
+
   // Восстановление исследования из URL параметра
   useEffect(() => {
     const handleResearchRecovery = async () => {

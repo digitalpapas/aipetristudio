@@ -234,9 +234,20 @@ export default function ResearchResultPage() {
             setAllGeneratedSegments(formattedAllSegments);
             localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(formattedAllSegments));
           } else {
-            console.log('⚠️ No segments found in database, using selected segments as fallback');
-            // Только если в БД вообще нет сегментов, используем выбранные как fallback
-            if (allSegmentsFromDB && allSegmentsFromDB.length > 0) {
+            console.log('⚠️ No segments found in database. Trying research.generated_segments fallback');
+            // Fallback 1: use generated_segments from research record if present
+            if (data && Array.isArray((data as any).generated_segments) && (data as any).generated_segments.length > 0) {
+              const fallbackFromResearch = (data as any).generated_segments.map((segment: any, index: number) => ({
+                id: segment.id ?? index + 1,
+                title: segment.title,
+                description: segment.description,
+                problems: segment.problems,
+                message: segment.message
+              }));
+              setAllGeneratedSegments(fallbackFromResearch);
+              localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(fallbackFromResearch));
+            } else if (allSegmentsFromDB && allSegmentsFromDB.length > 0) {
+              // Fallback 2: use selected segments if any
               const fallbackSegments = allSegmentsFromDB.map((segment: any) => ({
                 id: segment["Сегмент ID"],
                 title: segment["Название сегмента"],
@@ -245,6 +256,7 @@ export default function ResearchResultPage() {
                 message: segment.message
               }));
               setAllGeneratedSegments(fallbackSegments);
+              localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(fallbackSegments));
             }
           }
           

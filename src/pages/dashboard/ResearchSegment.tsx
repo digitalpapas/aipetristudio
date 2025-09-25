@@ -160,9 +160,10 @@ export default function ResearchSegmentPage() {
       .on(
         'postgres_changes',
         {
-          event: '*', // INSERT, UPDATE, DELETE
+          event: 'UPDATE',
           schema: 'public',
           table: 'segment_analyses',
+          filter: `Project ID=eq.${id}`
         },
         (payload) => {
           const newRow: any = (payload as any).new;
@@ -231,19 +232,20 @@ export default function ResearchSegmentPage() {
           .eq('Сегмент ID', parseInt(segmentId))
           .eq('analysis_type', marker.analysisType)
           .order('updated_at', { ascending: false })
-          .maybeSingle();
+          .limit(1);
         if (error) {
           console.warn('Polling error for regeneration', error);
           return;
         }
-        if (data?.status === 'completed') {
+        const row = Array.isArray(data) ? data[0] : null;
+        if (row?.status === 'completed') {
           toast({ title: 'Анализ готов', description: 'Результаты обновлены' });
           setSelectedAnalysisType(marker.analysisType);
           setCurrentView('result');
           localStorage.removeItem('last-regeneration');
           if (interval) window.clearInterval(interval);
           if (timeout) window.clearTimeout(timeout);
-        } else if (data?.status === 'error' || data?.status === 'failed') {
+        } else if (row?.status === 'error' || row?.status === 'failed') {
           toast({ type: 'error', title: 'Ошибка анализа', description: 'Не удалось завершить перегенерацию' });
           localStorage.removeItem('last-regeneration');
           if (interval) window.clearInterval(interval);

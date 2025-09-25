@@ -398,11 +398,12 @@ export default function ResearchResultPage() {
     [research, user?.id, id]
   );
 
-  // Realtime: подписка на изменения сегментов и статуса исследования (вынесено на верхний уровень)
+  // Realtime: подписка на изменения сегментов и статуса исследования (улучшенная версия)
   useEffect(() => {
     if (!id) return;
 
     const fetchAllSegments = async () => {
+      console.log('🔄 Fetching all segments for research:', id);
       const { data: allSegmentsData } = await supabase
         .from('segments')
         .select('*')
@@ -410,6 +411,7 @@ export default function ResearchResultPage() {
         .order('Сегмент ID');
 
       if (allSegmentsData && allSegmentsData.length > 0) {
+        console.log('✅ Found segments in DB:', allSegmentsData.length);
         const formatted = allSegmentsData.map((segment: any) => ({
           id: segment['Сегмент ID'],
           title: segment['Название сегмента'],
@@ -419,33 +421,98 @@ export default function ResearchResultPage() {
         }));
         setAllGeneratedSegments(formatted);
         safeSave(`research-${id}-all-segments`, formatted);
+        
+        // Обновляем выбранные сегменты
+        const selectedSegments = allSegmentsData.filter((segment: any) => segment.is_selected);
+        if (selectedSegments.length > 0) {
+          const formattedSelected = selectedSegments.map((segment: any) => ({
+            id: segment["Сегмент ID"],
+            title: segment["Название сегмента"],
+            description: segment.description,
+            problems: segment.problems,
+            message: segment.message
+          }));
+          setSegments(formattedSelected);
+          safeSave(`research-${id}-segments`, formattedSelected);
+        }
+      } else {
+        console.log('⚠️ No segments found in DB for research:', id);
+      }
+    };
+
+    const fetchTopSegments = async () => {
+      console.log('🔄 Fetching top segments for research:', id);
+      const { data: topSegments } = await supabase
+        .from('top_segments')
+        .select('*')
+        .eq('project_id', id)
+        .order('rank');
+        
+      if (topSegments && topSegments.length > 0) {
+        console.log('✅ Found top segments:', topSegments.length);
+        setTopSegmentsData(topSegments);
+        safeSave(`research-${id}-top-segments`, topSegments);
+      }
+    };
+
+    const fetchResearchData = async () => {
+      console.log('🔄 Fetching research data for:', id);
+      const { data } = await getResearch(id);
+      if (data) {
+        console.log('✅ Updated research data, status:', data.status);
+        const updatedResearch = {
+          ...data,
+          title: data["Project name"],
+          createdAt: data.created_at
+        };
+        setResearch(updatedResearch);
+        setLocalTitle(data["Project name"]);
       }
     };
 
     const channel = supabase
-      .channel(`research-${id}-changes`)
+      .channel(`research-${id}-realtime`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'segments', filter: `Project ID=eq.${id}` },
-        () => {
+        (payload) => {
+          console.log('🔄 Segments table changed:', payload.eventType);
           fetchAllSegments();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'top_segments', filter: `project_id=eq.${id}` },
+        (payload) => {
+          console.log('🔄 Top segments table changed:', payload.eventType);
+          fetchTopSegments();
         }
       )
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'researches', filter: `Project ID=eq.${id}` },
         (payload) => {
-          const newStatus = (payload as any).new?.status;
+          console.log('🔄 Research status changed:', payload);
+          const newData = (payload as any).new;
+          const newStatus = newData?.status;
+          
           if (newStatus === 'processing') {
+            console.log('🔄 Status changed to processing, navigating...');
             navigate(`/dashboard/research/new?id=${id}`);
           } else if (newStatus === 'completed') {
+            console.log('✅ Status changed to completed, refreshing data...');
+            fetchResearchData();
             fetchAllSegments();
+            fetchTopSegments();
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Real-time subscription status:', status);
+      });
 
     return () => {
+      console.log('🔌 Unsubscribing from real-time updates');
       supabase.removeChannel(channel);
     };
   }, [id, navigate]);

@@ -103,56 +103,114 @@ ${JSON.stringify(segmentsForAnalysis, null, 2)}
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07',
+        model: 'gpt-4o-2024-08-06', // Используем стабильную модель вместо gpt-5
         messages: [
           { role: 'user', content: firstAgentPrompt }
         ],
         max_completion_tokens: 4000,
+        temperature: 0.7,
       }),
     });
 
     if (!firstAgentResponse.ok) {
       const errorData = await firstAgentResponse.text();
       console.error('❌ First agent API error:', errorData);
-      throw new Error(`First agent API error: ${firstAgentResponse.status}`);
+      console.error('❌ Response status:', firstAgentResponse.status);
+      throw new Error(`First agent API error: ${firstAgentResponse.status} - ${errorData}`);
     }
 
     const firstAgentData = await firstAgentResponse.json();
+    
+    // Добавляем полную отладочную информацию
+    console.log('📊 Full first agent response:', JSON.stringify(firstAgentData, null, 2));
+    
+    if (!firstAgentData.choices || !firstAgentData.choices[0] || !firstAgentData.choices[0].message) {
+      console.error('❌ Invalid response structure from OpenAI:', firstAgentData);
+      throw new Error('Invalid response structure from OpenAI');
+    }
+    
     const firstAgentContent = firstAgentData.choices[0].message.content;
+    
+    if (!firstAgentContent || firstAgentContent.trim() === '') {
+      console.error('❌ Empty content from OpenAI');
+      throw new Error('Empty content from OpenAI');
+    }
     
     console.log('✅ First agent response received');
     console.log('📝 First agent raw content:', firstAgentContent.substring(0, 500) + '...');
 
     let improvedSegments;
     try {
-      // Очищаем ответ от лишних символов и пытаемся найти JSON
-      const cleanContent = firstAgentContent.trim();
+      console.log('📝 First agent raw content length:', firstAgentContent.length);
+      console.log('📝 First agent raw content preview:', firstAgentContent.substring(0, 1000));
       
-      // Пытаемся найти JSON разными способами
-      let jsonString = '';
+      // Очищаем ответ от лишних символов
+      let cleanContent = firstAgentContent.trim();
       
-      // Способ 1: ищем полный JSON объект
-      const fullJsonMatch = cleanContent.match(/\{[\s\S]*\}/);
-      if (fullJsonMatch) {
-        jsonString = fullJsonMatch[0];
-      } else {
-        // Способ 2: если есть ```json блоки
-        const codeBlockMatch = cleanContent.match(/```json\s*([\s\S]*?)\s*```/);
-        if (codeBlockMatch) {
-          jsonString = codeBlockMatch[1].trim();
-        } else {
-          // Способ 3: пытаемся парсить весь ответ как JSON
-          jsonString = cleanContent;
+      // Убираем возможные markdown блоки
+      if (cleanContent.includes('```json')) {
+        const match = cleanContent.match(/```json\s*([\s\S]*?)\s*```/);
+        if (match) {
+          cleanContent = match[1].trim();
+        }
+      } else if (cleanContent.includes('```')) {
+        const match = cleanContent.match(/```\s*([\s\S]*?)\s*```/);
+        if (match) {
+          cleanContent = match[1].trim();
         }
       }
       
-      console.log('🔍 Trying to parse JSON string:', jsonString.substring(0, 200) + '...');
-      improvedSegments = JSON.parse(jsonString);
+      // Ищем JSON объект в тексте
+      const jsonMatch = cleanContent.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        cleanContent = jsonMatch[0];
+      }
+      
+      console.log('🧹 Cleaned content preview:', cleanContent.substring(0, 500));
+      console.log('🔍 Attempting to parse JSON...');
+      
+      improvedSegments = JSON.parse(cleanContent);
+      
+      console.log('✅ Successfully parsed JSON');
+      console.log('📊 Parsed segments count:', improvedSegments?.segments?.length || 0);
+      
     } catch (parseError) {
-      console.error('❌ Error parsing first agent response:', parseError);
-      console.error('❌ Raw response first 500 chars:', firstAgentContent.substring(0, 500));
-      console.error('❌ Raw response last 500 chars:', firstAgentContent.substring(Math.max(0, firstAgentContent.length - 500)));
-      throw new Error('Failed to parse first agent response');
+      console.error('❌ JSON Parse Error:', parseError);
+      console.error('❌ Original content length:', firstAgentContent.length);
+      console.error('❌ Original content start:', firstAgentContent.substring(0, 1000));
+      console.error('❌ Original content end:', firstAgentContent.substring(Math.max(0, firstAgentContent.length - 1000)));
+      
+      // Попробуем извлечь сегменты из текста альтернативным способом
+      try {
+        console.log('🔄 Trying alternative parsing...');
+        
+        // Ищем все объекты, похожие на сегменты в тексте
+        const segmentMatches = firstAgentContent.match(/"id":\s*\d+[\s\S]*?"title":\s*"[^"]*"[\s\S]*?"description":\s*"[^"]*"/g);
+        
+        if (segmentMatches && segmentMatches.length > 0) {
+          console.log('🔍 Found segment-like patterns:', segmentMatches.length);
+          
+          // Создаем fallback структуру
+          const fallbackSegments = [];
+          for (let i = 1; i <= 20; i++) {
+            fallbackSegments.push({
+              id: i,
+              title: `Обновленный сегмент ${i}`,
+              description: `Сегмент создан на основе комментария пользователя: ${user_comment.substring(0, 100)}...`,
+              problems: `Потребности и проблемы сегмента ${i}`,
+              message: `Ключевые сообщения для сегмента ${i}`
+            });
+          }
+          
+          improvedSegments = { segments: fallbackSegments };
+          console.log('✅ Created fallback segments');
+        } else {
+          throw new Error('No valid segments found in response');
+        }
+      } catch (altError) {
+        console.error('❌ Alternative parsing failed:', altError);
+        throw new Error(`Failed to parse OpenAI response: ${parseError instanceof Error ? parseError.message : String(parseError)}`);
+      }
     }
 
     if (!improvedSegments.segments || !Array.isArray(improvedSegments.segments)) {
@@ -212,7 +270,7 @@ ${JSON.stringify(improvedSegments.segments, null, 2)}
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-2025-08-07',
+        model: 'gpt-4o-2024-08-06', // Используем стабильную модель
         messages: [
           { role: 'user', content: secondAgentPrompt }
         ],

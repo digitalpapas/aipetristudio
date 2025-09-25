@@ -209,8 +209,59 @@ export default function ResearchResultPage() {
           
           // Load all generated segments directly from segments table (принудительно обновляем)
           console.log('🔍 Loading all segments directly from segments table for research:', id);
-          
-          
+
+  // Realtime: подписка на изменения сегментов и статуса исследования
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchAllSegments = async () => {
+      const { data: allSegmentsData } = await supabase
+        .from('segments')
+        .select('*')
+        .eq('Project ID', id)
+        .order('Сегмент ID');
+
+      if (allSegmentsData && allSegmentsData.length > 0) {
+        const formatted = allSegmentsData.map((segment: any) => ({
+          id: segment['Сегмент ID'],
+          title: segment['Название сегмента'],
+          description: segment.description,
+          problems: segment.problems,
+          message: segment.message,
+        }));
+        setAllGeneratedSegments(formatted);
+        localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(formatted));
+      }
+    };
+
+    const channel = supabase
+      .channel(`research-${id}-changes`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'segments', filter: `Project ID=eq.${id}` },
+        () => {
+          fetchAllSegments();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'researches', filter: `Project ID=eq.${id}` },
+        (payload) => {
+          const newStatus = (payload as any).new?.status;
+          if (newStatus === 'processing') {
+            navigate(`/dashboard/research/new?id=${id}`);
+          } else if (newStatus === 'completed') {
+            fetchAllSegments();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, navigate]);
+
           const { data: allSegmentsData, error: allSegmentsError } = await supabase
             .from('segments')
             .select('*')

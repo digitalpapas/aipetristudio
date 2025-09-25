@@ -31,6 +31,37 @@ export default function ResearchNewPage() {
   const { user } = useAuth();
   const { toast } = useCustomToast();
   
+  // Функция создания уведомления
+  const createNotification = async (researchId: string, title: string, type: 'success' | 'error' | 'info') => {
+    if (!user) return;
+    
+    try {
+      const notificationData = {
+        user_id: user.id,
+        title: type === 'success' ? `Исследование "${title}" готово!` : `Ошибка в исследовании "${title}"`,
+        message: type === 'success' 
+          ? 'Анализ целевой аудитории завершен. Нажмите для просмотра результатов.'
+          : 'Произошла ошибка при анализе. Попробуйте еще раз.',
+        type,
+        is_read: false,
+        action_url: type === 'success' ? `/dashboard/research/${researchId}` : `/dashboard/research/new?id=${researchId}`,
+        research_id: researchId
+      };
+      
+      const { error } = await supabase
+        .from('notifications')
+        .insert([notificationData]);
+        
+      if (error) {
+        console.error('Error creating notification:', error);
+      } else {
+        console.log('Notification created successfully for research:', researchId);
+      }
+    } catch (error) {
+      console.error('Failed to create notification:', error);
+    }
+  };
+  
   // Проверяем URL параметр для восстановления исследования с ошибкой
   const urlParams = new URLSearchParams(location.search);
   const recoveryId = urlParams.get('id');
@@ -665,6 +696,10 @@ export default function ResearchNewPage() {
           console.log('Top segments received:', data.topSegments);
           console.log('RAW DATA from Edge Function:', data);
           console.log('Setting results with top segments:', data.topSegments);
+          
+          // Создаем уведомление об успешном завершении
+          await createNotification(researchId, title, 'success');
+          
           setLoading(false);
           return;
         } else {
@@ -759,6 +794,10 @@ export default function ResearchNewPage() {
             projectId: data.projectId,
             resultText: data.resultText
           });
+          
+          // Создаем уведомление об успешном завершении
+          await createNotification(researchId, title, 'success');
+          
           setLoading(false);
           return;
         } else {
@@ -784,6 +823,9 @@ export default function ResearchNewPage() {
       // Update research with error status
       if (currentResearchId) {
         setError(true);
+        
+        // Создаем уведомление об ошибке
+        await createNotification(currentResearchId, title, 'error');
         
         updateResearch(currentResearchId, {
           status: "error",

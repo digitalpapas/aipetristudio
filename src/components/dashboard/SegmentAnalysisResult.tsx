@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { FileText, Users, Target, Heart, Lightbulb, AlertTriangle, Star, Loader2, Trash2, Bookmark, Brain, Clock, Eye, Wrench, Layers, ArrowLeft, RefreshCw, HelpCircle, MessageSquare, Copy } from "lucide-react";
+import { FileText, Users, Target, Heart, Lightbulb, AlertTriangle, Star, Loader2, Trash2, Bookmark, Brain, Clock, Eye, Wrench, Layers, ArrowLeft, RefreshCw, HelpCircle, MessageSquare, Copy, AlertCircle } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -113,6 +113,7 @@ export default function SegmentAnalysisResult({
     }
     return null;
   });
+  const [analysisStatus, setAnalysisStatus] = useState<string | null>(null);
   const [selectedSection, setSelectedSection] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(() => {
     // Если есть данные в localStorage, не показываем загрузку
@@ -201,7 +202,52 @@ export default function SegmentAnalysisResult({
           }
         }
         
-        // Затем загружаем актуальные данные из Supabase в фоне
+        // Проверяем статус анализа из базы данных
+        const { data: statusData } = await supabase
+          .from('segment_analyses')
+          .select('status, content')
+          .eq('Project ID', researchId)
+          .eq('Сегмент ID', parseInt(segmentId))
+          .eq('analysis_type', analysisType)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (statusData) {
+          setAnalysisStatus('completed');
+          if (statusData.content) {
+            const processedContent = parseAnalysisContent(statusData.content);
+            
+            // Сохраняем в localStorage для быстрой загрузки в будущем
+            SafeStorage.setWithTimestamp(storageKey, { text: processedContent });
+            
+            setAnalysisResult(processedContent);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Проверяем, не в процессе ли анализ
+        const { data: processingData } = await supabase
+          .from('segment_analyses')
+          .select('status')
+          .eq('Project ID', researchId)
+          .eq('Сегмент ID', parseInt(segmentId))
+          .eq('analysis_type', analysisType)
+          .eq('status', 'processing')
+          .maybeSingle();
+
+        if (processingData) {
+          setAnalysisStatus('processing');
+          setLoading(true);
+          return;
+        }
+
+        // Если нет данных в БД - значит анализ не был запущен
+        setAnalysisStatus('not_started');
+        
+        // Затем загружаем актуальные данные из Supabase в фоне (fallback)
         const { data, error } = await getSegmentAnalysis(researchId, parseInt(segmentId), analysisType);
         
         if (error) {
@@ -214,7 +260,6 @@ export default function SegmentAnalysisResult({
           const processedContent = parseAnalysisContent(data.content);
           
           // Сохраняем в localStorage для быстрой загрузки в будущем
-          const storageKey = `segment-analysis-${researchId}-${segmentId}-${analysisType}`;
           SafeStorage.setWithTimestamp(storageKey, { text: processedContent });
           
           setAnalysisResult(processedContent);
@@ -1119,29 +1164,37 @@ export default function SegmentAnalysisResult({
         </CardHeader>
         <CardContent className="min-h-0">
           <div ref={contentRef} className="select-text" data-analysis-content>
-            {loading && !analysisResult ? (
+            {analysisStatus === 'processing' || (loading && !analysisResult) ? (
               <div className="flex items-center justify-center py-16">
                 <div className="text-center">
                   <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
-                  <p className="text-muted-foreground">Загрузка результатов анализа...</p>
+                  <p className="text-muted-foreground">
+                    {analysisStatus === 'processing' ? 'Анализ выполняется...' : 'Загрузка результатов анализа...'}
+                  </p>
                 </div>
               </div>
-          ) : error ? (
-            <div className="text-center py-8 text-destructive">
-              <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
-              <p>{error}</p>
-            </div>
-          ) : analysisResult ? (
-            typeof analysisResult === 'string' ? 
-              renderStructuredContent(analysisResult) : 
+            ) : analysisStatus === 'not_started' ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <AlertCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Анализ не был запущен</p>
+                <p className="text-sm mt-2">Вернитесь к списку анализов и запустите этот тип анализа</p>
+              </div>
+            ) : error ? (
+              <div className="text-center py-8 text-destructive">
+                <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
+                <p>{error}</p>
+              </div>
+            ) : analysisResult ? (
+              typeof analysisResult === 'string' ? 
+                renderStructuredContent(analysisResult) : 
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>Неподдерживаемый формат данных</p>
+                </div>
+            ) : (
               <div className="text-center py-8 text-muted-foreground">
                 <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Неподдерживаемый формат данных</p>
-              </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Результат анализа пока не доступен</p>
+                <p>Результат анализа пока не доступен</p>
               </div>
             )}
           </div>

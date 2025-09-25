@@ -290,6 +290,45 @@ serve(async (req) => {
         .eq('analysis_type', analysisType)
         .eq('status', 'processing');
       if (cleanupError) console.warn('Cleanup processing rows error:', cleanupError);
+      
+      // Создаем уведомление о завершении анализа
+      try {
+        // Получаем информацию о пользователе из заголовка авторизации
+        const authHeader = req.headers.get('authorization');
+        if (authHeader) {
+          const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''));
+          if (user?.id) {
+            const analysisNames: Record<string, string> = {
+              'segment_description': 'Описание сегмента',
+              'user_personas': 'Пользовательские персоны',
+              'jtbd_analysis': 'Анализ Jobs-to-be-Done',
+              'solutions_analysis': 'Анализ решений',
+              'pain_points': 'Болевые точки',
+              'market_size': 'Размер рынка'
+            };
+            
+            const analysisDisplayName = analysisNames[analysisType] || analysisType;
+            
+            const { error: notificationError } = await supabase
+              .from('notifications')
+              .insert({
+                user_id: user.id,
+                title: 'Анализ завершен',
+                message: `${analysisDisplayName} для сегмента "${segmentName}" готов к просмотру`,
+                type: 'research',
+                action_url: `/dashboard/research/${researchId}/segment/${segmentId}`,
+                research_id: researchId,
+                segment_id: segmentId
+              });
+            
+            if (notificationError) {
+              console.error('Failed to create notification:', notificationError);
+            }
+          }
+        }
+      } catch (notifErr) {
+        console.warn('Failed to create notification:', notifErr);
+      }
     } catch (dbErr) {
       console.error('DB operations failed:', dbErr);
     }

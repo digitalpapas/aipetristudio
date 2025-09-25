@@ -346,10 +346,13 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
               setCompletedAnalyses(prev => (
                 prev.includes(completedAnalysisType) ? prev : [...prev, completedAnalysisType]
               ));
+              
+              // Мгновенно обновляем данные без задержки
+              setTimeout(() => loadAllAnalysisData(), 100);
+            } else {
+              // Для других статусов также обновляем данные
+              setTimeout(() => loadAllAnalysisData(), 100);
             }
-
-            // Refresh data
-            loadAllAnalysisData();
           }
         }
       )
@@ -360,16 +363,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
     }
   }, [researchId, segmentId, user?.id]);
 
-  // Периодическая проверка для синхронизации статусов
-  useEffect(() => {
-    if (analyzingTypes.length === 0) return;
-    
-    const interval = setInterval(() => {
-      loadAllAnalysisData();
-    }, 5000); // Проверка каждые 5 секунд
-    
-    return () => clearInterval(interval);
-  }, [analyzingTypes.length]);
+  // Убрана периодическая проверка - полагаемся только на real-time обновления
 
   // Убрана периодическая проверка - теперь анализ синхронный
 
@@ -550,9 +544,20 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
       // Ждем завершения ВСЕХ анализов
       const results = await Promise.allSettled(analysisPromises);
       
-      // Подсчитываем результаты
-      const successful = results.filter(r => r.status === 'fulfilled' && r.value?.success).length;
-      const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value?.success)).length;
+      // Подсчитываем результаты - улучшенная логика
+      const successful = results.filter(r => {
+        if (r.status === 'rejected') return false;
+        if (r.status === 'fulfilled' && r.value?.success) return true;
+        // Дополнительная проверка: если нет явной ошибки, считаем успешным
+        if (r.status === 'fulfilled' && !r.value?.error) return true;
+        return false;
+      }).length;
+      
+      const failed = results.filter(r => {
+        if (r.status === 'rejected') return true;
+        if (r.status === 'fulfilled' && r.value?.success === false && r.value?.error) return true;
+        return false;
+      }).length;
       
       // Перезагружаем данные для обновления UI
       await loadAllAnalysisData();

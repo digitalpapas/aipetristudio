@@ -629,22 +629,12 @@ export default function SegmentCards({
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Button
-            onClick={() => handleRegenerate(false)}
-            disabled={isLoading}
-            variant="outline"
-            className="flex-1 gap-2"
-          >
-            <RefreshCw size={20} className={isLoading ? 'animate-spin' : ''} />
-            <span className="break-words">Перегенерировать</span>
-          </Button>
-
+        <div className="flex justify-center">
           <Button
             onClick={() => setShowCommentField(true)}
             disabled={isLoading}
             variant="outline"
-            className="flex-1 gap-2"
+            className="gap-2"
           >
             <MessageSquare size={20} />
             <span className="break-words">Перегенерировать с комментарием</span>

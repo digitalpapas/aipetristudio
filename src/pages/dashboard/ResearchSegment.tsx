@@ -165,7 +165,9 @@ export default function ResearchSegmentPage() {
           table: 'segment_analyses',
         },
         (payload) => {
-          const row: any = (payload as any).new || (payload as any).old;
+          const newRow: any = (payload as any).new;
+          const oldRow: any = (payload as any).old;
+          const row: any = newRow || oldRow;
           const pid = row?.["Project ID"];
           const sid = row?.["Сегмент ID"];
           if (pid !== id || sid !== parseInt(segmentId)) return;
@@ -177,6 +179,31 @@ export default function ResearchSegmentPage() {
           });
 
           checkAnalysesCompletion();
+
+          // Авто-переход к готовому результату после перегенерации
+          try {
+            const markerStr = localStorage.getItem('last-regeneration');
+            if (markerStr && newRow) {
+              const marker = JSON.parse(markerStr);
+              if (
+                marker.researchId === id &&
+                marker.segmentId === parseInt(segmentId) &&
+                marker.analysisType === newRow.analysis_type
+              ) {
+                if (newRow.status === 'completed') {
+                  toast({ title: 'Анализ готов', description: 'Результаты обновлены' });
+                  setSelectedAnalysisType(newRow.analysis_type);
+                  setCurrentView('result');
+                  localStorage.removeItem('last-regeneration');
+                } else if (newRow.status === 'error' || newRow.status === 'failed') {
+                  toast({ type: 'error', title: 'Ошибка анализа', description: 'Не удалось завершить перегенерацию' });
+                  localStorage.removeItem('last-regeneration');
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to process regeneration marker', e);
+          }
         }
       )
       .subscribe();

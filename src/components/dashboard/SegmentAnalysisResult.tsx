@@ -667,15 +667,19 @@ export default function SegmentAnalysisResult({
         description: "Анализ перегенерируется с учетом ваших комментариев. Вы получите уведомление о завершении.",
       });
 
-      // Перенаправляем на страницу исследования, чтобы пользователь наблюдал прогресс в списке
-      setTimeout(() => {
-        try {
-          navigate(`/dashboard/research/${researchId}#selected-segments`);
-        } catch {
-          // fallback - вернуться назад, если navigate не сработал
-          onBack();
-        }
-      }, 400);
+      // Сохраняем маркер последней перегенерации
+      try {
+        localStorage.setItem('last-regeneration', JSON.stringify({
+          researchId,
+          segmentId: parseInt(segmentId),
+          analysisType,
+          startedAt: Date.now()
+        }));
+      } catch (e) {
+        console.warn('Не удалось сохранить маркер перегенерации', e);
+      }
+      // Мгновенно вернуться на шаг назад (меню анализов)
+      onBack();
 
     } catch (error) {
       console.error('Ошибка перегенерации:', error);

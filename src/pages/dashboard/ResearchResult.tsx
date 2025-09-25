@@ -123,17 +123,22 @@ export default function ResearchResultPage() {
   // Safe localStorage setter with quota handling and compact payload for large arrays
   const safeSave = useCallback((key: string, value: any) => {
     try {
-      let payload = value;
-      if (Array.isArray(value) && key.endsWith('-all-segments')) {
-        // Store compact version to reduce size
-        payload = value.map((s: any) => ({
-          id: s.id,
-          title: s.title,
-          // limit description to 700 chars to fit quota comfortably
-          description: (s.description || '').slice(0, 700),
-          // do not persist problems/message to keep storage small
-        }));
+      // For heavy payloads, avoid localStorage entirely to prevent QuotaExceeded
+      if (key.endsWith('-all-segments')) {
+        // Compact and write to sessionStorage only
+        let payload: any = value;
+        if (Array.isArray(value)) {
+          payload = value.map((s: any) => ({
+            id: s.id,
+            title: s.title,
+            description: (s.description || '').slice(0, 500),
+          }));
+        }
+        try { sessionStorage.setItem(key, JSON.stringify(payload)); } catch {}
+        return; // do not write to localStorage for all-segments
       }
+      // Other keys: normal safe write to localStorage
+      let payload = value;
       localStorage.setItem(key, JSON.stringify(payload));
     } catch (e) {
       console.warn('localStorage save skipped due to quota for', key, e);
@@ -806,7 +811,7 @@ export default function ResearchResultPage() {
       setSegments(updatedSegments);
       
       // Обновляем localStorage
-      localStorage.setItem(`research-${id}-segments`, JSON.stringify(updatedSegments));
+      safeSave(`research-${id}-segments`, updatedSegments);
       
       toast({
         type: "success",

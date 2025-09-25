@@ -45,6 +45,7 @@ interface SegmentCardsProps {
   };
   onRegenerate?: (newSegments: Segment[], newTopSegments: number[]) => void;
   hideTopRecommendations?: boolean; // Новый пропс для скрытия блока топ-3
+  persistSelection?: boolean; // Принудительно сохранять выбор в БД при toggle
 }
 
 export default function SegmentCards({ 
@@ -57,7 +58,8 @@ export default function SegmentCards({
   researchId, 
   originalData, 
   onRegenerate,
-  hideTopRecommendations = false
+  hideTopRecommendations = false,
+  persistSelection = false
 }: SegmentCardsProps) {
   const navigate = useNavigate();
   const { toast } = useCustomToast();
@@ -311,10 +313,11 @@ export default function SegmentCards({
   const handleSegmentToggle = (segmentId: number) => {
     console.log('🔄 HandleSegmentToggle called with:', segmentId);
     console.log('🔍 hideTopRecommendations:', hideTopRecommendations);
+    console.log('🔍 persistSelection:', persistSelection);
     console.log('🔍 Current selectedSegments:', selectedSegments);
     
-    if (hideTopRecommendations) {
-      // В разделе результатов используем toggle: добавление/удаление
+    if (hideTopRecommendations || persistSelection) {
+      // В разделе результатов используем toggle: добавление/удаление c сохранением в БД
       const isCurrentlySelected = selectedSegments.includes(segmentId);
       if (isCurrentlySelected) {
         console.log('📋 Using handleRemoveFromSelected (results page)');
@@ -324,7 +327,7 @@ export default function SegmentCards({
         handleAddToSelected(segmentId);
       }
     } else {
-      // На странице выбора сегментов используем обычное переключение
+      // На странице выбора сегментов используем обычное переключение (локально)
       console.log('🔄 Using toggleSegment (selection page)');
       toggleSegment(segmentId);
     }

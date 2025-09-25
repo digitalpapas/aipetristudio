@@ -1077,6 +1077,8 @@ export default function ResearchResultPage() {
             segments={segments || []} // Используем сегменты из таблицы segments
             researchTitle={research?.["Project name"] || research?.title || ""}
             researchId={id} // Передаем ID для загрузки топ-сегментов
+            selectedSegments={selectedSegmentIds} // Передаем выбранные ID для корректного toggle
+            persistSelection={true} // Сохраняем изменения сразу в БД
             onSelectedSegmentsChange={(selectedIds) => {
               console.log('Выбранные сегменты:', selectedIds);
               // Обновляем счетчик сегментов в основной записи исследования

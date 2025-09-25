@@ -205,9 +205,10 @@ export default function SegmentCards({
   }, [selectedSegmentForView, fullSegmentData, finalTopSegmentIds, dbTopSegments]);
 
   const toggleSegment = (segmentId: number) => {
-    console.log('⚡ toggleSegment called with:', segmentId);
+    console.log('⚡ toggleSegment called with segmentId:', segmentId);
     console.log('📊 Current selectedSegments before:', selectedSegments);
     
+    // ИСПРАВЛЕНИЕ: Работаем с реальными ID сегментов, а не с индексами
     const newSelected = selectedSegments.includes(segmentId)
       ? selectedSegments.filter(id => id !== segmentId)
       : [...selectedSegments, segmentId];
@@ -322,19 +323,15 @@ export default function SegmentCards({
       return;
     }
 
+    // ИСПРАВЛЕНИЕ: selectedSegments теперь содержит реальные ID сегментов
     const selectedSegmentObjects = segments.filter(segment => 
       selectedSegments.includes(segment.id)
-    ).map((segment, index) => ({
-      ...segment,
-      id: index + 1
-    }));
+    );
 
     try {
-      // Отмечаем выбранные сегменты вместо удаления всех
-      // selectedSegments содержит индексы выбранных сегментов (0-based), нужно конвертировать в 1-based ID
-      const selectedIds = selectedSegments.map(index => index + 1);
-      console.log('🔍 Selected segment IDs:', selectedIds);
-      const { error } = await markSelectedSegments(finalResearchId, selectedIds);
+      // Отмечаем выбранные сегменты используя их реальные ID
+      console.log('🔍 Selected segment IDs:', selectedSegments);
+      const { error } = await markSelectedSegments(finalResearchId, selectedSegments);
       
       if (error && error.code !== '23505') {
         toast({

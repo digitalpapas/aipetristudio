@@ -677,7 +677,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
             <Brain className="h-5 w-5 flex-shrink-0" />
             <span className="truncate">Параметры анализа</span>
           </CardTitle>
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0 pr-3 pt-3">
             {/* Кнопка начать анализ */}
             <Button 
               onClick={handleStartAnalysis}

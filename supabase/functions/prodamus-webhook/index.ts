@@ -9,17 +9,23 @@ const corsHeaders = {
 const SECRET_KEY = '9a48810fd60a2a65c6801282c40d5e83d3d3a2cb0f7df06f395401ef69a25d6f';
 
 interface ProdamusWebhookData {
-  payment_status: string;
-  customer_email: string;
+  date: string;
   order_id: string;
-  products: Array<{
-    name: string;
-    price: number;
-  }>;
+  order_num: string;
   order_sum: number;
-  payment_date: string;
+  currency: string;
+  customer_phone: string;
+  customer_email: string;
+  customer_extra: string;
+  payment_type: string;
+  commission: string;
+  commission_sum: string;
+  attempt: string;
+  demo_mode: boolean;
+  payment_status: string;
+  payment_status_description: string;
+  payment_init: string;
   subscription_id?: string;
-  payment_type?: string;
 }
 
 // Функция для проверки подписи
@@ -88,10 +94,30 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    const webhookData: ProdamusWebhookData = JSON.parse(bodyText);
+    // Парсим данные из формы
+    const formData = new URLSearchParams(bodyText);
+    const webhookData: ProdamusWebhookData = {
+      date: formData.get('date') || '',
+      order_id: formData.get('order_id') || '',
+      order_num: formData.get('order_num') || '',
+      order_sum: parseFloat(formData.get('sum') || '0'),
+      currency: formData.get('currency') || 'rub',
+      customer_phone: formData.get('customer_phone') || '',
+      customer_email: formData.get('customer_email') || '',
+      customer_extra: formData.get('customer_extra') || '',
+      payment_type: formData.get('payment_type') || '',
+      commission: formData.get('commission') || '',
+      commission_sum: formData.get('commission_sum') || '',
+      attempt: formData.get('attempt') || '',
+      demo_mode: formData.get('demo_mode') === '1',
+      payment_status: formData.get('payment_status') || '',
+      payment_status_description: formData.get('payment_status_description') || '',
+      payment_init: formData.get('payment_init') || '',
+      subscription_id: formData.get('subscription_id') || undefined
+    };
     console.log('Parsed webhook data:', JSON.stringify(webhookData, null, 2));
 
-    // Проверяем обязательные условия
+    // Проверяем только статус оплаты для всех платежей
     if (webhookData.payment_status !== 'success') {
       console.log('Payment not successful, status:', webhookData.payment_status);
       return new Response(JSON.stringify({ success: true, message: 'Payment not successful' }), { 
@@ -100,13 +126,9 @@ serve(async (req) => {
       });
     }
 
-    if (webhookData.subscription_id !== '2510594') {
-      console.log('Not target subscription, ID:', webhookData.subscription_id);
-      return new Response(JSON.stringify({ success: true, message: 'Not target subscription' }), { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    // Логируем информацию о платеже
+    console.log('Processing payment for order:', webhookData.order_id);
+    console.log('Demo mode:', webhookData.demo_mode);
 
     const { customer_email } = webhookData;
     console.log('Processing subscription for email:', customer_email);

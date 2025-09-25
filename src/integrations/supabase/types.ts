@@ -243,6 +243,7 @@ export type Database = {
           prodamus_order_id: string
           prodamus_subscription_id: string | null
           status: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
@@ -255,6 +256,7 @@ export type Database = {
           prodamus_order_id: string
           prodamus_subscription_id?: string | null
           status?: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
@@ -267,6 +269,7 @@ export type Database = {
           prodamus_order_id?: string
           prodamus_subscription_id?: string | null
           status?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []

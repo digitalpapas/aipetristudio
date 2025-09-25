@@ -770,6 +770,22 @@ export default function ResearchResultPage() {
         </div>
         
         <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleExport}
+          >
+            <span className="hidden lg:inline">Экспорт</span>
+            <span className="lg:hidden">📤</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={handleShare}
+          >
+            <span className="hidden lg:inline">Поделиться</span>
+            <span className="lg:hidden">🔗</span>
+          </Button>
         </div>
       </header>
 
@@ -781,25 +797,6 @@ export default function ResearchResultPage() {
           </TabsList>
 
           <TabsContent value="all-segments" className="space-y-4">
-            {/* Действия для всех сегментов */}
-            <div className="flex gap-2 mb-4">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleExport}
-              >
-                <span className="hidden lg:inline">Экспорт</span>
-                <span className="lg:hidden">📤</span>
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={handleShare}
-              >
-                <span className="hidden lg:inline">Поделиться</span>
-                <span className="lg:hidden">🔗</span>
-              </Button>
-            </div>
             {/* Отображаем все сгенерированные сегменты (20 штук) с выделением топ-3 */}
             {allGeneratedSegments && allGeneratedSegments.length > 0 ? (
               <SegmentCards 

@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Trash2, RefreshCw, Lock, Eye, ArrowRight, X, Star, MessageSquare } from "lucide-react";
+import { ArrowLeft, Loader2, Trash2, RefreshCw, Lock, Eye, ArrowRight, X, Star } from "lucide-react";
 import SegmentCards from "@/components/dashboard/SegmentCards";
 import { useCustomToast } from "@/hooks/use-custom-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,14 +22,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 export default function ResearchResultPage() {
   const { id } = useParams();
@@ -67,7 +58,7 @@ export default function ResearchResultPage() {
         // Обеспечиваем наличие базовых полей для отображения
         title: foundResearch.title || foundResearch["Project name"] || "Исследование",
         "Project name": foundResearch["Project name"] || foundResearch.title || "Исследование",
-        status: foundResearch.status || "completed" // Сохраняем реальный статус
+        status: foundResearch.status || "completed"
       };
     }
     
@@ -77,7 +68,7 @@ export default function ResearchResultPage() {
       id: id,
       title: "Загружается...",
       "Project name": "Загружается...",
-      status: "loading" // специальный статус для начальной загрузки
+      status: "completed" // для показа основного интерфейса
     };
   });
   
@@ -112,12 +103,6 @@ export default function ResearchResultPage() {
   const [segmentToDelete, setSegmentToDelete] = useState<number | null>(null);
 
   const [isRetrying, setIsRetrying] = useState(false);
-  
-  // Состояния для модального окна перегенерации с комментарием
-  const [showRegenerateDialog, setShowRegenerateDialog] = useState(false);
-  const [regenerateComment, setRegenerateComment] = useState('');
-  const [isRegenerating, setIsRegenerating] = useState(false);
-  
   // Removed isLoading state - show interface immediately like ResearchSegmentPage
   
   // Move useMemo to top level to prevent hooks rendering error
@@ -209,8 +194,8 @@ export default function ResearchResultPage() {
           
           // Load all generated segments directly from segments table (принудительно обновляем)
           console.log('🔍 Loading all segments directly from segments table for research:', id);
-
-
+          
+          
           const { data: allSegmentsData, error: allSegmentsError } = await supabase
             .from('segments')
             .select('*')
@@ -234,42 +219,9 @@ export default function ResearchResultPage() {
             setAllGeneratedSegments(formattedAllSegments);
             localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(formattedAllSegments));
           } else {
-            console.log('⚠️ No segments found in database. Trying research.generated_segments fallback');
-            // Fallback 1: use generated_segments from research record if present (supports multiple shapes)
-            const rawGS = (data as any)?.generated_segments;
-            let parsedGS: any = rawGS;
-            try {
-              if (typeof rawGS === 'string') parsedGS = JSON.parse(rawGS);
-            } catch (e) {
-              console.warn('generated_segments parse error, using raw value');
-            }
-
-            let fallbackFromResearch: any[] | null = null;
-            if (Array.isArray(parsedGS)) {
-              // Shape: [{ id, title/name, description, problems, message }]
-              fallbackFromResearch = parsedGS.map((segment: any, index: number) => ({
-                id: segment.id ?? index + 1,
-                title: segment.title ?? segment.name,
-                description: segment.description ?? segment.desc,
-                problems: segment.problems,
-                message: segment.message
-              }));
-            } else if (parsedGS && Array.isArray(parsedGS.segments)) {
-              // Shape: { principles: [...], segments: [...] }
-              fallbackFromResearch = parsedGS.segments.map((segment: any, index: number) => ({
-                id: segment.id ?? index + 1,
-                title: segment.title ?? segment.name,
-                description: segment.description ?? segment.desc,
-                problems: segment.problems,
-                message: segment.message
-              }));
-            }
-
-            if (fallbackFromResearch && fallbackFromResearch.length > 0) {
-              setAllGeneratedSegments(fallbackFromResearch);
-              localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(fallbackFromResearch));
-            } else if (allSegmentsFromDB && allSegmentsFromDB.length > 0) {
-              // Fallback 2: use selected segments if any
+            console.log('⚠️ No segments found in database, using selected segments as fallback');
+            // Только если в БД вообще нет сегментов, используем выбранные как fallback
+            if (allSegmentsFromDB && allSegmentsFromDB.length > 0) {
               const fallbackSegments = allSegmentsFromDB.map((segment: any) => ({
                 id: segment["Сегмент ID"],
                 title: segment["Название сегмента"],
@@ -278,7 +230,6 @@ export default function ResearchResultPage() {
                 message: segment.message
               }));
               setAllGeneratedSegments(fallbackSegments);
-              localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(fallbackSegments));
             }
           }
           
@@ -344,58 +295,6 @@ export default function ResearchResultPage() {
     }, 1000), // Задержка 1 секунда
     [research, user?.id, id]
   );
-
-  // Realtime: подписка на изменения сегментов и статуса исследования (вынесено на верхний уровень)
-  useEffect(() => {
-    if (!id) return;
-
-    const fetchAllSegments = async () => {
-      const { data: allSegmentsData } = await supabase
-        .from('segments')
-        .select('*')
-        .eq('Project ID', id)
-        .order('Сегмент ID');
-
-      if (allSegmentsData && allSegmentsData.length > 0) {
-        const formatted = allSegmentsData.map((segment: any) => ({
-          id: segment['Сегмент ID'],
-          title: segment['Название сегмента'],
-          description: segment.description,
-          problems: segment.problems,
-          message: segment.message,
-        }));
-        setAllGeneratedSegments(formatted);
-        localStorage.setItem(`research-${id}-all-segments`, JSON.stringify(formatted));
-      }
-    };
-
-    const channel = supabase
-      .channel(`research-${id}-changes`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'segments', filter: `Project ID=eq.${id}` },
-        () => {
-          fetchAllSegments();
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'researches', filter: `Project ID=eq.${id}` },
-        (payload) => {
-          const newStatus = (payload as any).new?.status;
-          if (newStatus === 'processing') {
-            navigate(`/dashboard/research/new?id=${id}`);
-          } else if (newStatus === 'completed') {
-            fetchAllSegments();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [id, navigate]);
 
   // Обновляем useEffect для синхронизации localTitle
   useEffect(() => {
@@ -483,140 +382,6 @@ export default function ResearchResultPage() {
       title: "В разработке",
       description: "Функция дублирования скоро будет доступна"
     });
-  };
-
-  const handleRegenerateWithComment = async () => {
-    if (!regenerateComment.trim()) {
-      toast({
-        type: "error",
-        title: "Ошибка",
-        description: "Пожалуйста, введите комментарий"
-      });
-      return;
-    }
-
-    if (!research || !user?.id) return;
-    
-    setIsRegenerating(true);
-    
-    try {
-      // Получаем текущие сегменты из состояния
-      const currentSegments = allGeneratedSegments.length > 0 ? allGeneratedSegments : segments;
-      
-      if (!currentSegments || currentSegments.length === 0) {
-        toast({
-          type: "error",
-          title: "Ошибка",
-          description: "Не найдены текущие сегменты для перегенерации"
-        });
-        setIsRegenerating(false);
-        return;
-      }
-
-      // Обновляем статус исследования
-      await updateResearch(id!, { status: "processing" });
-      
-      // Обновляем localStorage
-      const allResearch = JSON.parse(localStorage.getItem('research') || '[]');
-      const updatedResearch = allResearch.map((r: any) => 
-        r.id === id ? { ...r, status: "processing" } : r
-      );
-      localStorage.setItem('research', JSON.stringify(updatedResearch));
-      
-      // Формируем данные для отправки в edge function
-      const requestData = {
-        research_id: id,
-        user_id: user.id,
-        user_comment: regenerateComment.trim(),
-        current_segments: currentSegments,
-        original_research: {
-          project_name: research["Project name"] || research.title,
-          description: research.description || ""
-        }
-      };
-
-      console.log("Отправляем запрос на перегенерацию с комментарием:", requestData);
-
-      // Вызываем edge function для перегенерации с комментарием
-      const { data, error } = await supabase.functions.invoke('full-regenerate-with-comments', {
-        body: requestData
-      });
-
-      if (error) {
-        console.error('Error calling regenerate-with-comments function:', error);
-        throw new Error(error.message || 'Ошибка при вызове функции перегенерации');
-      }
-
-      console.log("Результат перегенерации:", data);
-
-      // Закрываем модальное окно и очищаем комментарий
-      setShowRegenerateDialog(false);
-      setRegenerateComment('');
-
-      // Обновляем статус исследования на "processing" локально
-      setResearch({ ...research, status: "processing" });
-      
-      // Обновляем localStorage
-      const allResearchForRegenerate = JSON.parse(localStorage.getItem('research') || '[]');
-      const updatedResearchForRegenerate = allResearchForRegenerate.map((r: any) => 
-        r.id === id ? { ...r, status: "processing" } : r
-      );
-      localStorage.setItem('research', JSON.stringify(updatedResearchForRegenerate));
-      
-      toast({
-        type: "success",
-        title: "Перегенерация запущена",
-        description: "Идёт создание новых сегментов с учётом ваших комментариев"
-      });
-
-      // Перенаправляем на страницу загрузки (важно делать это после обновления состояния)
-      navigate(`/dashboard/research/${id}`);
-
-    } catch (error) {
-      console.error('Error during regeneration with comment:', error);
-      
-      // Возвращаем статус обратно
-      await updateResearch(id!, { status: "completed" });
-      
-      toast({
-        type: "error",
-        title: "Ошибка перегенерации",
-        description: error instanceof Error ? error.message : "Произошла ошибка при перегенерации сегментов"
-      });
-    } finally {
-      setIsRegenerating(false);
-    }
-  };
-
-  const handleResetStatus = async () => {
-    if (!research || !user?.id || !id) return;
-    
-    try {
-      await updateResearch(id, { status: "completed" });
-      
-      // Обновляем локальное состояние
-      setResearch({ ...research, status: "completed" });
-      
-      // Обновляем localStorage
-      const allResearch = JSON.parse(localStorage.getItem('research') || '[]');
-      const updatedResearch = allResearch.map((r: any) => 
-        r.id === id ? { ...r, status: "completed" } : r
-      );
-      localStorage.setItem('research', JSON.stringify(updatedResearch));
-      
-      toast({
-        type: "success",
-        title: "Статус сброшен",
-        description: "Теперь можно попробовать перегенерацию снова"
-      });
-    } catch (error) {
-      console.error('Error resetting status:', error);
-      toast({
-        type: "error",
-        title: "Ошибка",
-        description: "Не удалось сбросить статус"
-      });
-    }
   };
 
   const handleRetryAnalysis = async () => {
@@ -813,7 +578,7 @@ export default function ResearchResultPage() {
   }
 
   // Если исследование в процессе генерации
-  if (research?.status === "processing" || research?.status === "generating" || research?.status === "loading") {
+  if (research?.status === "processing" || research?.status === "generating") {
     return (
       <main className="space-y-5">
         <div className="flex items-center gap-3 mb-4">
@@ -833,11 +598,11 @@ export default function ResearchResultPage() {
             <Input 
               value={localTitle} 
               onChange={(e) => handleNameChange(e.target.value)}
-              disabled={research?.status === "processing" || research?.status === "generating" || research?.status === "loading"}
-              className={`${research?.status === "processing" || research?.status === "generating" || research?.status === "loading" ? "bg-muted text-muted-foreground cursor-not-allowed pr-10" : ""}`}
-              title={research?.status === "processing" || research?.status === "generating" || research?.status === "loading" ? "Редактирование заблокировано во время генерации сегментов" : ""}
+              disabled={research?.status === "processing" || research?.status === "generating"}
+              className={`${research?.status === "processing" || research?.status === "generating" ? "bg-muted text-muted-foreground cursor-not-allowed pr-10" : ""}`}
+              title={research?.status === "processing" || research?.status === "generating" ? "Редактирование заблокировано во время генерации сегментов" : ""}
             />
-            {(research?.status === "processing" || research?.status === "generating" || research?.status === "loading") && (
+            {(research?.status === "processing" || research?.status === "generating") && (
               <Lock className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             )}
           </div>
@@ -847,13 +612,9 @@ export default function ResearchResultPage() {
         <Card className="rounded-2xl">
           <CardContent className="text-center py-8">
             <Loader2 className="h-12 w-12 mx-auto animate-spin text-primary mb-4" />
-            <h3 className="font-semibold mb-2">
-              {research?.status === "processing" ? "Анализируем данные..." : "Генерируем сегменты..."}
-            </h3>
+            <h3 className="font-semibold mb-2">Генерируем сегменты...</h3>
             <p className="text-muted-foreground">
-              {research?.status === "processing" 
-                ? "Это может занять несколько минут" 
-                : "Анализируем данные и создаем целевые аудитории"}
+              Анализируем данные и создаем целевые аудитории
             </p>
           </CardContent>
         </Card>
@@ -1009,33 +770,6 @@ export default function ResearchResultPage() {
         </div>
         
         <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setShowRegenerateDialog(true)}
-            disabled={research?.status === 'processing'}
-          >
-            <span className="hidden lg:inline">Перегенерировать с комментарием</span>
-            <span className="lg:hidden">🔄</span>
-          </Button>
-          {research?.status === 'processing' && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleResetStatus}
-            >
-              <span className="hidden lg:inline">Сбросить статус</span>
-              <span className="lg:hidden">🔄</span>
-            </Button>
-          )}
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleExport}
-          >
-            <span className="hidden lg:inline">Экспорт</span>
-            <span className="lg:hidden">📤</span>
-          </Button>
         </div>
       </header>
 
@@ -1047,6 +781,25 @@ export default function ResearchResultPage() {
           </TabsList>
 
           <TabsContent value="all-segments" className="space-y-4">
+            {/* Действия для всех сегментов */}
+            <div className="flex gap-2 mb-4">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleExport}
+              >
+                <span className="hidden lg:inline">Экспорт</span>
+                <span className="lg:hidden">📤</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleShare}
+              >
+                <span className="hidden lg:inline">Поделиться</span>
+                <span className="lg:hidden">🔗</span>
+              </Button>
+            </div>
             {/* Отображаем все сгенерированные сегменты (20 штук) с выделением топ-3 */}
             {allGeneratedSegments && allGeneratedSegments.length > 0 ? (
               <SegmentCards 
@@ -1086,6 +839,25 @@ export default function ResearchResultPage() {
           </TabsContent>
 
           <TabsContent value="selected-segments" className="space-y-4">
+            {/* Действия для выбранных сегментов */}
+            <div className="flex gap-2 mb-4">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleExport}
+              >
+                <span className="hidden lg:inline">Экспорт</span>
+                <span className="lg:hidden">📤</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleShare}
+              >
+                <span className="hidden lg:inline">Поделиться</span>
+                <span className="lg:hidden">🔗</span>
+              </Button>
+            </div>
             {/* Отображаем только выбранные сегменты */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {segments.length > 0 ? (
@@ -1182,71 +954,6 @@ export default function ResearchResultPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      {/* Модальное окно для перегенерации с комментарием */}
-      <Dialog open={showRegenerateDialog} onOpenChange={setShowRegenerateDialog}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              Перегенерировать с комментарием
-            </DialogTitle>
-            <DialogDescription>
-              Опишите, что вам не нравится в текущих сегментах или что вы хотели бы изменить. 
-              Будет создана полная перегенерация всех 20 сегментов и топ-3.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label htmlFor="comment" className="text-sm font-medium">
-                Ваш комментарий (максимум 500 символов)
-              </label>
-              <Textarea
-                id="comment"
-                placeholder="Например: Нужны более платежеспособные сегменты с возрастом 30-45 лет..."
-                value={regenerateComment}
-                onChange={(e) => setRegenerateComment(e.target.value.slice(0, 500))}
-                className="min-h-[100px] resize-none"
-                maxLength={500}
-              />
-              <div className="text-xs text-muted-foreground text-right">
-                {regenerateComment.length}/500
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowRegenerateDialog(false);
-                setRegenerateComment('');
-              }}
-              disabled={isRegenerating}
-            >
-              Отмена
-            </Button>
-            <Button
-              onClick={handleRegenerateWithComment}
-              disabled={!regenerateComment.trim() || isRegenerating}
-              className="min-w-[120px]"
-            >
-              {isRegenerating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Генерация...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Перегенерировать
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </main>
   );
 }

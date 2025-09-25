@@ -9,7 +9,7 @@ import { ArrowLeft, Loader2, Trash2, RefreshCw, Lock, Eye, ArrowRight, X, Star, 
 import SegmentCards from "@/components/dashboard/SegmentCards";
 import { useCustomToast } from "@/hooks/use-custom-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { deleteResearch, updateResearch, getResearch, getSegments } from "@/lib/supabase-utils";
+import { deleteResearch, updateResearch, getResearch, getSegments, addSegmentToSelected } from "@/lib/supabase-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { debounce } from "lodash";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -219,16 +219,29 @@ export default function ResearchResultPage() {
           const { data: allSegmentsFromDB } = await getSegments(id);
           if (allSegmentsFromDB && allSegmentsFromDB.length > 0) {
             // Фильтруем только выбранные сегменты для вкладки "Выбранные сегменты"
-            const selectedSegments = allSegmentsFromDB.filter((segment: any) => segment.is_selected);
-            const formattedSegments = selectedSegments.map((segment: any) => ({
+            const selectedFromDB = allSegmentsFromDB.filter((segment: any) => segment.is_selected);
+            let formattedSegments = selectedFromDB.map((segment: any) => ({
               id: segment["Сегмент ID"],
               title: segment["Название сегмента"],
               description: segment.description,
               problems: segment.problems,
               message: segment.message
             }));
+
+            // Fallback-восстановление из localStorage, если в БД пусто
+            if (formattedSegments.length === 0) {
+              const localSelected = JSON.parse(localStorage.getItem(`research-${id}-segments`) || '[]');
+              if (Array.isArray(localSelected) && localSelected.length > 0) {
+                console.log('🛟 Восстанавливаем выбранные сегменты из localStorage → БД');
+                // Обновляем БД для каждого сегмента
+                for (const seg of localSelected) {
+                  await addSegmentToSelected(id, seg.id);
+                }
+                formattedSegments = localSelected;
+              }
+            }
+
             setSegments(formattedSegments);
-            
             // Sync segments with localStorage (safe)
             safeSave(`research-${id}-segments`, formattedSegments);
           }

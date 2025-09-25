@@ -100,7 +100,8 @@ serve(async (req) => {
     // 2) Вернуть ответ СРАЗУ, а всю тяжёлую работу — в фоне
     const authHeader = req.headers.get('authorization') || '';
 
-    EdgeRuntime.waitUntil((async () => {
+    // Run background task without blocking response
+    (async () => {
       try {
         console.log(`Перегенерация ${analysisType} запущена (project=${researchId}, segment=${segmentId})`);
 
@@ -254,10 +255,10 @@ serve(async (req) => {
             .eq('analysis_type', analysisType)
             .eq('status', 'processing');
         } catch (cleanupError) {
-          console.error('Cleanup error:', cleanupError);
+        console.error('Cleanup error:', cleanupError);
         }
       }
-    })());
+    })().catch(console.error);
 
     // Немедленный ответ
     return new Response(JSON.stringify({ queued: true }), {

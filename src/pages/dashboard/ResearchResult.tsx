@@ -466,15 +466,22 @@ export default function ResearchResultPage() {
       // Закрываем модальное окно и очищаем комментарий
       setShowRegenerateDialog(false);
       setRegenerateComment('');
+
+      // Обновляем статус исследования на "processing" локально
+      setResearch({ ...research, status: "processing" });
+      
+      // Обновляем localStorage
+      const allResearchForRegenerate = JSON.parse(localStorage.getItem('research') || '[]');
+      const updatedResearchForRegenerate = allResearchForRegenerate.map((r: any) => 
+        r.id === id ? { ...r, status: "processing" } : r
+      );
+      localStorage.setItem('research', JSON.stringify(updatedResearchForRegenerate));
       
       toast({
         type: "success",
         title: "Перегенерация запущена",
         description: "Идёт создание новых сегментов с учётом ваших комментариев"
       });
-
-      // Перенаправляем на страницу исследования для ожидания результатов
-      navigate(`/dashboard/research/${id}`);
 
     } catch (error) {
       console.error('Error during regeneration with comment:', error);

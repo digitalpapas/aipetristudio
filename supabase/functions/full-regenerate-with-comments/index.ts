@@ -125,14 +125,33 @@ ${JSON.stringify(segmentsForAnalysis, null, 2)}
 
     let improvedSegments;
     try {
-      // Пытаемся найти JSON в ответе
-      const jsonMatch = firstAgentContent.match(/\{[\s\S]*\}/);
-      const jsonString = jsonMatch ? jsonMatch[0] : firstAgentContent;
+      // Очищаем ответ от лишних символов и пытаемся найти JSON
+      const cleanContent = firstAgentContent.trim();
       
+      // Пытаемся найти JSON разными способами
+      let jsonString = '';
+      
+      // Способ 1: ищем полный JSON объект
+      const fullJsonMatch = cleanContent.match(/\{[\s\S]*\}/);
+      if (fullJsonMatch) {
+        jsonString = fullJsonMatch[0];
+      } else {
+        // Способ 2: если есть ```json блоки
+        const codeBlockMatch = cleanContent.match(/```json\s*([\s\S]*?)\s*```/);
+        if (codeBlockMatch) {
+          jsonString = codeBlockMatch[1].trim();
+        } else {
+          // Способ 3: пытаемся парсить весь ответ как JSON
+          jsonString = cleanContent;
+        }
+      }
+      
+      console.log('🔍 Trying to parse JSON string:', jsonString.substring(0, 200) + '...');
       improvedSegments = JSON.parse(jsonString);
     } catch (parseError) {
       console.error('❌ Error parsing first agent response:', parseError);
-      console.error('❌ Raw response:', firstAgentContent);
+      console.error('❌ Raw response first 500 chars:', firstAgentContent.substring(0, 500));
+      console.error('❌ Raw response last 500 chars:', firstAgentContent.substring(Math.max(0, firstAgentContent.length - 500)));
       throw new Error('Failed to parse first agent response');
     }
 

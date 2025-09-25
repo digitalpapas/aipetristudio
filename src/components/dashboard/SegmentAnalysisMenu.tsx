@@ -776,7 +776,7 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
             {/* Кнопка начать анализ */}
             <Button 
               onClick={handleStartAnalysis}
-              disabled={selectedCount === 0 || isLoading}
+              disabled={selectedCount === 0 || isLoading || analyzingTypes.length > 0}
               size="sm"
               className="flex items-center gap-2 min-w-0 shrink-0"
             >

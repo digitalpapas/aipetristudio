@@ -89,37 +89,8 @@ const CATEGORY_NAMES = {
 export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisStart, onViewResult }: SegmentAnalysisMenuProps) {
   const { toast } = useCustomToast();
   const { user } = useAuth();
-  const [selectedOptions, setSelectedOptions] = useState<string[]>(["segment_description"]);
-  const [completedAnalyses, setCompletedAnalyses] = useState<string[]>(() => {
-    // Инициализация из localStorage для мгновенного отображения
-    const storageKey = `segment-analysis-${researchId}-${segmentId}`;
-    const saved = safeGetItem(storageKey);
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        return data.completed || [];
-      } catch (e) {
-        return [];
-      }
-    }
-    return [];
-  });
-
-  const [analyzingTypes, setAnalyzingTypes] = useState<string[]>(() => {
-    // Проверяем анализирующиеся типы из sessionStorage (временные данные)
-    const analyzing: string[] = [];
-    ANALYSIS_OPTIONS.forEach(option => {
-      const key = `analyzing-${researchId}-${segmentId}-${option.id}`;
-      if (sessionStorage.getItem(key)) {
-        analyzing.push(option.id);
-      }
-    });
-    return analyzing;
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [deletingAnalysis, setDeletingAnalysis] = useState<string | null>(null);
-
-  // Safe storage functions with quota handling and auto-cleanup
+  
+  // Safe storage functions with quota handling and auto-cleanup (MOVED TO TOP)
   const clearOldData = () => {
     try {
       const keys = Object.keys(localStorage);
@@ -193,6 +164,37 @@ export default function SegmentAnalysisMenu({ researchId, segmentId, onAnalysisS
 
   // Get localStorage key for analysis status
   const getAnalysisKey = (analysisType: string) => `analyzing-${researchId}-${segmentId}-${analysisType}`;
+
+  // Now useState can safely use the helper functions
+  const [selectedOptions, setSelectedOptions] = useState<string[]>(["segment_description"]);
+  const [completedAnalyses, setCompletedAnalyses] = useState<string[]>(() => {
+    // Инициализация из localStorage для мгновенного отображения
+    const storageKey = `segment-analysis-${researchId}-${segmentId}`;
+    const saved = safeGetItem(storageKey);
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        return data.completed || [];
+      } catch (e) {
+        return [];
+      }
+    }
+    return [];
+  });
+
+  const [analyzingTypes, setAnalyzingTypes] = useState<string[]>(() => {
+    // Проверяем анализирующиеся типы из sessionStorage (временные данные)
+    const analyzing: string[] = [];
+    ANALYSIS_OPTIONS.forEach(option => {
+      const key = `analyzing-${researchId}-${segmentId}-${option.id}`;
+      if (sessionStorage.getItem(key)) {
+        analyzing.push(option.id);
+      }
+    });
+    return analyzing;
+  });
+   const [isLoading, setIsLoading] = useState(false);
+  const [deletingAnalysis, setDeletingAnalysis] = useState<string | null>(null);
 
   // Check sessionStorage for currently analyzing types
   const loadAnalyzingTypes = () => {

@@ -1145,7 +1145,7 @@ export default function ResearchResultPage() {
         
         <div className="flex gap-2">
           <Button 
-            variant="outline" 
+            variant="hero" 
             size="sm"
             onClick={() => setShowRegenerateDialog(true)}
             disabled={research?.status === 'processing'}

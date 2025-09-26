@@ -130,8 +130,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Create signature
     const signature = await createSignature(prodamusData, PRODAMUS_SECRET_KEY);
+    
+    // Convert to strings for URLSearchParams
     const requestData = {
-      ...prodamusData,
+      subscription: subscriptionId,
+      customer_email: userEmail,
+      active_user: '0', // Convert to string for URLSearchParams
       signature
     };
 

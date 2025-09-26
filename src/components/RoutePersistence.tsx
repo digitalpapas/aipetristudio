@@ -1,23 +1,18 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { SafeStorage } from "@/lib/storage-utils";
 
-// Persist and restore the last visited route across reloads without causing unwanted redirects.
-// We avoid saving/restoring auth or subscription-related pages and only restore from true fallbacks.
-const SKIP_PAGES = new Set([
+// Persist and restore the last visited route across reloads.
+// This helps counter any unexpected redirects that may occur on initial mount.
+const AUTH_PAGES = new Set([
   "/login",
   "/register",
   "/verify-email",
   "/payment-success",
   "/payment-error",
-  "/account/subscription",
-  "/pricing",
 ]);
 
-const FALLBACK_PAGES = new Set(["/", "/dashboard"]);
-
-function shouldSkip(pathname: string) {
-  return SKIP_PAGES.has(pathname);
+function shouldSkipRestore(pathname: string) {
+  return AUTH_PAGES.has(pathname);
 }
 
 export default function RoutePersistence() {
@@ -27,24 +22,23 @@ export default function RoutePersistence() {
 
   const fullPath = `${location.pathname}${location.search}${location.hash}`;
 
-  // Attempt restore only once on first mount, and only from real fallbacks
+  // Attempt restore only once on first mount
   useEffect(() => {
     if (restoredOnce.current) return;
     restoredOnce.current = true;
 
     try {
-      const saved =
-        SafeStorage.safeGetItem("last-path", true) ||
-        SafeStorage.safeGetItem("last-path", false);
+      const saved = sessionStorage.getItem("last-path") || localStorage.getItem("last-path");
       if (!saved) return;
 
-      // Never override explicit auth/subscription/payment pages
-      if (shouldSkip(location.pathname)) return;
+      // Never override explicit auth or payment pages
+      if (shouldSkipRestore(location.pathname)) return;
 
-      // Validate saved path and ensure we don't restore to skipped pages
-      if (typeof saved !== "string" || !saved.startsWith("/") || shouldSkip(saved)) return;
-
-      const isFallbackPath = FALLBACK_PAGES.has(location.pathname);
+      // Restore only if current path looks like a fallback and differs from the saved one
+      const isFallbackPath =
+        location.pathname === "/" ||
+        location.pathname === "/pricing" ||
+        location.pathname === "/dashboard";
 
       if (isFallbackPath && saved !== fullPath) {
         navigate(saved, { replace: true });
@@ -57,15 +51,13 @@ export default function RoutePersistence() {
 
   // Track route changes and persist the latest path (lightweight string only)
   useEffect(() => {
-    if (shouldSkip(location.pathname)) return;
     try {
-      // Save in session first, then local as a backup using safe storage
-      SafeStorage.safeSetItem("last-path", fullPath, true);
-      SafeStorage.safeSetItem("last-path", fullPath, false);
+      sessionStorage.setItem("last-path", fullPath);
+      localStorage.setItem("last-path", fullPath);
     } catch {
       // ignore quota issues for a tiny string
     }
-  }, [fullPath, location.pathname]);
+  }, [fullPath]);
 
   return null;
 }

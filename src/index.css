@@ -186,6 +186,19 @@ All colors MUST be HSL. */
   /* Предотвращение горизонтального скролла */
   .overflow-x-safe {
     @apply overflow-x-hidden;
-    word-break: break-word;
+    overflow-wrap: break-word; /* Безопасный перенос только при необходимости */
+  }
+  
+  /* Правильный перенос заголовков в мобильной версии */
+  .title-mobile-safe {
+    word-break: keep-all; /* Не ломать слова */
+    overflow-wrap: break-word; /* Переносить только очень длинные слова */
+    hyphens: auto; /* Автоматические переносы */
+  }
+  
+  /* Мобильная безопасная область */
+  .mobile-safe-area {
+    word-break: normal; /* Нормальные переносы */
+    overflow-wrap: break-word;
   }
 }

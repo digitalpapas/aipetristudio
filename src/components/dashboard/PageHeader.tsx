@@ -38,8 +38,8 @@ export function PageHeader({
         </div>
       )}
       
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold break-words">{title}</h1>
+      <div className="min-w-0 flex-1">
+        <h1 className="text-xl sm:text-2xl font-bold title-mobile-safe leading-tight">{title}</h1>
         {subtitle && (
           <p className="text-muted-foreground mt-1 text-sm sm:text-base">{subtitle}</p>
         )}

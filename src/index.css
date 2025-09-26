@@ -39,6 +39,11 @@ All colors MUST be HSL. */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
+    /* Pale red for subtle warnings */
+    --warning-red: 0 65% 95%;
+    --warning-red-border: 0 50% 85%;
+    --warning-red-text: 0 70% 50%;
+
     --border: 214 32% 91%;
     --input: 214 32% 91%;
     --ring: var(--brand-blue);

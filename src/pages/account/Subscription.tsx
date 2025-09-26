@@ -248,7 +248,7 @@ Email: ${user?.email}
                     
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <Button variant="outline" className="w-full sm:w-auto border-amber-200 text-amber-700 hover:bg-amber-50">
+                        <Button variant="outline" className="w-full sm:w-auto border-[hsl(var(--warning-red-border))] text-[hsl(var(--warning-red-text))] hover:bg-[hsl(var(--warning-red))]">
                           Отменить автопродление
                         </Button>
                       </AlertDialogTrigger>
@@ -271,7 +271,7 @@ Email: ${user?.email}
                           <AlertDialogAction 
                             disabled={isCancelling}
                             onClick={handleCancelSubscription}
-                            className="bg-amber-600 hover:bg-amber-700"
+                            className="bg-[hsl(var(--warning-red-text))] hover:bg-[hsl(0_70%_45%)] text-white"
                           >
                             {isCancelling ? 'Отменяем...' : 'Отменить автопродление'}
                           </AlertDialogAction>

@@ -1163,14 +1163,6 @@ export default function ResearchResultPage() {
               <span className="lg:hidden">🔄</span>
             </Button>
           )}
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleExport}
-          >
-            <span className="hidden lg:inline">Экспорт</span>
-            <span className="lg:hidden">📤</span>
-          </Button>
         </div>
       </header>
 

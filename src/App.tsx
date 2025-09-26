@@ -25,7 +25,6 @@ import BookmarksPage from "./pages/dashboard/Bookmarks";
 import DiagnosticsPage from "./pages/dashboard/Diagnostics";
 import AIBotsPage from "./pages/dashboard/AIBots";
 import ContentFactoryPage from "./pages/dashboard/ContentFactory";
-import RoutePersistence from "@/components/RoutePersistence";
 
 const queryClient = new QueryClient();
 
@@ -200,7 +199,6 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <RoutePersistence />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<AuthRoutes.Login />} />

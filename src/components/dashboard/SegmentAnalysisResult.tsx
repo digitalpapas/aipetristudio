@@ -1032,29 +1032,32 @@ export default function SegmentAnalysisResult({
           <div></div>
         )}
         
-        {/* Кнопки выравнены по нижнему краю */}
-        <div className="flex gap-2 pb-1">
+        {/* Кнопки выравнены по нижнему краю - адаптивная верстка */}
+        <div className="flex flex-wrap gap-2 pb-1 sm:flex-nowrap">
           <Button
             variant="outline"
             size="sm"
             onClick={copyPageContent}
-            className="flex items-center gap-2 transition-all duration-200"
+            className="flex items-center gap-1 sm:gap-2 transition-all duration-200 text-xs sm:text-sm"
             title="Копировать весь текст"
           >
-            <Copy className="h-4 w-4" />
-            Копировать
+            <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden xs:inline">Копировать</span>
+            <span className="xs:hidden">Копия</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="flex items-center gap-2 transition-all duration-200"
+            className="flex items-center gap-1 sm:gap-2 transition-all duration-200 text-xs sm:text-sm"
             onClick={() => {
               navigate(`/dashboard/research/${researchId}/segment/${segmentId}/bookmarks`);
             }}
           >
-            <Bookmark className="h-4 w-4" />
+            <Bookmark className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="transition-all duration-200">
-              Избранное {bookmarkedTexts.length > 0 && (
+              <span className="hidden xs:inline">Избранное</span>
+              <span className="xs:hidden">★</span>
+              {bookmarkedTexts.length > 0 && (
                 <span className="ml-1 animate-in fade-in duration-300">
                   ({bookmarkedTexts.length})
                 </span>
@@ -1068,9 +1071,10 @@ export default function SegmentAnalysisResult({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="flex items-center gap-2 transition-all duration-200 hover:bg-primary/5"
+                  className="flex items-center gap-1 sm:gap-2 transition-all duration-200 hover:bg-primary/5 text-xs sm:text-sm"
                 >
-                  <RefreshCw className="h-4 w-4 text-orange-500" />
+                  <RefreshCw className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500" />
+                  <span className="hidden xs:inline">Обновить</span>
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]">
@@ -1132,15 +1136,16 @@ export default function SegmentAnalysisResult({
               <Button
                 variant="outline"
                 size="sm"
-                className="text-destructive hover:text-destructive-foreground hover:bg-destructive"
+                className="flex items-center gap-1 sm:gap-2 text-destructive hover:text-destructive-foreground hover:bg-destructive text-xs sm:text-sm"
                 disabled={isDeleting}
               >
                 {isDeleting ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                 ) : (
-                  <Trash2 className="h-4 w-4 mr-2" />
+                  <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 )}
-                Удалить анализ
+                <span className="hidden xs:inline">Удалить анализ</span>
+                <span className="xs:hidden">Удалить</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

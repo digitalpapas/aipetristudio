@@ -6,23 +6,26 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// HMAC signature creation for Prodamus API (исправлено согласно документации)
+// HMAC signature creation ТОЧНО по алгоритму Prodamus (как в официальном PHP классе)
 async function createSignature(data: Record<string, any>, secretKey: string): Promise<string> {
-  // 1. ВАЖНО: Исключаем поле signature из данных (как в Laravel документации)
-  const dataForSignature = { ...data };
-  delete dataForSignature.signature;
+  // 1. Копируем данные и удаляем signature (точно как в PHP: unset($data['signature']))
+  const cleanData = { ...data };
+  delete cleanData.signature;
   
-  // 2. Сортируем ключи по алфавиту (как ksort в PHP)
-  const sortedKeys = Object.keys(dataForSignature).sort();
+  // 2. Сортируем по ключам (точно как в PHP: ksort($data))
+  const sortedKeys = Object.keys(cleanData).sort();
   
-  // 3. Создаем query string с правильным энкодированием (как http_build_query в PHP)
+  // 3. Строим query string БЕЗ URL-кодирования (точно как http_build_query в PHP)
+  // ВАЖНО: Prodamus НЕ использует encodeURIComponent для подписи!
   const queryString = sortedKeys
-    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(dataForSignature[key]))}`)
+    .map(key => `${key}=${cleanData[key]}`)
     .join('&');
   
-  console.log('Data for signature (excluding signature field):', dataForSignature);
-  console.log('Query string for signature:', queryString);
+  console.log('🔐 Signature data (cleaned):', cleanData);
+  console.log('🔐 Query string for HMAC:', queryString);
+  console.log('🔐 Secret key length:', secretKey.length);
   
+  // 4. Создаем HMAC SHA256 (точно как hash_hmac('sha256', $str, $key) в PHP)
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secretKey);
   const messageData = encoder.encode(queryString);
@@ -39,7 +42,7 @@ async function createSignature(data: Record<string, any>, secretKey: string): Pr
   const hashArray = Array.from(new Uint8Array(signature));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   
-  console.log('Generated signature:', hashHex);
+  console.log('🔐 Generated signature:', hashHex);
   return hashHex;
 }
 
@@ -132,66 +135,78 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Prepare data for Prodamus API according to Laravel documentation
-    // ВАЖНО: Все значения должны быть строками для правильного создания подписи
-    const prodamusData = {
-      subscription: subscriptionId,
-      customer_email: userEmail,
-      active_user: "0" // ВАЖНО: строка "0" для деактивации от пользователя
-    };
-
-    console.log('Prodamus data (before signature):', prodamusData);
-    
-    // Create signature for security (передаем данные БЕЗ поля signature)
-    const signature = await createSignature(prodamusData, PRODAMUS_SECRET_KEY);
-    
-    // Добавляем подпись к данным запроса
-    const requestData = {
-      ...prodamusData,
-      signature
-    };
-
-    console.log('Sending request to Prodamus API:', requestData);
-
-    // Try different possible endpoints based on documentation
-    const possibleUrls = [
-      'https://neurosetipraktika.payform.ru/rest/setActivity/', // Your specific domain
-      'https://payform.ru/rest/setActivity/',                   // Production environment
-      'https://demo.payform.ru/rest/setActivity/',              // Demo environment if needed
+    // Пробуем разные варианты параметров согласно документации Prodamus
+    const attempts = [
+      // Вариант 1: active_user как число (как в документации)
+      {
+        subscription: subscriptionId,
+        customer_email: userEmail,
+        active_user: 0 // число, не строка!
+      },
+      // Вариант 2: active_user как строка
+      {
+        subscription: subscriptionId,
+        customer_email: userEmail,
+        active_user: "0"
+      },
+      // Вариант 3: через active_manager (альтернативный способ)
+      {
+        subscription: subscriptionId,
+        customer_email: userEmail,
+        active_manager: 0
+      }
     ];
-    
-    let lastError = null;
+
     let success = false;
+    let lastError = '';
     
-    for (const prodamusUrl of possibleUrls) {
-      console.log(`Trying URL: ${prodamusUrl}`);
+    // Используем ТОЛЬКО правильный домен (из логов видно что он работает)
+    const PRODAMUS_URL = 'https://neurosetipraktika.payform.ru/rest/setActivity/';
+    
+    for (let i = 0; i < attempts.length; i++) {
+      const prodamusData = attempts[i];
+      
+      console.log(`🚀 Attempt ${i + 1}:`, prodamusData);
+      
+      // Создаем подпись
+      const signature = await createSignature(prodamusData, PRODAMUS_SECRET_KEY);
+      
+      // Финальные данные для отправки
+      const requestData = {
+        ...prodamusData,
+        signature
+      };
+
+      console.log('📤 Sending to Prodamus:', requestData);
+
       
       try {
-        const response = await fetch(prodamusUrl, {
+        const response = await fetch(PRODAMUS_URL, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
           },
-          body: new URLSearchParams(requestData).toString()
+          body: new URLSearchParams(requestData as any).toString()
         });
 
         const responseText = await response.text();
-        console.log('Prodamus API response:', response.status, responseText);
+        console.log(`📥 Response ${i + 1}:`, response.status, responseText.substring(0, 100));
 
-        if (response.ok && responseText === 'success') {
+        if (response.ok && responseText.trim().toLowerCase() === 'success') {
+          console.log('✅ SUCCESS! Cancellation worked');
+          
           // Update user's subscription status in our database
           const { error: updateError } = await supabase
             .from('profiles')
             .update({ 
-              // Оставляем статус как есть - месяц уже оплачен
-              // Только убираем автопродление
-              prodamus_subscription_id: null // Убираем связь с подпиской для отключения автопродления
+              prodamus_subscription_id: null // Отключаем автопродление
             })
             .eq('user_id', user.id);
 
           if (updateError) {
-            console.error('Error updating profile:', updateError);
-            // Don't fail the request if DB update fails, as Prodamus cancellation worked
+            console.error('❌ DB update error:', updateError);
+          } else {
+            console.log('✅ DB updated successfully');
           }
 
           return new Response(
@@ -204,19 +219,13 @@ const handler = async (req: Request): Promise<Response> => {
               headers: { 'Content-Type': 'application/json', ...corsHeaders } 
             }
           );
-        } else if (response.ok) {
-          // If response is OK but not 'success', try next URL
-          lastError = `Unexpected response: ${responseText}`;
-          continue;
         } else {
-          // If response is not OK, try next URL
-          lastError = `HTTP ${response.status}: ${responseText}`;
-          continue;
+          lastError = `HTTP ${response.status}: ${responseText.substring(0, 200)}`;
+          console.log(`❌ Attempt ${i + 1} failed:`, lastError);
         }
       } catch (fetchError: any) {
-        console.error(`Error with URL ${prodamusUrl}:`, fetchError);
-        lastError = fetchError.message;
-        continue;
+        lastError = `Network error: ${fetchError.message}`;
+        console.error(`❌ Network error attempt ${i + 1}:`, fetchError);
       }
     }
     

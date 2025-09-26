@@ -6,15 +6,21 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// HMAC signature creation for Prodamus API
+// HMAC signature creation for Prodamus API (исправлено согласно документации)
 async function createSignature(data: Record<string, any>, secretKey: string): Promise<string> {
-  // Создаем query string в правильном порядке для Prodamus API
-  // Порядок важен! Параметры должны быть отсортированы по алфавиту  
-  const sortedEntries = Object.entries(data).sort(([a], [b]) => a.localeCompare(b));
-  const queryString = sortedEntries
-    .map(([key, value]) => `${key}=${value}`)
+  // 1. ВАЖНО: Исключаем поле signature из данных (как в Laravel документации)
+  const dataForSignature = { ...data };
+  delete dataForSignature.signature;
+  
+  // 2. Сортируем ключи по алфавиту (как ksort в PHP)
+  const sortedKeys = Object.keys(dataForSignature).sort();
+  
+  // 3. Создаем query string с правильным энкодированием (как http_build_query в PHP)
+  const queryString = sortedKeys
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(String(dataForSignature[key]))}`)
     .join('&');
   
+  console.log('Data for signature (excluding signature field):', dataForSignature);
   console.log('Query string for signature:', queryString);
   
   const encoder = new TextEncoder();
@@ -33,6 +39,7 @@ async function createSignature(data: Record<string, any>, secretKey: string): Pr
   const hashArray = Array.from(new Uint8Array(signature));
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   
+  console.log('Generated signature:', hashHex);
   return hashHex;
 }
 
@@ -125,25 +132,22 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Prepare data for Prodamus API according to official documentation
+    // Prepare data for Prodamus API according to Laravel documentation
+    // ВАЖНО: Все значения должны быть строками для правильного создания подписи
     const prodamusData = {
       subscription: subscriptionId,
       customer_email: userEmail,
-      active_user: 0 // 0 = deactivated by user (cannot be reactivated)
+      active_user: "0" // ВАЖНО: строка "0" для деактивации от пользователя
     };
 
-    console.log('Prodamus data for signature:', prodamusData);
+    console.log('Prodamus data (before signature):', prodamusData);
     
-    // Create signature for security
+    // Create signature for security (передаем данные БЕЗ поля signature)
     const signature = await createSignature(prodamusData, PRODAMUS_SECRET_KEY);
     
-    console.log('Generated signature:', signature);
-    
-    // Convert to string format for form submission (all values must be strings for URLSearchParams)
+    // Добавляем подпись к данным запроса
     const requestData = {
-      subscription: subscriptionId,
-      customer_email: userEmail,
-      active_user: '0',
+      ...prodamusData,
       signature
     };
 

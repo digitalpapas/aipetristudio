@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useCustomToast } from "@/hooks/use-custom-toast";
 import { Star, Download, Share2 } from "lucide-react";
+import { getStorageItem, setStorageItem, removeStorageItem } from "@/lib/safe-storage";
 
 export default function ResearchSegmentPage() {
   const { id, segmentId } = useParams();
@@ -14,7 +15,7 @@ export default function ResearchSegmentPage() {
   const [segmentName, setSegmentName] = useState<string>(() => {
     // Попытка загрузить из localStorage для мгновенного отображения
     try {
-      const cached = localStorage.getItem(`segment-name-${id}-${segmentId}`);
+      const cached = getStorageItem(`segment-name-${id}-${segmentId}`);
       return cached || "";
     } catch {
       return "";
@@ -28,7 +29,7 @@ export default function ResearchSegmentPage() {
   // Состояние с восстановлением из localStorage при обновлении страницы
   const [currentView, setCurrentView] = useState<'menu' | 'result'>(() => {
     try {
-      const saved = localStorage.getItem(`segment-view-${id}-${segmentId}`);
+      const saved = getStorageItem(`segment-view-${id}-${segmentId}`);
       return saved === 'result' ? 'result' : 'menu';
     } catch {
       return 'menu';
@@ -37,7 +38,7 @@ export default function ResearchSegmentPage() {
   
   const [selectedAnalysisType, setSelectedAnalysisType] = useState<string>(() => {
     try {
-      return localStorage.getItem(`segment-analysis-type-${id}-${segmentId}`) || '';
+      return getStorageItem(`segment-analysis-type-${id}-${segmentId}`) || '';
     } catch {
       return '';
     }
@@ -96,7 +97,7 @@ export default function ResearchSegmentPage() {
           document.title = `${data['Название сегмента']} — подробный анализ`;
           
           // Сохраняем в localStorage для быстрого показа в следующий раз
-          localStorage.setItem(`segment-name-${id}-${segmentId}`, data['Название сегмента']);
+          setStorageItem(`segment-name-${id}-${segmentId}`, data['Название сегмента'], 24 * 60 * 60 * 1000); // 24 hours
         }
       } catch (error) {
         console.error('❌ Error loading segment name:', error);
@@ -129,23 +130,23 @@ export default function ResearchSegmentPage() {
 
     // Сброс состояния только при реальном изменении сегмента (не при обновлении страницы)
     const currentKey = `${id}-${segmentId}`;
-    const lastKey = localStorage.getItem('last-segment-key');
+    const lastKey = getStorageItem('last-segment-key');
     
     if (lastKey && lastKey !== currentKey) {
       // Реальное изменение сегмента - сбрасываем состояние
       setCurrentView('menu');
       setSelectedAnalysisType('');
-      localStorage.removeItem(`segment-view-${lastKey}`);
-      localStorage.removeItem(`segment-analysis-type-${lastKey}`);
+      removeStorageItem(`segment-view-${lastKey}`);
+      removeStorageItem(`segment-analysis-type-${lastKey}`);
     }
     
-    localStorage.setItem('last-segment-key', currentKey);
+    setStorageItem('last-segment-key', currentKey);
   }, [id, segmentId]);
 
   // Сохранение состояния просмотра в localStorage при изменении
   useEffect(() => {
     if (id && segmentId) {
-      localStorage.setItem(`segment-view-${id}-${segmentId}`, currentView);
+      setStorageItem(`segment-view-${id}-${segmentId}`, currentView, 7 * 24 * 60 * 60 * 1000); // 7 days
     }
   }, [currentView, id, segmentId]);
 
@@ -153,9 +154,9 @@ export default function ResearchSegmentPage() {
   useEffect(() => {
     if (id && segmentId) {
       if (selectedAnalysisType) {
-        localStorage.setItem(`segment-analysis-type-${id}-${segmentId}`, selectedAnalysisType);
+        setStorageItem(`segment-analysis-type-${id}-${segmentId}`, selectedAnalysisType, 7 * 24 * 60 * 60 * 1000); // 7 days
       } else {
-        localStorage.removeItem(`segment-analysis-type-${id}-${segmentId}`);
+        removeStorageItem(`segment-analysis-type-${id}-${segmentId}`);
       }
     }
   }, [selectedAnalysisType, id, segmentId]);
@@ -226,7 +227,7 @@ export default function ResearchSegmentPage() {
 
           // Авто-переход к готовому результату после перегенерации
           try {
-            const markerStr = localStorage.getItem('last-regeneration');
+            const markerStr = getStorageItem('last-regeneration');
             if (markerStr && newRow) {
               const marker = JSON.parse(markerStr);
               if (
@@ -238,10 +239,10 @@ export default function ResearchSegmentPage() {
                   toast({ title: 'Анализ готов', description: 'Результаты обновлены' });
                   setSelectedAnalysisType(newRow.analysis_type);
                   setCurrentView('result');
-                  localStorage.removeItem('last-regeneration');
+                  removeStorageItem('last-regeneration');
                 } else if (newRow.status === 'error' || newRow.status === 'failed') {
                   toast({ type: 'error', title: 'Ошибка анализа', description: 'Не удалось завершить перегенерацию' });
-                  localStorage.removeItem('last-regeneration');
+                  removeStorageItem('last-regeneration');
                 }
               }
             }
@@ -263,7 +264,7 @@ export default function ResearchSegmentPage() {
     let interval: number | undefined;
     let timeout: number | undefined;
     try {
-      const markerStr = localStorage.getItem('last-regeneration');
+      const markerStr = getStorageItem('last-regeneration');
       if (!markerStr) return;
       const marker = JSON.parse(markerStr);
       if (marker.researchId !== id || marker.segmentId !== parseInt(segmentId)) return;
@@ -285,12 +286,12 @@ export default function ResearchSegmentPage() {
           toast({ title: 'Анализ готов', description: 'Результаты обновлены' });
           setSelectedAnalysisType(marker.analysisType);
           setCurrentView('result');
-          localStorage.removeItem('last-regeneration');
+          removeStorageItem('last-regeneration');
           if (interval) window.clearInterval(interval);
           if (timeout) window.clearTimeout(timeout);
         } else if (row?.status === 'error' || row?.status === 'failed') {
           toast({ type: 'error', title: 'Ошибка анализа', description: 'Не удалось завершить перегенерацию' });
-          localStorage.removeItem('last-regeneration');
+          removeStorageItem('last-regeneration');
           if (interval) window.clearInterval(interval);
           if (timeout) window.clearTimeout(timeout);
         }

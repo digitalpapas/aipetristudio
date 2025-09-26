@@ -121,77 +121,104 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Prepare data for Prodamus API
+    // Prepare data for Prodamus API according to official documentation
     const prodamusData = {
       subscription: subscriptionId,
       customer_email: userEmail,
-      active_user: 0 // Cancel from user side (0 = deactivated by user)
+      active_user: 0 // 0 = deactivated by user (cannot be reactivated)
     };
 
-    // Create signature
+    // Create signature for security
     const signature = await createSignature(prodamusData, PRODAMUS_SECRET_KEY);
     
-    // Convert to strings for URLSearchParams
+    // Convert to string format for form submission
     const requestData = {
       subscription: subscriptionId,
       customer_email: userEmail,
-      active_user: '0', // Convert to string for URLSearchParams
+      active_user: '0',
       signature
     };
 
     console.log('Sending request to Prodamus API:', requestData);
 
-    // Call Prodamus API (use production URL for real environment)
-    const prodamusUrl = 'https://payform.ru/rest/setActivity/'; // Production URL
-    const response = await fetch(prodamusUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams(requestData).toString()
-    });
+    // Try different possible endpoints based on documentation
+    const possibleUrls = [
+      'https://demo.payform.ru/rest/setActivity/', // Demo environment
+      'https://payform.ru/rest/setActivity/',      // Production environment  
+      'https://my.payform.ru/rest/setActivity/'    // Alternative production
+    ];
+    
+    let lastError = null;
+    let success = false;
+    
+    for (const prodamusUrl of possibleUrls) {
+      console.log(`Trying URL: ${prodamusUrl}`);
+      
+      try {
+        const response = await fetch(prodamusUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams(requestData).toString()
+        });
 
-    const responseText = await response.text();
-    console.log('Prodamus API response:', response.status, responseText);
+        const responseText = await response.text();
+        console.log('Prodamus API response:', response.status, responseText);
 
-    if (response.ok && responseText === 'success') {
-      // Update user's subscription status in our database
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ 
-          // Оставляем статус как есть - месяц уже оплачен
-          // Только убираем автопродление
-          prodamus_subscription_id: null // Убираем связь с подпиской для отключения автопродления
-        })
-        .eq('user_id', user.id);
+        if (response.ok && responseText === 'success') {
+          // Update user's subscription status in our database
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ 
+              // Оставляем статус как есть - месяц уже оплачен
+              // Только убираем автопродление
+              prodamus_subscription_id: null // Убираем связь с подпиской для отключения автопродления
+            })
+            .eq('user_id', user.id);
 
-      if (updateError) {
-        console.error('Error updating profile:', updateError);
-        // Don't fail the request if DB update fails, as Prodamus cancellation worked
+          if (updateError) {
+            console.error('Error updating profile:', updateError);
+            // Don't fail the request if DB update fails, as Prodamus cancellation worked
+          }
+
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              message: 'Автопродление отменено успешно' 
+            }),
+            { 
+              status: 200, 
+              headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+            }
+          );
+        } else if (response.ok) {
+          // If response is OK but not 'success', try next URL
+          lastError = `Unexpected response: ${responseText}`;
+          continue;
+        } else {
+          // If response is not OK, try next URL
+          lastError = `HTTP ${response.status}: ${responseText}`;
+          continue;
+        }
+      } catch (fetchError: any) {
+        console.error(`Error with URL ${prodamusUrl}:`, fetchError);
+        lastError = fetchError.message;
+        continue;
       }
-
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'Автопродление отменено успешно' 
-        }),
-        { 
-          status: 200, 
-          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-        }
-      );
-    } else {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Failed to cancel subscription', 
-          details: responseText 
-        }),
-        { 
-          status: 400, 
-          headers: { 'Content-Type': 'application/json', ...corsHeaders } 
-        }
-      );
     }
+    
+    // If we get here, all URLs failed
+    return new Response(
+      JSON.stringify({ 
+        error: 'Failed to cancel subscription', 
+        details: lastError || 'All endpoints failed'
+      }),
+      { 
+        status: 400, 
+        headers: { 'Content-Type': 'application/json', ...corsHeaders } 
+      }
+    );
 
   } catch (error: any) {
     console.error('Error in cancel-subscription function:', error);

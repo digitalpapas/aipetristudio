@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { FileText, Users, Target, Heart, Lightbulb, AlertTriangle, Star, Loader2, Trash2, Bookmark, Brain, Clock, Eye, Wrench, Layers, ArrowLeft, RefreshCw, HelpCircle, MessageSquare, Copy, AlertCircle } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { getSegmentAnalysis, deleteSegmentAnalysis, saveBookmark, getBookmarks } from "@/lib/supabase-utils";
 import { useCustomToast } from "@/hooks/use-custom-toast";
@@ -1077,25 +1077,40 @@ export default function SegmentAnalysisResult({
                   <span className="hidden xs:inline">Обновить</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                  <DialogTitle>Перегенерировать с комментариями</DialogTitle>
+                  <DialogTitle className="flex items-center gap-2">
+                    <RefreshCw className="h-5 w-5" />
+                    Перегенерировать с комментариями
+                  </DialogTitle>
                   <DialogDescription>
-                    Укажите конкретные комментарии и пожелания для улучшения анализа. 
-                    Например: "Добавить больше примеров", "Сфокусироваться на возрасте 25-35", "Учесть региональную специфику" и т.д.
+                    Опишите, что вам не нравится в текущем анализе или что вы хотели бы изменить. 
+                    Будет создана полная перегенерация этого типа анализа.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <Textarea
-                    placeholder="Введите ваши комментарии и пожелания для перегенерации анализа..."
-                    value={regenerateComments}
-                    onChange={(e) => setRegenerateComments(e.target.value)}
-                    className="min-h-[100px]"
-                  />
+                
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <label htmlFor="regenerate-comment" className="text-sm font-medium">
+                      Ваш комментарий (максимум 500 символов)
+                    </label>
+                    <Textarea
+                      id="regenerate-comment"
+                      placeholder="Например: Добавить больше примеров, сфокусироваться на возрасте 25-35, учесть региональную специфику..."
+                      value={regenerateComments}
+                      onChange={(e) => setRegenerateComments(e.target.value.slice(0, 500))}
+                      className="min-h-[100px] resize-none"
+                      maxLength={500}
+                    />
+                    <div className="text-xs text-muted-foreground text-right">
+                      {regenerateComments.length}/500
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    variant="outline" 
+                
+                <DialogFooter>
+                  <Button
+                    variant="outline"
                     onClick={() => {
                       setShowRegenerateDialog(false);
                       setRegenerateComments("");
@@ -1106,12 +1121,12 @@ export default function SegmentAnalysisResult({
                   <Button 
                     onClick={handleRegenerateWithComments}
                     disabled={!regenerateComments.trim()}
-                    className="bg-orange-500 hover:bg-orange-600"
+                    className="bg-orange-500 hover:bg-orange-600 min-w-[120px]"
                   >
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Перегенерировать
                   </Button>
-                </div>
+                </DialogFooter>
               </DialogContent>
             </Dialog>
 

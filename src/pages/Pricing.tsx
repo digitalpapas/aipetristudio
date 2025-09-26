@@ -13,7 +13,7 @@ const PricingPage = () => {
   const { status, daysLeft, hasActiveSubscription } = useSubscription();
   const navigate = useNavigate();
   
-  const SUBSCRIPTION_URL = 'https://payform.ru/q69gDr2/';
+  const SUBSCRIPTION_URL = 'https://payform.ru/fw9h36n/';
 
   const handleProButtonClick = () => {
     if (!user) {

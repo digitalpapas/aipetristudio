@@ -295,7 +295,7 @@ const SubscriptionPage = () => {
               </div>
               
               <Button 
-                onClick={() => navigate('/pricing')}
+                onClick={() => window.open('https://payform.ru/fw9h36n/', '_blank')}
                 className="w-full sm:w-auto"
               >
                 <ArrowRight className="w-4 h-4 mr-2" />

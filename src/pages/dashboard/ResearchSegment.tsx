@@ -24,8 +24,24 @@ export default function ResearchSegmentPage() {
   const [isAssistantLocked, setIsAssistantLocked] = useState(true);
   const [missingAnalyses, setMissingAnalyses] = useState<string[]>([]);
   const navigate = useNavigate();
-  const [currentView, setCurrentView] = useState<'menu' | 'result'>('menu');
-  const [selectedAnalysisType, setSelectedAnalysisType] = useState<string>('');
+  
+  // Состояние с восстановлением из localStorage при обновлении страницы
+  const [currentView, setCurrentView] = useState<'menu' | 'result'>(() => {
+    try {
+      const saved = localStorage.getItem(`segment-view-${id}-${segmentId}`);
+      return saved === 'result' ? 'result' : 'menu';
+    } catch {
+      return 'menu';
+    }
+  });
+  
+  const [selectedAnalysisType, setSelectedAnalysisType] = useState<string>(() => {
+    try {
+      return localStorage.getItem(`segment-analysis-type-${id}-${segmentId}`) || '';
+    } catch {
+      return '';
+    }
+  });
 
   // Список ВСЕХ обязательных анализов для разблокировки
   const REQUIRED_ANALYSES = [
@@ -111,10 +127,38 @@ export default function ResearchSegmentPage() {
     }
     canonical.setAttribute("href", window.location.href);
 
-    // Сброс состояния при изменении сегмента
-    setCurrentView('menu');
-    setSelectedAnalysisType('');
+    // Сброс состояния только при реальном изменении сегмента (не при обновлении страницы)
+    const currentKey = `${id}-${segmentId}`;
+    const lastKey = localStorage.getItem('last-segment-key');
+    
+    if (lastKey && lastKey !== currentKey) {
+      // Реальное изменение сегмента - сбрасываем состояние
+      setCurrentView('menu');
+      setSelectedAnalysisType('');
+      localStorage.removeItem(`segment-view-${lastKey}`);
+      localStorage.removeItem(`segment-analysis-type-${lastKey}`);
+    }
+    
+    localStorage.setItem('last-segment-key', currentKey);
   }, [id, segmentId]);
+
+  // Сохранение состояния просмотра в localStorage при изменении
+  useEffect(() => {
+    if (id && segmentId) {
+      localStorage.setItem(`segment-view-${id}-${segmentId}`, currentView);
+    }
+  }, [currentView, id, segmentId]);
+
+  // Сохранение типа анализа в localStorage при изменении
+  useEffect(() => {
+    if (id && segmentId) {
+      if (selectedAnalysisType) {
+        localStorage.setItem(`segment-analysis-type-${id}-${segmentId}`, selectedAnalysisType);
+      } else {
+        localStorage.removeItem(`segment-analysis-type-${id}-${segmentId}`);
+      }
+    }
+  }, [selectedAnalysisType, id, segmentId]);
 
   const checkAnalysesCompletion = async () => {
     if (!id || !segmentId) return;
@@ -349,7 +393,10 @@ export default function ResearchSegmentPage() {
             researchId={id!}
             segmentId={segmentId!}
             analysisType={selectedAnalysisType}
-            onBack={() => setCurrentView('menu')}
+            onBack={() => {
+              setCurrentView('menu');
+              setSelectedAnalysisType('');
+            }}
           />
         )}
       </div>

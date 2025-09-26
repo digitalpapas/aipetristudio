@@ -125,7 +125,7 @@ const handler = async (req: Request): Promise<Response> => {
     const prodamusData = {
       subscription: subscriptionId,
       customer_email: userEmail,
-      active_user: '0' // Cancel from user side (string for URLSearchParams)
+      active_user: 0 // Cancel from user side (0 = deactivated by user)
     };
 
     // Create signature

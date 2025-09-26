@@ -10,6 +10,7 @@ import { Calendar, CreditCard, User, AlertCircle, ArrowRight } from "lucide-reac
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface Payment {
   id: string;
@@ -91,11 +92,15 @@ const SubscriptionPage = () => {
   const handleCancelSubscription = async () => {
     if (!subscriptionId || !user?.email) {
       console.error('Missing subscription data');
+      toast.error('Ошибка: отсутствуют данные подписки');
       return;
     }
 
     try {
       setIsCancelling(true);
+      
+      // Показываем индикатор загрузки
+      toast.loading('Отменяем автопродление...', { id: 'cancelling' });
       
       const { data, error } = await supabase.functions.invoke('cancel-subscription', {
         body: {
@@ -106,26 +111,39 @@ const SubscriptionPage = () => {
 
       if (error) {
         console.error('Error cancelling subscription:', error);
-        alert('Произошла ошибка при отмене подписки. Попробуйте позже или обратитесь в поддержку.');
+        toast.dismiss('cancelling');
+        toast.error('Произошла ошибка при отмене подписки: ' + error.message + '. Попробуйте позже или обратитесь в поддержку.');
         return;
       }
 
       if (data?.success) {
-        // Success - show confirmation and refresh
-        alert('Автопродление успешно отменено! Ваша подписка будет действовать до окончания оплаченного периода.');
+        toast.dismiss('cancelling');
         
-        // Force refresh subscription data
+        // Success - показываем красивое сообщение
+        toast.success('🎉 Автопродление успешно отменено!', {
+          description: 'Ваша подписка будет действовать до окончания оплаченного периода. После этого она не будет автоматически продлена.',
+          duration: 8000,
+        });
+        
+        // Обновляем данные подписки
         await fetchSubscriptionData();
-        
-        // Reload page to reflect changes
-        window.location.reload();
+        await fetchPaymentHistory();
       } else {
         console.error('Cancellation failed:', data);
-        alert('Не удалось отменить подписку: ' + (data?.error || 'Неизвестная ошибка'));
+        const errorMsg = data?.details || data?.error || 'Неизвестная ошибка';
+        toast.dismiss('cancelling');
+        toast.error('Не удалось отменить подписку', {
+          description: errorMsg + '\n\nПопробуйте позже или обратитесь в поддержку.',
+          duration: 8000,
+        });
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Произошла ошибка при отмене подписки. Попробуйте позже или обратитесь в поддержку.');
+      toast.dismiss('cancelling');
+      toast.error('Произошла ошибка при отмене подписки', {
+        description: 'Попробуйте позже или обратитесь в поддержку. Детали: ' + error.message,
+        duration: 8000,
+      });
     } finally {
       setIsCancelling(false);
     }

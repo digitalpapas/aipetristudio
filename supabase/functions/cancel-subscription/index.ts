@@ -8,9 +8,11 @@ const corsHeaders = {
 
 // HMAC signature creation for Prodamus API
 async function createSignature(data: Record<string, any>, secretKey: string): Promise<string> {
-  const sortedKeys = Object.keys(data).sort();
-  const queryString = sortedKeys
-    .map(key => `${key}=${data[key]}`)
+  // Создаем query string в правильном порядке для Prodamus API
+  // Порядок важен! Параметры должны быть отсортированы по алфавиту  
+  const sortedEntries = Object.entries(data).sort(([a], [b]) => a.localeCompare(b));
+  const queryString = sortedEntries
+    .map(([key, value]) => `${key}=${value}`)
     .join('&');
   
   console.log('Query string for signature:', queryString);

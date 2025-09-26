@@ -10,8 +10,10 @@ const corsHeaders = {
 async function createSignature(data: Record<string, any>, secretKey: string): Promise<string> {
   const sortedKeys = Object.keys(data).sort();
   const queryString = sortedKeys
-    .map(key => `${key}=${encodeURIComponent(data[key])}`)
+    .map(key => `${key}=${data[key]}`)
     .join('&');
+  
+  console.log('Query string for signature:', queryString);
   
   const encoder = new TextEncoder();
   const keyData = encoder.encode(secretKey);
@@ -128,10 +130,14 @@ const handler = async (req: Request): Promise<Response> => {
       active_user: 0 // 0 = deactivated by user (cannot be reactivated)
     };
 
+    console.log('Prodamus data for signature:', prodamusData);
+    
     // Create signature for security
     const signature = await createSignature(prodamusData, PRODAMUS_SECRET_KEY);
     
-    // Convert to string format for form submission
+    console.log('Generated signature:', signature);
+    
+    // Convert to string format for form submission (all values must be strings for URLSearchParams)
     const requestData = {
       subscription: subscriptionId,
       customer_email: userEmail,
@@ -143,9 +149,9 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Try different possible endpoints based on documentation
     const possibleUrls = [
-      'https://demo.payform.ru/rest/setActivity/', // Demo environment
-      'https://payform.ru/rest/setActivity/',      // Production environment  
-      'https://my.payform.ru/rest/setActivity/'    // Alternative production
+      'https://neurosetipraktika.payform.ru/rest/setActivity/', // Your specific domain
+      'https://payform.ru/rest/setActivity/',                   // Production environment
+      'https://demo.payform.ru/rest/setActivity/',              // Demo environment if needed
     ];
     
     let lastError = null;

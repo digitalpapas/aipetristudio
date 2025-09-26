@@ -89,6 +89,11 @@ const SubscriptionPage = () => {
   };
 
   const handleCancelSubscription = async () => {
+    if (!subscriptionId || !user?.email) {
+      console.error('Missing subscription data');
+      return;
+    }
+
     try {
       setIsCancelling(true);
       
@@ -101,58 +106,26 @@ const SubscriptionPage = () => {
 
       if (error) {
         console.error('Error cancelling subscription:', error);
-        // Fallback to email method if API fails
-        const subject = 'Запрос на отмену автопродления';
-        const body = `Здравствуйте!
-
-Прошу отменить автопродление для моей подписки Pro.
-
-ID подписки: ${subscriptionId}
-Email: ${user?.email}
-
-Спасибо.`;
-        
-        const mailtoUrl = `mailto:neuroseti.praktika@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        window.location.href = mailtoUrl;
+        alert('Произошла ошибка при отмене подписки. Попробуйте позже или обратитесь в поддержку.');
         return;
       }
 
       if (data?.success) {
+        // Success - show confirmation and refresh
+        alert('Автопродление успешно отменено! Ваша подписка будет действовать до окончания оплаченного периода.');
+        
         // Force refresh subscription data
         await fetchSubscriptionData();
-        console.log('Автопродление отменено успешно');
+        
         // Reload page to reflect changes
         window.location.reload();
       } else {
-        // Fallback to email method
-        const subject = 'Запрос на отмену автопродления';
-        const body = `Здравствуйте!
-
-Прошу отменить автопродление для моей подписки Pro.
-
-ID подписки: ${subscriptionId}
-Email: ${user?.email}
-
-Спасибо.`;
-        
-        const mailtoUrl = `mailto:neuroseti.praktika@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        window.location.href = mailtoUrl;
+        console.error('Cancellation failed:', data);
+        alert('Не удалось отменить подписку: ' + (data?.error || 'Неизвестная ошибка'));
       }
     } catch (error) {
       console.error('Error:', error);
-      // Fallback to email method
-      const subject = 'Запрос на отмену автопродления';
-      const body = `Здравствуйте!
-
-Прошу отменить автопродление для моей подписки Pro.
-
-ID подписки: ${subscriptionId}
-Email: ${user?.email}
-
-Спасибо.`;
-      
-      const mailtoUrl = `mailto:neuroseti.praktika@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.location.href = mailtoUrl;
+      alert('Произошла ошибка при отмене подписки. Попробуйте позже или обратитесь в поддержку.');
     } finally {
       setIsCancelling(false);
     }
